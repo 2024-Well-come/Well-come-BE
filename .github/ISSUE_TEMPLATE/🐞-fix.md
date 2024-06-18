@@ -2,7 +2,7 @@
 name: "\U0001F41E FIX"
 about: Bug 발생 시 작성해 주세요
 title: "[FIX] "
-labels: '작업: FIX'
+labels: ''
 assignees: ''
 
 ---

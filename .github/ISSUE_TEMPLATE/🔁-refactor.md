@@ -2,7 +2,7 @@
 name: "\U0001F501 Refactor"
 about: Refactor 작업 사항을 입력해 주세요
 title: "[REFACTOR] "
-labels: '작업: REFACTOR'
+labels: ''
 assignees: ''
 
 ---
