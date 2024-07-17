@@ -5,6 +5,13 @@ on:
     types: [closed]
   workflow_dispatch: # (2).수동 실행도 가능하도록
 
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_S3_BUCKET: app-release-files
+  AWS_CODE_DEPLOY_APPLICATION: cicd2024wellcome
+  AWS_CODE_DEPLOY_GROUP: cicd2024wellcome-group
+
+
 jobs:
   build:
     runs-on: ubuntu-latest # (3).OS환경
@@ -36,3 +43,16 @@ jobs:
 
       - name: Show Current Time
         run: echo "CurrentTime=${{ steps.current-time.outputs.formatted }}" # (9).확보한 시간 보여주기
+
+      - name: AWS credential 설정
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.CICD_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.CICD_SECRET_KEY }}
+
+      - name: S3 upload
+        run: aws deploy push --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} --ignore-hidden-files --s3-location s3://$AWS_S3_BUCKET/cicdtest/$GITHUB_SHA.zip --source .
+
+      - name: EC2에 배포
+        run: aws deploy create-deployment --application-name ${{ env.AWS_CODE_DEPLOY_APPLICATION }} --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name ${{ env.AWS_CODE_DEPLOY_GROUP }} --s3-location bucket=$AWS_S3_BUCKET,key=cicdtest/$GITHUB_SHA.zip,bundleType=zip
