@@ -9,8 +9,8 @@ on:
 env:
   AWS_REGION: ap-northeast-2
   S3_BUCKET_NAME: s3bulidimage
-  CODE_DEPLOY_APPLICATION_NAME: cicd2024wellcome
-  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: cicd2024wellcome-group
+  CODE_DEPLOY_APPLICATION_NAME: cicd2024WellcomeBE
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: cicd2024Wellcome-group
 
 permissions:
   contents: read
