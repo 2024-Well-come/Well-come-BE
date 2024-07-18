@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_ROOT="/home/ubuntu/spring-github-action"
-JAR_FILE="$PROJECT_ROOT/spring-webapp.jar"
+JAR_FILE="$PROJECT_ROOT/WellcomeBE-0.0.1-SNAPSHOT.jar"
 
 APP_LOG="$PROJECT_ROOT/application.log"
 ERROR_LOG="$PROJECT_ROOT/error.log"
@@ -10,8 +10,9 @@ DEPLOY_LOG="$PROJECT_ROOT/deploy.log"
 TIME_NOW=$(date +%c)
 
 # 로그 파일 생성 및 소유자 변경
-touch $APP_LOG $ERROR_LOG $DEPLOY_LOG
-chown ubuntu:ubuntu $APP_LOG $ERROR_LOG $DEPLOY_LOG
+chmod +x /home/ubuntu/spring-github-action/scripts/stop.sh
+chmod +x /home/ubuntu/spring-github-action/scripts/start.sh
+
 
 # build 파일 복사
 echo "$TIME_NOW > $JAR_FILE 파일 복사" >> $DEPLOY_LOG
