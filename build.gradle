@@ -26,6 +26,11 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// 공간 데이터
+	implementation 'org.hibernate.orm:hibernate-spatial:6.5.2.Final'
+	implementation 'org.locationtech.jts:jts-core:1.18.2'
+
 	compileOnly 'org.projectlombok:lombok'
 	// implementation 'com.h2database:h2'
 	runtimeOnly 'com.mysql:mysql-connector-j:8.0.33'
