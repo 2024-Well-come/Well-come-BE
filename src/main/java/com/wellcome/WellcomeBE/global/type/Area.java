@@ -3,6 +3,8 @@ package com.wellcome.WellcomeBE.global.type;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+
 @Getter
 @RequiredArgsConstructor
 public enum Area {
@@ -27,5 +29,12 @@ public enum Area {
 
     private final String name;
     private final int code;
+
+    public static Area getAreaType(int code){
+        return Arrays.stream(Area.values())
+                .filter(area -> area.getCode() == code)
+                .findFirst()
+                .orElseThrow(); // 예외 처리 필요
+    }
 
 }

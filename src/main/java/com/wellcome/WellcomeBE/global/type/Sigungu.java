@@ -3,6 +3,8 @@ package com.wellcome.WellcomeBE.global.type;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+
 /**
  * 강원도 시군구 코드
  */
@@ -31,5 +33,13 @@ public enum Sigungu {
 
     private final String name;
     private final int code;
+
+    public static Sigungu getSigunguType(int code){
+        return Arrays.stream(Sigungu.values())
+                .filter(sigungu -> sigungu.getCode() == code)
+                .findFirst()
+                .orElseThrow(); // 예외 처리 필요
+    }
+
 
 }
