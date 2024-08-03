@@ -134,8 +134,7 @@ public class WellnessInfoService {
 
     private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item){
         try {
-            // TODO 테마 분류 필요 (NATURE로 임시 지정)
-            return item.toEntity(Thema.NATURE);
+            return item.toEntity();
         } catch (ParseException e) {
             throw new RuntimeException("Failed to convert item to entity: ", e);
         }

@@ -18,6 +18,7 @@ import java.util.List;
 import static com.wellcome.WellcomeBE.global.type.Area.getAreaType;
 import static com.wellcome.WellcomeBE.global.type.Category.getCategoryType;
 import static com.wellcome.WellcomeBE.global.type.Sigungu.getSigunguType;
+import static com.wellcome.WellcomeBE.global.type.Thema.getThemaType;
 
 @Data
 @Slf4j
@@ -72,7 +73,7 @@ public class TourBasicApiResponse {
                     private String tel;
                     private String title;
 
-                    public WellnessInfo toEntity(Thema thema) throws ParseException {
+                    public WellnessInfo toEntity() throws ParseException {
 
                         // WKTReader를 통해 WKT -> 실제 타입으로 변환
                         String pointWKT = String.format("POINT(%s %s)", mapx, mapy);
@@ -82,6 +83,9 @@ public class TourBasicApiResponse {
                         Area area = areacode != null ? getAreaType(Integer.parseInt(areacode)) : getAreaType(100);
                         Sigungu sigungu = sigungucode != null ? getSigunguType(Integer.parseInt(sigungucode)): getSigunguType(100);
                         Category category = getCategoryType(Integer.parseInt(contenttypeid));
+
+                        // 테마
+                        Thema thema = getThemaType(cat1, cat2, cat3);
 
                         WellnessInfo wellnessSpot = WellnessInfo.builder()
                                 .title(title)
