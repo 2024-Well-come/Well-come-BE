@@ -20,9 +20,7 @@ import static com.wellcome.WellcomeBE.global.type.Keyword.KEYWORDS;
 @Slf4j
 public class WellnessInfoService {
 
-    @Qualifier("tourBasicApiWebClient")
     private final WebClient tourBasicApiWebClient;
-    @Qualifier("tourSearchApiWebClient")
     private final WebClient tourSearchApiWebClient;
     private final WellnessInfoRepository wellnessInfoRepository;
 
