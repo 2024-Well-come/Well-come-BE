@@ -1,5 +1,7 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.global.type.Area;
 import com.wellcome.WellcomeBE.global.type.Category;
@@ -36,7 +38,9 @@ public class TourBasicApiResponse {
 
         @Data
         public static class Body {
+            @JsonDeserialize(using = ItemsDeserializer.class)
             private Items items;
+
             private int numOfRows;
             private int pageNo;
             private int totalCount;
