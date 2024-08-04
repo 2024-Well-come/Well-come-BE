@@ -60,7 +60,7 @@ public class WellnessInfo extends BaseTimeEntity {
     @Column(nullable = false)
     private Double mapY;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "GEOMETRY")
     private Point location;
 
 }
