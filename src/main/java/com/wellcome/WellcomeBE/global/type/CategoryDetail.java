@@ -30,12 +30,12 @@ public class CategoryDetail {
 
             // 숙박
             new CategoryDetail("B02", "B0201", "B02011200"), // 홈스테이
-            new CategoryDetail("B02", "B0201", "B02011600"), // 한옥
+            new CategoryDetail("B02", "B0201", "B02011600") // 한옥
             // TODO 웰니스 프로그램 있는 곳 개별 추가 필요
 
             // 음식점
-            new CategoryDetail("A05", "A0502", "A05020100"), // 한식
-            new CategoryDetail("A05", "A0502", "A05020900") // 카페/전통찻집
+            //new CategoryDetail("A05", "A0502", "A05020100"), // 한식
+            //new CategoryDetail("A05", "A0502", "A05020900") // 카페/전통찻집
     );
 
     private CategoryDetail(String cat1, String cat2, String cat3) {
