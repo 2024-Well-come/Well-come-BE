@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleCustomException(CustomException e, HttpServletRequest request) {
         log.error("*** Custom Exception - url: {} ({}), httpStatus: {}, errorCode: {}, errorMessage: {}",
                 request.getRequestURL(), request.getMethod(), e.getCustomErrorCode().getHttpStatus(), e.getCustomErrorCode().getCode(), e.getMessage());
-        return buildResponseEntity(e.getCustomErrorCode());
+        return buildResponseEntity(e.getCustomErrorCode(), e.getMessage());
     }
 
     // @Valid Exception
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAllException(Exception e, HttpServletRequest request) {
         log.error("*** Common Exception - url: {} ({}), errorMessage: {}",
                 request.getRequestURL(), request.getMethod(), e.getMessage());
-        return buildResponseEntity(CustomErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
+        return buildResponseEntity(CustomErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     private ResponseEntity<ErrorResponse> buildResponseEntity(CustomErrorCode customErrorCode, String errorMessage) {
