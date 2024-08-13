@@ -12,12 +12,10 @@ import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -94,24 +92,6 @@ public class WellnessInfoService {
 
     private Mono<TourBasicApiResponse> fetchFromTourBasicApi(CategoryDetail categoryDetail, int pageNo){
 
-//        UriComponentsBuilder uriBuilder = webClientConfig.getTourBasicApiUrl()
-//                .queryParam("areaCode", GANGWONDO_AREACODE)
-//                .queryParam("pageNo", pageNo)
-//                .queryParam("numOfRows", NUM_OF_ROWS_BASIC)
-//                .queryParam("cat1", categoryDetail.getCat1());
-//
-//        if (categoryDetail.getCat2() != null) {
-//            uriBuilder.queryParam("cat2", categoryDetail.getCat2());
-//        }
-//
-//        if (categoryDetail.getCat3() != null) {
-//            uriBuilder.queryParam("cat3", categoryDetail.getCat3());
-//        }
-//
-//        return webClient.get()
-//                .uri(uriBuilder.build(false).toUriString())
-//                .exchangeToMono(this::handleResponse);
-
         // 추가 파라미터 설정
         Map<String, String> params = new HashMap<>();
         params.put("areaCode", GANGWONDO_AREACODE);
@@ -155,16 +135,6 @@ public class WellnessInfoService {
     }
 
     private Mono<TourBasicApiResponse> fetchDataFromTourSearchApi(String keyword, int pageNo) {
-
-//        UriComponentsBuilder uriBuilder = webClientConfig.getTourSearchApiUrl()
-//                .queryParam("areaCode", GANGWONDO_AREACODE)
-//                .queryParam("pageNo", pageNo)
-//                .queryParam("numOfRows", NUM_OF_ROWS_SEARCH)
-//                .queryParam("keyword", keyword);
-//
-//        return webClient.get()
-//                .uri(uriBuilder.build(false).toUriString())
-//                .exchangeToMono(this::handleResponse);
 
         // 추가 파라미터 설정
         Map<String, String> params = new HashMap<>();

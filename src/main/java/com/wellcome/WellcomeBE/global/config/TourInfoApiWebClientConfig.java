@@ -39,10 +39,6 @@ public class TourInfoApiWebClientConfig {
     }
 
     // 지역기반관광정보조회
-//    public UriComponentsBuilder getTourBasicApiUrl() {
-//        return buildTourApiCommonUrl("areaBasedList1");
-//    }
-
     public String getTourBasicApiUrl(Map<String, String> additionalParams) {
         UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("areaBasedList1");
         additionalParams.forEach(uriBuilder::queryParam);
@@ -50,10 +46,6 @@ public class TourInfoApiWebClientConfig {
     }
 
     // 키워드검색조회
-//    public UriComponentsBuilder getTourSearchApiUrl() {
-//        return buildTourApiCommonUrl("searchKeyword1");
-//    }
-
     public String getTourSearchApiUrl(Map<String, String> additionalParams) {
         UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("searchKeyword1");
         additionalParams.forEach(uriBuilder::queryParam);
