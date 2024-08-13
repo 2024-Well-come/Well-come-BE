@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.TourBasicApiResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
@@ -16,8 +17,12 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_JSON_PARSING_ERROR;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_RESPONSE_ERROR;
@@ -27,8 +32,8 @@ import static com.wellcome.WellcomeBE.global.type.Keyword.KEYWORDS;
 @Slf4j
 public class WellnessInfoService {
 
-    private final WebClient tourBasicApiWebClient;
-    private final WebClient tourSearchApiWebClient;
+    private final WebClient webClient;
+    private final TourInfoApiWebClientConfig webClientConfig;
     private final WellnessInfoRepository wellnessInfoRepository;
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
 
@@ -39,12 +44,12 @@ public class WellnessInfoService {
     private static final int NUM_OF_ROWS_SEARCH = 5;
 
     public WellnessInfoService(
-            @Qualifier("tourBasicApiWebClient") WebClient tourBasicApiWebClient,
-            @Qualifier("tourSearchApiWebClient") WebClient tourSearchApiWebClient,
-            WellnessInfoRepository wellnessInfoRepository) {
-        this.tourBasicApiWebClient = tourBasicApiWebClient;
-        this.tourSearchApiWebClient = tourSearchApiWebClient;
+            WebClient webClient,
+            WellnessInfoRepository wellnessInfoRepository,
+            TourInfoApiWebClientConfig webClientConfig) {
+        this.webClient = webClient;
         this.wellnessInfoRepository = wellnessInfoRepository;
+        this.webClientConfig = webClientConfig;
     }
 
     public void fetchAndSaveTourInfo() {
@@ -88,22 +93,42 @@ public class WellnessInfoService {
     }
 
     private Mono<TourBasicApiResponse> fetchFromTourBasicApi(CategoryDetail categoryDetail, int pageNo){
-        return tourBasicApiWebClient.get()
-                .uri(uriBuilder -> {
-                    uriBuilder.queryParam("areaCode", GANGWONDO_AREACODE)
-                            .queryParam("pageNo", pageNo)
-                            .queryParam("numOfRows", NUM_OF_ROWS_BASIC)
-                            .queryParam("cat1", categoryDetail.getCat1());
 
-                    if (categoryDetail.getCat2() != null) {
-                        uriBuilder.queryParam("cat2", categoryDetail.getCat2());
-                    }
-                    if (categoryDetail.getCat3() != null) {
-                        uriBuilder.queryParam("cat3", categoryDetail.getCat3());
-                    }
-                    return uriBuilder.build();
-                })
+//        UriComponentsBuilder uriBuilder = webClientConfig.getTourBasicApiUrl()
+//                .queryParam("areaCode", GANGWONDO_AREACODE)
+//                .queryParam("pageNo", pageNo)
+//                .queryParam("numOfRows", NUM_OF_ROWS_BASIC)
+//                .queryParam("cat1", categoryDetail.getCat1());
+//
+//        if (categoryDetail.getCat2() != null) {
+//            uriBuilder.queryParam("cat2", categoryDetail.getCat2());
+//        }
+//
+//        if (categoryDetail.getCat3() != null) {
+//            uriBuilder.queryParam("cat3", categoryDetail.getCat3());
+//        }
+//
+//        return webClient.get()
+//                .uri(uriBuilder.build(false).toUriString())
+//                .exchangeToMono(this::handleResponse);
+
+        // 추가 파라미터 설정
+        Map<String, String> params = new HashMap<>();
+        params.put("areaCode", GANGWONDO_AREACODE);
+        params.put("pageNo", String.valueOf(pageNo));
+        params.put("numOfRows", String.valueOf(NUM_OF_ROWS_BASIC));
+        params.put("cat1", categoryDetail.getCat1());
+        if (categoryDetail.getCat2() != null) {
+            params.put("cat2", categoryDetail.getCat2());
+        }
+        if (categoryDetail.getCat3() != null) {
+            params.put("cat3", categoryDetail.getCat3());
+        }
+
+        return webClient.get()
+                .uri(webClientConfig.getTourBasicApiUrl(params))
                 .exchangeToMono(this::handleResponse);
+
     }
 
     private Flux<WellnessInfo> fetchDataByKeyword(String keyword) {
@@ -130,13 +155,26 @@ public class WellnessInfoService {
     }
 
     private Mono<TourBasicApiResponse> fetchDataFromTourSearchApi(String keyword, int pageNo) {
-        return tourSearchApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .queryParam("areaCode", GANGWONDO_AREACODE)
-                        .queryParam("pageNo", pageNo)
-                        .queryParam("numOfRows", NUM_OF_ROWS_SEARCH)
-                        .queryParam("keyword", keyword)
-                        .build())
+
+//        UriComponentsBuilder uriBuilder = webClientConfig.getTourSearchApiUrl()
+//                .queryParam("areaCode", GANGWONDO_AREACODE)
+//                .queryParam("pageNo", pageNo)
+//                .queryParam("numOfRows", NUM_OF_ROWS_SEARCH)
+//                .queryParam("keyword", keyword);
+//
+//        return webClient.get()
+//                .uri(uriBuilder.build(false).toUriString())
+//                .exchangeToMono(this::handleResponse);
+
+        // 추가 파라미터 설정
+        Map<String, String> params = new HashMap<>();
+        params.put("areaCode", GANGWONDO_AREACODE);
+        params.put("pageNo", String.valueOf(pageNo));
+        params.put("numOfRows", String.valueOf(NUM_OF_ROWS_SEARCH));
+        params.put("keyword", keyword);
+
+        return webClient.get()
+                .uri(webClientConfig.getTourSearchApiUrl(params))
                 .exchangeToMono(this::handleResponse);
     }
 

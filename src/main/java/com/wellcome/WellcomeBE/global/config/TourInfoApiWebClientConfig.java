@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Map;
+
 @Configuration
 @Slf4j
 public class TourInfoApiWebClientConfig {
@@ -14,36 +16,48 @@ public class TourInfoApiWebClientConfig {
     @Value("${api.key}")
     private String apiKey;
 
-    private static final String BASE_URL = "http://apis.data.go.kr/B551011/KorService1/";
+    private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService1/";
 
-    // 공통 baseUrl 생성
-    private String buildUrl(String endpoint) {
-        String uriString = UriComponentsBuilder.fromHttpUrl(BASE_URL + endpoint)
+    // WebClient 생성
+    @Bean
+    public WebClient webClient() {
+        return WebClient.builder()
+                .build();
+    }
+
+    /**
+     * 한국관광공사_국문 관광정보 API
+     */
+    // 국문 관광정보 API 공통 URL 생성
+    private UriComponentsBuilder buildTourApiCommonUrl(String endpoint) {
+        return UriComponentsBuilder.fromHttpUrl(TOUR_API_BASE_URL + endpoint)
                 .queryParam("serviceKey", apiKey)
                 .queryParam("MobileOS", "AND")
                 .queryParam("MobileApp", "Wellcome")
                 .queryParam("_type", "json")
-                .queryParam("listYN", "Y")
-                .build(false)
-                .toUriString();
-
-        return uriString;
+                .queryParam("listYN", "Y");
     }
 
-    // 한국관광공사_국문 관광정보 서비스 API - 지역기반관광정보조회
-    @Bean
-    public WebClient tourBasicApiWebClient() {
-        return WebClient.builder()
-                .baseUrl(buildUrl("areaBasedList1"))
-                .build();
+    // 지역기반관광정보조회
+//    public UriComponentsBuilder getTourBasicApiUrl() {
+//        return buildTourApiCommonUrl("areaBasedList1");
+//    }
+
+    public String getTourBasicApiUrl(Map<String, String> additionalParams) {
+        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("areaBasedList1");
+        additionalParams.forEach(uriBuilder::queryParam);
+        return uriBuilder.build(false).toUriString();
     }
 
-    // 한국관광공사_국문 관광정보 서비스 API - 키워드검색조회
-    @Bean
-    public WebClient tourSearchApiWebClient() {
-        return WebClient.builder()
-                .baseUrl(buildUrl("searchKeyword1"))
-                .build();
+    // 키워드검색조회
+//    public UriComponentsBuilder getTourSearchApiUrl() {
+//        return buildTourApiCommonUrl("searchKeyword1");
+//    }
+
+    public String getTourSearchApiUrl(Map<String, String> additionalParams) {
+        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("searchKeyword1");
+        additionalParams.forEach(uriBuilder::queryParam);
+        return uriBuilder.build(false).toUriString();
     }
 
 }
