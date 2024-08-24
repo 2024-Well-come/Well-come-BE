@@ -26,6 +26,7 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
 	// implementation 'com.h2database:h2'
 	implementation 'com.mysql:mysql-connector-j:8.0.33'
 
@@ -39,6 +40,11 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// jsch 라이브러리, for ssh tunneling
+	implementation 'com.github.mwiede:jsch:0.2.16'
+	// application.yml의 환경 변수를 class에서 사용하기 위한 라이브러리
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }
 
 tasks.named('test') {
