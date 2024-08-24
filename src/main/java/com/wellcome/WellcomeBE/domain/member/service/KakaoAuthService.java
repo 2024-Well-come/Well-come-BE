@@ -96,23 +96,6 @@ public class KakaoAuthService {
                 .bodyToMono(KakaoUserInfoResponse.class);
     }
 
-    // 카카오 API 호출 - 토큰 갱신하기
-    private Mono<KakaoTokenResponse> getNewToken(String refreshToken) {
-        String requestUrl = UriComponentsBuilder
-                .fromUriString("https://kauth.kakao.com/oauth/token")
-                .queryParam("grant_type", "refresh_token")
-                .queryParam("client_id", clientId)
-                .queryParam("refresh_token", refreshToken)
-                .build()
-                .toUriString();
-
-        return webClient.post()
-                .uri(requestUrl)
-                .header("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
-                .retrieve()
-                .bodyToMono(KakaoTokenResponse.class);
-    }
-
     // 회원가입 여부 확인 후 회원가입 진행
     private void verifyAndRegisterMember(KakaoUserInfoResponse userInfoResponse) {
         Optional<Member> member = memberRepository.findByKakaoId(userInfoResponse.getId());
@@ -139,6 +122,10 @@ public class KakaoAuthService {
 
         // 헤더에서 refresh token 추출
         String refreshToken = extractToken(httpServletRequest);
+        if(refreshToken == null || refreshToken.isEmpty()) {
+            throw new RuntimeException("refresh token이 누락되었습니다.");
+            // TODO Custom Exception 처리
+        }
 
         // refresh token 유효성 확인
         if(getRefreshToken(refreshToken) == null) { //refresh token 만료
@@ -168,6 +155,23 @@ public class KakaoAuthService {
         return null;
     }
 
+    // 카카오 API 호출 - 토큰 갱신하기
+    private Mono<KakaoTokenResponse> getNewToken(String refreshToken) {
+        String requestUrl = UriComponentsBuilder
+                .fromUriString("https://kauth.kakao.com/oauth/token")
+                .queryParam("grant_type", "refresh_token")
+                .queryParam("client_id", clientId)
+                .queryParam("refresh_token", refreshToken)
+                .build()
+                .toUriString();
+
+        return webClient.post()
+                .uri(requestUrl)
+                .header("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
+                .retrieve()
+                .bodyToMono(KakaoTokenResponse.class);
+    }
+
     // refresh token이 갱신된 경우 업데이트
     private String updateRefreshToken(Long kakaoId, String oldRefreshToken, KakaoTokenResponse newTokenResponse){
         String newRefreshToken = newTokenResponse.getRefreshToken();
@@ -176,6 +180,40 @@ public class KakaoAuthService {
         saveRefreshToken(kakaoId, newRefreshToken, newTokenResponse.getRefreshTokenExpiresIn());
 
         return newRefreshToken;
+    }
+
+    /**
+     * 카카오 로그아웃
+     */
+    public void handleKakaoLogout(HttpServletRequest httpServletRequest) {
+
+        // 헤더에서 access token 추출
+        String accessToken = extractToken(httpServletRequest);
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new RuntimeException("acess token이 누락되었습니다.");
+            // TODO Custom Exception 처리
+        }
+
+        // 로그아웃 처리
+        logout(accessToken);
+
+        // TODO refresh token 삭제
+
+    }
+
+    // 카카오 API 호출 - 로그아웃
+    private void logout(String accessToken) {
+        String requestUrl = UriComponentsBuilder
+                .fromUriString("https://kapi.kakao.com/v1/user/logout")
+                .build()
+                .toUriString();
+
+        webClient.post()
+                .uri(requestUrl)
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
     }
 
 }

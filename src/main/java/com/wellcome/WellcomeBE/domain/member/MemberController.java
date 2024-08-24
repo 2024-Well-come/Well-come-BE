@@ -30,4 +30,11 @@ public class MemberController {
         return ResponseEntity.ok(kakaoService.renewKakaoToken(httpServletRequest));
     }
 
+    // 카카오 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<Void> kakaoLogout(HttpServletRequest httpServletRequest){
+        kakaoService.handleKakaoLogout(httpServletRequest);
+        return ResponseEntity.ok().build();
+    }
+
 }
