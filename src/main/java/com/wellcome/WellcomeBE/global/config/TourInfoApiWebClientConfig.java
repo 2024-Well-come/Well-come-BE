@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class TourInfoApiWebClientConfig {
 
-    @Value("${api.key}")
+    @Value("${tour_api.key}")
     private String apiKey;
 
     // 한국관광공사_국문 관광정보 서비스 API - 지역기반관광정보조회
