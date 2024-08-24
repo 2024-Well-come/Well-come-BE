@@ -31,8 +31,12 @@ public class MemberController {
         // 회원가입 유무 확인 및 회원가입 진행
         kakaoService.verifyAndRegisterMember(userInfoResponse);
 
+        // refresh token 저장
+        kakaoService.saveRefreshToken(tokenResponse, userInfoResponse);
+
         // 카카오에서 발급받은 access token, refresh token 응답
         LoginResponse result = new LoginResponse(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken());
+
         return ResponseEntity.ok(result);
     }
 

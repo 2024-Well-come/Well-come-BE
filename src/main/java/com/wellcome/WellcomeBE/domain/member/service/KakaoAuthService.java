@@ -7,6 +7,7 @@ import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
 import com.wellcome.WellcomeBE.global.type.SocialLogin;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -26,10 +27,14 @@ public class KakaoAuthService {
 
     private final WebClient webClient;
     private final MemberRepository memberRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public KakaoAuthService(WebClient.Builder webClientBuilder, MemberRepository memberRepository) {
+    public KakaoAuthService(WebClient.Builder webClientBuilder,
+                            MemberRepository memberRepository,
+                            RedisTemplate<String, Object> redisTemplate) {
         this.webClient = webClientBuilder.build();
         this.memberRepository = memberRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     // 토큰 받기
@@ -88,4 +93,18 @@ public class KakaoAuthService {
                                     .build());
         }
     }
+
+    // Redis에 refresh token 저장
+    public void saveRefreshToken(KakaoTokenResponse tokenResponse, KakaoUserInfoResponse userInfoResponse) {
+        redisTemplate.opsForValue().set(String.valueOf(userInfoResponse.getId()), tokenResponse.getRefreshToken(), Long.valueOf(tokenResponse.getRefreshTokenExpiresIn()));
+    }
+//    public void saveRefreshToken(Long kakaoId, String refreshToken, String expiresIn) {
+//        redisTemplate.opsForValue().set(kakaoId, refreshToken, Long.valueOf(expiresIn));
+//    }
+
+    // refresh token 조회
+    public String getRefreshToken(Long kakaoId) {
+        return (String) redisTemplate.opsForValue().get(String.valueOf(kakaoId));
+    }
+
 }
