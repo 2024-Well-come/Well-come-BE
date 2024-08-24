@@ -4,6 +4,7 @@ import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.MemberRepository;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoTokenResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
+import com.wellcome.WellcomeBE.domain.member.dto.response.LoginResponse;
 import com.wellcome.WellcomeBE.global.type.SocialLogin;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,24 @@ public class KakaoAuthService {
         this.webClient = webClientBuilder.build();
         this.memberRepository = memberRepository;
         this.redisTemplate = redisTemplate;
+    }
+
+    public LoginResponse handleKakaoLogin(String code) {
+
+        // 토큰 발급
+        KakaoTokenResponse tokenResponse = getAccessToken(code).block();
+
+        // 사용자 정보 가져오기
+        KakaoUserInfoResponse userInfoResponse = getUserInfo(tokenResponse.getAccessToken()).block();
+
+        // 회원가입 유무 확인 및 회원가입 진행
+        verifyAndRegisterMember(userInfoResponse);
+
+        // refresh token 저장
+        saveRefreshToken(userInfoResponse.getId(), tokenResponse.getRefreshToken(), tokenResponse.getRefreshTokenExpiresIn());
+
+        // access token, refresh token 응답
+        return new LoginResponse(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken());
     }
 
     // 토큰 받기
@@ -94,13 +113,10 @@ public class KakaoAuthService {
         }
     }
 
-    // Redis에 refresh token 저장
-    public void saveRefreshToken(KakaoTokenResponse tokenResponse, KakaoUserInfoResponse userInfoResponse) {
-        redisTemplate.opsForValue().set(String.valueOf(userInfoResponse.getId()), tokenResponse.getRefreshToken(), Long.valueOf(tokenResponse.getRefreshTokenExpiresIn()));
+    // refresh token 저장
+    public void saveRefreshToken(Long kakaoId, String refreshToken, Integer expiresIn) {
+        redisTemplate.opsForValue().set(String.valueOf(kakaoId), refreshToken, Long.valueOf(expiresIn));
     }
-//    public void saveRefreshToken(Long kakaoId, String refreshToken, String expiresIn) {
-//        redisTemplate.opsForValue().set(kakaoId, refreshToken, Long.valueOf(expiresIn));
-//    }
 
     // refresh token 조회
     public String getRefreshToken(Long kakaoId) {
