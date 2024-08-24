@@ -94,22 +94,8 @@ public class KakaoAuthService {
     // 회원가입 여부 확인 후 회원가입 진행
     public void verifyAndRegisterMember(KakaoUserInfoResponse userInfoResponse) {
         Optional<Member> member = memberRepository.findByKakaoId(userInfoResponse.getId());
-
         if(!member.isPresent()){
-            Long kakaoId = userInfoResponse.getId();
-
-            KakaoUserInfoResponse.KakaoAccount.Profile profile = userInfoResponse.getKakaoAccount().getProfile();
-            String nickname = profile.getNickname();
-            Boolean isDefaultImg = profile.getIsDefaultImage();
-            String profileImgUrl = isDefaultImg == false ? profile.getProfileImgUrl() : null;
-
-            // 유저 등록
-            memberRepository.save(Member.builder()
-                                    .socialType(SocialLogin.KAKAO)
-                                    .kakaoId(kakaoId)
-                                    .nickname(nickname)
-                                    .profileImg(profileImgUrl)
-                                    .build());
+            Member.createKakaoUser(userInfoResponse);
         }
     }
 
