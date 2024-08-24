@@ -38,6 +38,9 @@ public class KakaoAuthService {
         this.redisTemplate = redisTemplate;
     }
 
+    /**
+     * 카카오 로그인 & 회원가입 처리
+     */
     public LoginResponse handleKakaoLogin(String code) {
 
         // 토큰 발급
@@ -57,7 +60,7 @@ public class KakaoAuthService {
     }
 
     // 토큰 받기
-    public Mono<KakaoTokenResponse> getAccessToken(String code) {
+    private Mono<KakaoTokenResponse> getAccessToken(String code) {
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://kauth.kakao.com/oauth/token")
                 .queryParam("grant_type", "authorization_code")
@@ -76,7 +79,7 @@ public class KakaoAuthService {
     }
 
     // 사용자 정보 가져오기
-    public Mono<KakaoUserInfoResponse> getUserInfo(String accessToken) {
+    private Mono<KakaoUserInfoResponse> getUserInfo(String accessToken) {
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://kapi.kakao.com/v2/user/me")
                 .queryParam("property_keys", "[\"kakao_account.profile\"]")
@@ -92,7 +95,7 @@ public class KakaoAuthService {
     }
 
     // 회원가입 여부 확인 후 회원가입 진행
-    public void verifyAndRegisterMember(KakaoUserInfoResponse userInfoResponse) {
+    private void verifyAndRegisterMember(KakaoUserInfoResponse userInfoResponse) {
         Optional<Member> member = memberRepository.findByKakaoId(userInfoResponse.getId());
         if(!member.isPresent()){
             Member.createKakaoUser(userInfoResponse);
@@ -100,12 +103,12 @@ public class KakaoAuthService {
     }
 
     // refresh token 저장
-    public void saveRefreshToken(Long kakaoId, String refreshToken, Integer expiresIn) {
+    private void saveRefreshToken(Long kakaoId, String refreshToken, Integer expiresIn) {
         redisTemplate.opsForValue().set(String.valueOf(kakaoId), refreshToken, Long.valueOf(expiresIn));
     }
 
     // refresh token 조회
-    public String getRefreshToken(Long kakaoId) {
+    private String getRefreshToken(Long kakaoId) {
         return (String) redisTemplate.opsForValue().get(String.valueOf(kakaoId));
     }
 
