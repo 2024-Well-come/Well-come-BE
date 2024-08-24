@@ -3,10 +3,12 @@ package com.wellcome.WellcomeBE.domain.member;
 
 import com.wellcome.WellcomeBE.domain.BaseTimeEntity;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
+import com.wellcome.WellcomeBE.global.type.Role;
 import com.wellcome.WellcomeBE.global.type.SocialLogin;
 import jakarta.persistence.*;
 import lombok.*;
 
+import static com.wellcome.WellcomeBE.global.type.Role.USER;
 import static com.wellcome.WellcomeBE.global.type.SocialLogin.KAKAO;
 import static jakarta.persistence.EnumType.STRING;
 
@@ -27,15 +29,20 @@ public class Member extends BaseTimeEntity {
     private String nickname;
 
     @Enumerated(value = STRING)
+    private Role role;
+
+    @Enumerated(value = STRING)
     private SocialLogin socialType;
 
     @Column(nullable = false) //현재 카카오 로그인만 가능
     private Long kakaoId;
 
     @Builder
-    private Member(String nickname, String profileImg, SocialLogin socialType, Long kakaoId) {
+    private Member(String nickname, String profileImg, Role role,
+                   SocialLogin socialType, Long kakaoId) {
         this.nickname = nickname;
         this.profileImg = profileImg;
+        this.role = role;
         this.socialType = socialType;
         this.kakaoId = kakaoId;
     }
@@ -46,6 +53,7 @@ public class Member extends BaseTimeEntity {
         return Member.builder()
                 .nickname(profile.getNickname())
                 .profileImg(profile.getIsDefaultImage() == false ? profile.getProfileImgUrl() : null)
+                .role(USER)
                 .socialType(KAKAO)
                 .kakaoId(userInfoResponse.getId())
                 .build();
