@@ -1,39 +1,56 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
-import lombok.Getter;
 
-
+import java.util.ArrayList;
 import java.util.List;
 
-@Getter
+@Data
 public class TourImageApiResponse {
-    private Header header;
-    private Body body;
+    @JsonProperty("response")
+    private Response response;
 
-    @Getter
-    public static class Header {
-        private String resultCode;
-        private String resultMsg;
-    }
+    @Data
+    public static class Response {
+        @JsonProperty("header")
+        private Header header;
 
-    @Getter
-    public static class Body {
-        private Items items;
+        @JsonProperty("body")
+        private Body body;
 
-        @Getter
-        public static class Items {
-            private List<Item> item;
+        @Data
+        public static class Header {
+            @JsonProperty("resultCode")
+            private String resultCode;
+
+            @JsonProperty("resultMsg")
+            private String resultMsg;
         }
 
         @Data
-        public static class Item {
-            private String contentid;
-            private String originimgurl;
-            private String imgname;
-            private String smallimageurl;
-            private String cpyrhtDivCd;
-            private String serialnum;
+        public static class Body {
+            @JsonDeserialize(using = ItemsDeserializer.class)
+            private Items items;
+
+            @Data
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            public static class Items {
+                private List<Item> item;
+
+                @Data
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                public static class Item {
+                    private String contentid;
+                    private String originimgurl;
+                    private String imgname;
+                    private String smallimageurl;
+                    private String cpyrhtDivCd;
+                    private String serialnum;
+                }
+            }
         }
     }
 }
