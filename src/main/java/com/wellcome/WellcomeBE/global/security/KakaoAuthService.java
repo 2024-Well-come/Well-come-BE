@@ -2,12 +2,17 @@ package com.wellcome.WellcomeBE.global.security;
 
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoTokenResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
+import com.wellcome.WellcomeBE.global.exception.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
+
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.KAKAO_LOGIN_CLIENT_ERROR;
 
 
 /**
@@ -61,6 +66,13 @@ public class KakaoAuthService {
                 .header("Content-type", "application/x-www-form-urlencoded;charset=utf-8")
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
+                .onStatus(status -> status.is4xxClientError(), clientResponse -> {
+                    if (clientResponse.statusCode() == HttpStatus.UNAUTHORIZED) { // 401 Unauthorized
+                        return Mono.error(new CustomException(KAKAO_LOGIN_CLIENT_ERROR, "유효하지 않거나 만료된 토큰입니다."));
+                    } else {
+                        return Mono.error(new CustomException(KAKAO_LOGIN_CLIENT_ERROR));
+                    }
+                })
                 .bodyToMono(KakaoUserInfoResponse.class);
     }
 

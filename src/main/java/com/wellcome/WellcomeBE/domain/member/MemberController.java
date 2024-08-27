@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.domain.member;
 
+import com.wellcome.WellcomeBE.domain.member.dto.request.LogoutRequest;
 import com.wellcome.WellcomeBE.domain.member.dto.response.LoginResponse;
 import com.wellcome.WellcomeBE.domain.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,8 +32,8 @@ public class MemberController {
     // 카카오 로그아웃
     @PostMapping("/logout")
     public ResponseEntity<Void> kakaoLogout(HttpServletRequest httpServletRequest,
-                                            @RequestHeader("refreshToken") String refreshToken){
-        memberService.handleKakaoLogout(httpServletRequest, refreshToken);
+                                            @RequestBody LogoutRequest logoutRequest){
+        memberService.handleKakaoLogout(httpServletRequest, logoutRequest.getRefreshToken());
         return ResponseEntity.ok().build();
     }
 
