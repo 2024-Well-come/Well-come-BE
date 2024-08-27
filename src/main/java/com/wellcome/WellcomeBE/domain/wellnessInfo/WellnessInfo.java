@@ -65,4 +65,7 @@ public class WellnessInfo extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "GEOMETRY")
     private Point location;
 
+    public void setParentId(String parentId){
+        this.parentId = parentId;
+    }
 }

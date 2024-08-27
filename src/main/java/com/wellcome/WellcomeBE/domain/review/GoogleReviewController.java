@@ -17,7 +17,7 @@ public class GoogleReviewController {
     }
 
     @GetMapping("/place/id")
-    public Mono<PlacePredictionResponse> getPlacePlaceId(){
-        return googlePlaceService.getPlaceId("국립대관령치유의숲");
+    public void getPlacePlaceId(){
+        googlePlaceService.processWellnessInfo();
     }
 }
