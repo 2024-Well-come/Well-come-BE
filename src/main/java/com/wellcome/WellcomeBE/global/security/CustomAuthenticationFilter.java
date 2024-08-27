@@ -1,10 +1,14 @@
 package com.wellcome.WellcomeBE.global.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wellcome.WellcomeBE.global.exception.CustomException;
+import com.wellcome.WellcomeBE.global.exception.ErrorResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -38,20 +42,33 @@ public class CustomAuthenticationFilter extends GenericFilterBean {
             return;
         }
 
-        // 헤더에서 토큰 추출
-        String token = tokenProvider.extractToken((HttpServletRequest) request);
+        try {
+            // 헤더에서 토큰 추출
+            String token = tokenProvider.extractToken((HttpServletRequest) request);
 
-        if (token != null) {
-            // 토큰이 유효하면 토큰에 포함된 정보를 기반으로 Authentication 객체 생성
-            Authentication authentication = tokenProvider.getAuthentication(token);
+            if (token != null) {
+                // 토큰이 유효하면 토큰에 포함된 정보를 기반으로 Authentication 객체 생성
+                Authentication authentication = tokenProvider.getAuthentication(token);
 
-            // SecurityContext 에 Authentication 객체 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // SecurityContext 에 Authentication 객체 저장
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+
+            chain.doFilter(request, response);
+        } catch (CustomException e) {
+            HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+            ErrorResponse errorResponse = ErrorResponse.builder()
+                    .errorCode(e.getCustomErrorCode().getCode())
+                    .message(e.getMessage())
+                    .build();
+
+            httpResponse.setStatus(e.getCustomErrorCode().getHttpStatus().value());
+            httpResponse.setContentType("application/json; charset=UTF-8");
+            httpResponse.setCharacterEncoding("UTF-8");
+            httpResponse.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
         }
 
-        // TODO Custom Exception 처리
-
-        chain.doFilter(request, response);
     }
 
 }

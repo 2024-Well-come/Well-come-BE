@@ -3,6 +3,7 @@ package com.wellcome.WellcomeBE.global.security;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.MemberRepository;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
+import com.wellcome.WellcomeBE.global.exception.CustomException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.AUTHENTICATION_NOT_FOUND;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.MEMBER_NOT_FOUND;
 
 @Component
 @RequiredArgsConstructor
@@ -49,8 +53,7 @@ public class TokenProvider {
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
             return ((CustomUserDetails) authentication.getPrincipal()).getMemberId();
         }
-        throw new RuntimeException("인증되지 않은 사용자입니다.");
-        // TODO Custom Exception 처리
+        throw new CustomException(AUTHENTICATION_NOT_FOUND);
     }
 
     // * 로그인이 필수가 아닌 엔드포인트에서 사용
@@ -68,8 +71,7 @@ public class TokenProvider {
         if (token != null) {
             Long kakaoId = getKakaoIdByToken(token);
             Member member = memberRepository.findByKakaoId(kakaoId)
-                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-                    // TODO Custom Exception 처리
+                    .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
             return member.getId();
         }
 
