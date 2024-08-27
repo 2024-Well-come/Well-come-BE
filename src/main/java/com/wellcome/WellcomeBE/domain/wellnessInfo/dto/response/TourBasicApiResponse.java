@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.global.type.Area;
@@ -51,6 +51,7 @@ public class TourBasicApiResponse {
                 private List<Item> item;
 
                 @Data
+                @JsonIgnoreProperties(ignoreUnknown = true)
                 public static class Item {
                     private String addr1;
                     private String addr2;
