@@ -34,6 +34,7 @@ public class Community extends BaseTimeEntity {
     @Column(nullable = false)
     private String content;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long view = 0L;
 
