@@ -1,4 +1,4 @@
-package com.wellcome.WellcomeBE.domain.member;
+package com.wellcome.WellcomeBE.domain.member.controller;
 
 import com.wellcome.WellcomeBE.domain.member.dto.request.LogoutRequest;
 import com.wellcome.WellcomeBE.domain.member.dto.response.LoginResponse;

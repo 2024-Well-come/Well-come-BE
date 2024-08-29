@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.global.security;
 
-import com.wellcome.WellcomeBE.domain.member.MemberRepository;
+import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

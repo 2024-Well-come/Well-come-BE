@@ -1,11 +1,10 @@
 package com.wellcome.WellcomeBE.domain.member.service;
 
 import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.member.MemberRepository;
+import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoTokenResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.LoginResponse;
-import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.KakaoAuthService;
 import com.wellcome.WellcomeBE.global.security.RefreshTokenService;
@@ -101,14 +100,13 @@ public class MemberService {
         // access token 추출
         String accessToken = tokenProvider.extractToken(httpServletRequest);
         if (accessToken == null) {
-            throw new CustomException(TOKEN_MISSING, "acess token이 누락되었습니다.");
+            throw new CustomException(TOKEN_MISSING, "access token이 누락되었습니다.");
         }
 
         // 로그아웃 처리
         kakaoAuthService.logout(accessToken);
 
         // refresh token 삭제
-        // TODO -> 우선은 refresh token도 받는 걸로 생각하고 구현, 수정 필요
         refreshTokenService.deleteRefreshToken(refreshToken);
 
         // SecurityContextHolder 초기화
