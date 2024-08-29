@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfoImg.service;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.TourBasicApiResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImg;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.response.TourImageApiResponse;
@@ -55,16 +56,25 @@ public class WellnessInfoImgService {
     // 이미지 API 호출 및 DB에 저장하는 메서드
     private Mono<Void> fetchAndSaveImage(WellnessInfo wellnessInfo) {
         return fetchImage(wellnessInfo.getContent()) // 이미지 API 호출
-                // 응답 결과 확인.doOnNext(response -> log.info("Fetched image response: {}", response))
-                .flatMapMany(response -> Flux.fromIterable(response.getResponse().getBody().getItems().getItem())) // API 응답에서 이미지 리스트 추출
+                .flatMapMany(response -> {
+                    TourImageApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
+                    if (items == null || items.getItem() == null || items.getItem().isEmpty()) {
+                        log.info("{}에 상세 이미지에 대한 검색 결과 없음", wellnessInfo.getContent());
+                        return Flux.empty();
+                    }
+                    return Flux.fromIterable(items.getItem()); // API 응답에서 이미지 리스트 추출
+                })
                 .map(imgItem -> WellnessInfoImg.builder() // WellnessInfoImg 엔티티 생성
                         .wellnessInfo(wellnessInfo)
                         .imgUrl(imgItem.getOriginimgurl()) // API에서 반환된 이미지 URL 사용
                         .build())
                 .collectList()
-                .doOnNext(wellnessInfoImgRepository::saveAll) // 생성된 엔티티 리스트 저장
+                .flatMap(images -> {
+                    return Mono.fromRunnable(() -> wellnessInfoImgRepository.saveAll(images));
+                }) // 생성된 엔티티 리스트 저장
                 .then(); // Mono<Void> 반환
     }
+
 
     // tour4.0 Image API 요청
     private Mono<TourImageApiResponse> fetchImage(String wellnessInfoId) {
