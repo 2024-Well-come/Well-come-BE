@@ -67,7 +67,7 @@ public class GoogleMapInfoService {
     }
 
     // 비동기적으로 PlaceId 가져오기
-    public Mono<PlacePredictionResponse> getPlaceId(String address, String title) {
+    private Mono<PlacePredictionResponse> getPlaceId(String address, String title) {
         return getPlaceIdByAddress(address)
                 .doOnNext(response -> log.info("Response from address lookup: {}", response))
                 .switchIfEmpty(
@@ -116,7 +116,7 @@ public class GoogleMapInfoService {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("details/json")
-                        .queryParam("fields", "name,rating,formatted_phone_number,opening_hours,reviews")
+                        .queryParam("fields", "name,rating,formatted_phone_number,opening_hours,reviews,website")
                         .queryParam("place_id", placeId)
                         .queryParam("language", "ko")
                         .queryParam("key", apiKey)

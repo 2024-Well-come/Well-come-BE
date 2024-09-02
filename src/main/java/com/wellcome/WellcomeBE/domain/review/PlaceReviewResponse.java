@@ -17,6 +17,7 @@ public class PlaceReviewResponse {
         private OpeningHours opening_hours;      // 운영 시간
         private double rating;                   // 평점
         private List<PlaceReview> reviews;       // 리뷰 리스트
+        private String website; // 웹사이트 정보
 
         @Data
         public static class OpeningHours {
