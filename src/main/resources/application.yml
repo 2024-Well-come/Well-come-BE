@@ -1,0 +1,36 @@
+### LOCAL DB
+spring:
+#  config:
+#    activate:
+#      on-profile: local
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/wellcome?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: wellcome
+    password: 2024
+
+  jpa:
+    # 공간 데이터 사용
+    database: mysql
+    #database-platform: org.hibernate.spatial.dialect.mysql.MySQL8SpatialDialect
+    dialect: org.hibernate.spatial.dialect.mysql.MySQL8SpatialDialect
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+  redis:
+    host: localhost
+    port: 6379
+
+logging.level:
+  com.wellcome.WellcomeBE: debug
+
+api.key: ${tour_api_key}
+
+kakao:
+  client_id: 0e2a5afc4aaadc1408ff7fcc3b9b862f
+  redirect_uri: http://localhost:8080/api/oauth2/kakao

@@ -26,7 +26,9 @@ public class WellnessInfo extends BaseTimeEntity {
     @Column(nullable = false)
     private String title;
 
-    private String content;
+    private String contentId; // tour4.0 PK
+
+    private String parentId; //Google Map PK
 
     private String tel;
 
@@ -64,5 +66,9 @@ public class WellnessInfo extends BaseTimeEntity {
     private Point location;
 
     private long view;
+
+    public void setParentId(String parentId){
+        this.parentId = parentId;
+    }
 
 }

@@ -1,0 +1,10 @@
+# profile 설정
+spring:
+  profiles:
+    active: local
+
+---
+
+spring:
+  profiles:
+    active: prod

@@ -13,7 +13,7 @@ import java.util.Map;
 @Slf4j
 public class TourInfoApiWebClientConfig {
 
-    @Value("${api.key}")
+    @Value("${tour_api.key}")
     private String apiKey;
 
     private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService1/";

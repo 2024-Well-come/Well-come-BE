@@ -26,6 +26,7 @@ public class Article extends BaseTimeEntity {
     @Column(nullable = false)
     private String thumbnailUrl;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long view = 0L;
 
