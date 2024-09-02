@@ -184,8 +184,14 @@ public class WellnessInfoService {
         LocalTime now = LocalTime.now();
 
         // 5. JSON 데이터에서 운영 시간 찾기
-        String openDetail = getOpenDetail(placeResult.getOpening_hours().getWeekday_text(), todayString);
-        Boolean isOpen = isCurrentlyOpen(placeResult.getOpening_hours().getPeriods(), today, now);
+        String openDetail = "정보 없음";
+        Boolean isOpen = false;
+
+        // Null 체크 추가
+        if (placeResult.getOpening_hours() != null) {
+            openDetail = getOpenDetail(placeResult.getOpening_hours().getWeekday_text(), todayString);
+            isOpen = isCurrentlyOpen(placeResult.getOpening_hours().getPeriods(), today, now);
+        }
 
 
         // 6. WellnessInfoBasicResponse 객체 생성
