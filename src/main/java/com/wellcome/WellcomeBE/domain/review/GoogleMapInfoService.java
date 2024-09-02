@@ -116,7 +116,7 @@ public class GoogleMapInfoService {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("details/json")
-                        .queryParam("fields", "name,rating,formatted_phone_number,opening_hours,reviews,website")
+                        .queryParam("fields", "name,rating,formatted_phone_number,opening_hours,website,user_ratings_total,reviews")
                         .queryParam("place_id", placeId)
                         .queryParam("language", "ko")
                         .queryParam("key", apiKey)

@@ -17,6 +17,8 @@ import java.util.Properties;
 
 import static java.lang.System.exit;
 
+/*
+
 @Slf4j
 @Component
 @ConfigurationProperties(prefix = "ssh")
@@ -90,3 +92,5 @@ public class SSHTunnelingInitializer {
         return forwardedPort;
     }
 }
+
+*/
