@@ -1,8 +1,11 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.controller;
 
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -15,6 +18,11 @@ public class WellnessInfoController {
     @GetMapping("/getTourBasicApiData")
     public void fetchAndSaveTourInfo(){
         wellnessInfoService.fetchAndSaveTourInfo();
+    }
+
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/basic")
+    public ResponseEntity<WellnessInfoBasicResponse> wellnessInfoBasic(@PathVariable Long wellnessInfoId){
+        return ResponseEntity.ok(wellnessInfoService.getWellnessInfoBasic(wellnessInfoId));
     }
 
 }
