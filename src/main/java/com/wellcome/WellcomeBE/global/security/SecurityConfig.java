@@ -39,7 +39,9 @@ public class SecurityConfig {
                             .requestMatchers("/api/oauth2/kakao").permitAll()
                             .requestMatchers("/api/oauth2/kakao/refresh").permitAll()
                             .requestMatchers("/api/oauth2/kakao/logout").permitAll()
-
+                            .requestMatchers("/getTourBasicApiData").permitAll()
+                            .requestMatchers("/place/details").permitAll()
+                            .requestMatchers("/place/id").permitAll()
                             .anyRequest().authenticated();
                 })
 

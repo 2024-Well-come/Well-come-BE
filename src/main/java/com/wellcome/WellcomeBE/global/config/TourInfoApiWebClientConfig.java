@@ -42,14 +42,14 @@ public class TourInfoApiWebClientConfig {
     public String getTourBasicApiUrl(Map<String, String> additionalParams) {
         UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("areaBasedList1");
         additionalParams.forEach(uriBuilder::queryParam);
-        return uriBuilder.build(false).toUriString();
+        return uriBuilder.build(true).toUriString();
     }
 
     // 키워드검색조회
     public String getTourSearchApiUrl(Map<String, String> additionalParams) {
         UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("searchKeyword1");
         additionalParams.forEach(uriBuilder::queryParam);
-        return uriBuilder.build(false).toUriString();
+        return uriBuilder.build(true).toUriString();
     }
 
 }
