@@ -7,8 +7,8 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.TourBasicApiResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
-import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImg;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImgRepository;
+import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
@@ -18,13 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.wellcome.WellcomeBE.global.type.Keyword.KEYWORDS;
 
@@ -42,7 +36,7 @@ public class WellnessInfoService {
     private static final String GANGWONDO_AREACODE = "32";
     private static final int NUM_OF_ROWS_BASIC = 100;
     private static final int NUM_OF_ROWS_SEARCH = 5;
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmm");
+
 
     public WellnessInfoService(
             @Qualifier("tourBasicApiWebClient") WebClient tourBasicApiWebClient,
@@ -73,7 +67,7 @@ public class WellnessInfoService {
         Flux.fromIterable(KEYWORDS)
                 .flatMap(this::fetchDataByKeyword)
                 .collectList()
-                .doOnNext(entities -> wellnessInfoRepository.saveAll(entities))
+                .doOnNext(wellnessInfoRepository::saveAll)
                 .block();
     }
 
@@ -178,23 +172,10 @@ public class WellnessInfoService {
         // 3. 웰니스 이미지 목록 가져오기
         List<String> wellnessInfoImg = wellnessInfoImgRepository.findByWellnessInfo(wellness);
 
-        // 4. 현재 요일 구하기
-        DayOfWeek today = LocalDate.now().getDayOfWeek();
-        String todayString = today.name(); // 예: "MONDAY"
-        LocalTime now = LocalTime.now();
-
-        // 5. JSON 데이터에서 운영 시간 찾기
-        String openDetail = "정보 없음";
-        Boolean isOpen = false;
-
-        // Null 체크 추가
-        if (placeResult.getOpening_hours() != null) {
-            openDetail = getOpenDetail(placeResult.getOpening_hours().getWeekday_text(), todayString);
-            isOpen = isCurrentlyOpen(placeResult.getOpening_hours().getPeriods(), today, now);
-        }
+        // 4. JSON 데이터에서 운영 시간 찾기
+        OpeningHoursUtils.OpenStatus openStatus = OpeningHoursUtils.getOpenStatus(placeResult);
 
 
-        // 6. WellnessInfoBasicResponse 객체 생성
         return WellnessInfoBasicResponse.builder()
                 .wellnessInfoId(wellness.getId())
                 .thumbnailUrl(wellness.getThumbnailUrl())
@@ -203,47 +184,13 @@ public class WellnessInfoService {
                 .category(wellness.getCategory().getName())
                 .address(wellness.getAddress())
                 //.isLiked(likedRepository.findLikedByWellnessInfoAndMember())
-                .isOpen(isOpen)
-                .openDetail(openDetail)
+                .isOpen(openStatus.getIsOpen())
+                .openDetail(openStatus.getOpenDetail())
                 .tel(wellness.getTel())
                 .website(placeResult.getWebsite())
                 .build();
     }
 
-    private String getOpenDetail(List<String> weekdayText, String todayString) {
-        Map<String, String> WEEKDAY_MAP = new HashMap<>() {{
-            put("MONDAY", "월요일");
-            put("TUESDAY", "화요일");
-            put("WEDNESDAY", "수요일");
-            put("THURSDAY", "목요일");
-            put("FRIDAY", "금요일");
-            put("SATURDAY", "토요일");
-            put("SUNDAY", "일요일");
-        }};
 
-        for (String text : weekdayText) {
-            if (text.startsWith(WEEKDAY_MAP.get(todayString))) {
-                return text;
-            }
-        }
-        return "정보 없음";
-    }
-
-    private Boolean isCurrentlyOpen(List<PlaceReviewResponse.PlaceResult.OpeningHours.Period> periods, DayOfWeek today, LocalTime now) {
-        int todayIndex = today.getValue(); // 월요일이 1, 일요일이 7
-
-        for (PlaceReviewResponse.PlaceResult.OpeningHours.Period period : periods) {
-            // period.getOpen().getDay()와 todayIndex가 같아야 함
-            if (period.getOpen().getDay() == todayIndex - 1) { // JSON의 day는 0부터 시작하므로 1을 빼야 함
-                LocalTime openTime = LocalTime.parse(period.getOpen().getTime(), TIME_FORMATTER);
-                LocalTime closeTime = LocalTime.parse(period.getClose().getTime(), TIME_FORMATTER);
-
-                if (now.isAfter(openTime) && now.isBefore(closeTime)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
 }
