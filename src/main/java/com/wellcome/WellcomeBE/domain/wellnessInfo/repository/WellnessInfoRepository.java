@@ -21,7 +21,7 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
             "FROM WellnessInfo w " +
             "LEFT JOIN Liked l ON l.wellnessInfo = w AND l.member = :member " +
             "WHERE w.thema IN :themaList AND w.sigungu IN :sigunguList " +
-            "ORDER BY view DESC"
+            "ORDER BY w.view DESC"
     )
     Page<Object[]> findByThemaAndSigungu(PageRequest pageRequest,
                                              @Param("member") Member member,
@@ -35,11 +35,12 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
             //"WHERE w.thema IN :themaList AND w.sigungu IN :sigunguList"
             "WHERE (:themaList IS NULL OR w.thema IN :themaList) " +
             "AND (:sigunguList IS NULL OR w.sigungu IN :sigunguList) " +
-            "ORDER BY view DESC"
+            "ORDER BY w.view DESC"
     )
     Page<WellnessInfo> findByThemaAndSigunguWithoutLikes(PageRequest pageRequest,
                                          @Param("themaList") List<Thema> themaList,
                                          @Param("sigunguList") List<Sigungu> sigunguList);
+
 
 
 }

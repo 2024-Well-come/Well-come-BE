@@ -2,13 +2,11 @@ package com.wellcome.WellcomeBE.domain.review;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -17,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
-public class ReviewService {
+public class GoogleMapInfoService {
 
     @Value("${google_api.key}")
     private String apiKey;
@@ -28,7 +26,7 @@ public class ReviewService {
 
 
     // 생성자 주입
-    public ReviewService(WebClient googlePlaceInfoWebClient, RedisTemplate<String, Object> redisTemplate, WellnessInfoRepository wellnessInfoRepository) {
+    public GoogleMapInfoService(WebClient googlePlaceInfoWebClient, RedisTemplate<String, Object> redisTemplate, WellnessInfoRepository wellnessInfoRepository) {
         this.webClient = googlePlaceInfoWebClient;
         this.redisTemplate = redisTemplate;
         this.wellnessInfoRepository = wellnessInfoRepository;
@@ -69,7 +67,7 @@ public class ReviewService {
     }
 
     // 비동기적으로 PlaceId 가져오기
-    public Mono<PlacePredictionResponse> getPlaceId(String address, String title) {
+    private Mono<PlacePredictionResponse> getPlaceId(String address, String title) {
         return getPlaceIdByAddress(address)
                 .doOnNext(response -> log.info("Response from address lookup: {}", response))
                 .switchIfEmpty(

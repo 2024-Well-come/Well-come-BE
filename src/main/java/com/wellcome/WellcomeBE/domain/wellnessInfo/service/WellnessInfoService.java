@@ -54,7 +54,6 @@ public class WellnessInfoService {
         this.wellnessInfoRepository = wellnessInfoRepository;
         this.webClientConfig = webClientConfig;
     }
-
     public void fetchAndSaveTourInfo() {
 
         // Basic API 호출 및 저장
@@ -69,7 +68,7 @@ public class WellnessInfoService {
         Flux.fromIterable(KEYWORDS)
                 .flatMap(this::fetchDataByKeyword)
                 .collectList()
-                .doOnNext(entities -> wellnessInfoRepository.saveAll(entities))
+                .doOnNext(wellnessInfoRepository::saveAll)
                 .block();
     }
 
@@ -182,7 +181,7 @@ public class WellnessInfoService {
         try {
             return item.toEntity();
         } catch (ParseException e) {
-            throw new RuntimeException("Failed to convert item to entity: {}", e);
+            throw new RuntimeException("Failed to convert item to entity: ", e);
         }
     }
 
@@ -230,5 +229,8 @@ public class WellnessInfoService {
 //        String errorMessage = errorHandler.handleXmlErrorResponse(responseBody);
 //        return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, TOUR_API_RESPONSE_ERROR.getMessage() + ": " + errorMessage));
 //    }
+
+
+
 
 }

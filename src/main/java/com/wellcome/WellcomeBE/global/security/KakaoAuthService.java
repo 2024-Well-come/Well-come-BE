@@ -2,7 +2,6 @@ package com.wellcome.WellcomeBE.global.security;
 
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoTokenResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
-import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

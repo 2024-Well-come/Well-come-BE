@@ -1,9 +1,15 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
 
+import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
+import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
+import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImgRepository;
+import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +26,9 @@ import java.util.stream.Collectors;
 public class WellnessInfoApiService {
 
     private final WellnessInfoRepository wellnessInfoRepository;
+    private final GoogleMapInfoService googleMapInfoService;
+    private final LikedRepository likedRepository;
+    private final WellnessInfoImgRepository wellnessInfoImgRepository;
 
     /**
      * 웰니스 장소 추천 목록 조회
@@ -55,4 +64,39 @@ public class WellnessInfoApiService {
         return WellnessInfoResponse.from(themaList, sigunguList, request, WellnessInfoList);
 
     }
+
+    /**
+     *  [FEAT] 웰니스 장소 상세 조회(1) - 기본 정보 조회
+     */
+    public WellnessInfoBasicResponse getWellnessInfoBasic(Long wellnessInfoId){
+
+        // 1. 웰니스 정보 가져오기
+        WellnessInfo wellness = wellnessInfoRepository.findById(wellnessInfoId)
+                .orElseThrow(() -> new RuntimeException("[임시] 해당하는 웰니스가 존재하지 않습니다."));
+
+        // 2. Google Place API를 통해 장소 세부 정보 가져오기
+        PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellness.getParentId()).block().getResult();
+
+        // 3. 웰니스 이미지 목록 가져오기
+        List<String> wellnessInfoImg = wellnessInfoImgRepository.findByWellnessInfo(wellness);
+
+        // 4. JSON 데이터에서 운영 시간 찾기
+        OpeningHoursUtils.OpenStatus openStatus = OpeningHoursUtils.getOpenStatus(placeResult);
+
+
+        return WellnessInfoBasicResponse.builder()
+                .wellnessInfoId(wellness.getId())
+                .thumbnailUrl(wellness.getThumbnailUrl())
+                .imgList(wellnessInfoImg)
+                .title(wellness.getTitle())
+                .category(wellness.getCategory().getName())
+                .address(wellness.getAddress())
+                //.isLiked(likedRepository.findLikedByWellnessInfoAndMember())
+                .isOpen(openStatus.getIsOpen())
+                .openDetail(openStatus.getOpenDetail())
+                .tel(wellness.getTel())
+                .website(placeResult.getWebsite())
+                .build();
+    }
+
 }

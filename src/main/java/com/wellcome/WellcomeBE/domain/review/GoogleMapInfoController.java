@@ -7,9 +7,9 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
-public class GoogleReviewController {
+public class GoogleMapInfoController {
 
-    private final ReviewService googlePlaceService;
+    private final GoogleMapInfoService googlePlaceService;
 
     @GetMapping("/place/details")
     public Mono<PlaceReviewResponse> getPlaceDetails() {
