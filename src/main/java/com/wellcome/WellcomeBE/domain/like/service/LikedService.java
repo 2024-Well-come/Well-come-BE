@@ -40,4 +40,20 @@ public class LikedService {
                 .orElseGet(() -> likedRepository.save(Liked.create(wellnessInfo, member)));
     }
 
+    /**
+     * 좋아요 취소
+     */
+    public void deleteLiked(Long wellnessInfoId) {
+
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+                .orElseThrow(() -> new CustomException(WELLNESSINFO_NOT_FOUND));
+
+        Member member = memberRepository.findById(tokenProvider.getMemberId())
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+
+        // 좋아요 내역이 있을 경우, 좋아요 삭제
+        likedRepository.findByMemberId(member.getId())
+                .ifPresent(likedRepository::delete);
+    }
+
 }
