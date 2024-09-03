@@ -3,6 +3,8 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
@@ -10,59 +12,86 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResp
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
+import com.wellcome.WellcomeBE.global.exception.CustomException;
+import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.MEMBER_NOT_FOUND;
 
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WellnessInfoApiService {
 
     private final WellnessInfoRepository wellnessInfoRepository;
+    private final TokenProvider tokenProvider;
+    private final MemberRepository memberRepository;
     private final GoogleMapInfoService googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
 
     /**
      * 웰니스 장소 추천 목록 조회
+     * - 로그인 가정
      */
     public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request) {
 
-        // TODO 로그인 여부 확인 (develop에 회원가입 & 로그인 기능 반영 후 추가 구현 예정)
-        boolean isLogin = false;
+        // 사용자 정보 조회
+        Member member = memberRepository.findById(tokenProvider.getMemberId())
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
         // 웰니스 정보 조회
-        PageRequest pageRequest = PageRequest.of(page, 5);
-
         List<Thema> themaList = request.getThemaList();
         List<Sigungu> sigunguList = request.getSigunguList();
 
-        // TODO 로그인 한 유저의 경우, 좋아요 내역도 함께 조회
-        if(isLogin) {
-            //Page<Object[]> result = wellnessInfoRepository.findByThemaAndSigungu(pageRequest, member, themaList, sigunguList);
-        }else {
-            //Page<WellnessInfo> result = wellnessInfoRepository.findByThemaAndSigunguWithoutLikes(pageRequest, themaList, sigunguList);
+        boolean isThemaListEmpty = themaList == null || themaList.isEmpty();
+        boolean isSigunguListEmpty = sigunguList == null || sigunguList.isEmpty();
+
+        Page<Object[]> data;
+        Pageable pageable = PageRequest.of(page, 5);
+        List<Object[]> types;
+
+        if(isThemaListEmpty && isSigunguListEmpty){
+            data = wellnessInfoRepository.findAllByOrderByViewDesc(pageable, member);
+            types = wellnessInfoRepository.findDistinctAllThemaAndSigungu();
+        } else if (isThemaListEmpty) { //SigunguList로 필터링
+            data = wellnessInfoRepository.findBySigungu(pageable, member, sigunguList);
+            types = wellnessInfoRepository.findDistinctThemaAndSigunguBySigungu(sigunguList);
+        } else if (isSigunguListEmpty) { //ThemaList로 필터링
+            data = wellnessInfoRepository.findByThema(pageable, member, themaList);
+            types = wellnessInfoRepository.findDistinctThemaAndSigunguByThema(themaList);
+        } else {
+            data = wellnessInfoRepository.findByThemaAndSigungu(pageable, member, themaList, sigunguList);
+            types = wellnessInfoRepository.findDistinctThemaAndSigungu(themaList, sigunguList);
         }
 
-        Page<WellnessInfo> result = wellnessInfoRepository.findByThemaAndSigunguWithoutLikes(pageRequest, themaList, sigunguList);
+        Set<Thema> searchedThemaSet = new HashSet<>();
+        Set<Sigungu> searchedSigunguSet = new HashSet<>();
+        for (Object[] type : types) {
+            searchedThemaSet.add((Thema) type[0]);
+            searchedSigunguSet.add((Sigungu) type[1]);
+        }
 
-        List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = result.stream()
-                .map(wellnessInfo -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from(wellnessInfo, false))
+        List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = data.stream()
+                .map(objects -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from((WellnessInfo) objects[0], (Boolean) objects[1]))
                 .collect(Collectors.toList());
         WellnessInfoResponse.WellnessInfoList WellnessInfoList = WellnessInfoResponse.WellnessInfoList.from(
-                result.getTotalElements(), result.getNumber(),
-                result.hasPrevious(), result.hasNext(),
+                data.getTotalElements(), data.getNumber(),
+                data.hasPrevious(), data.hasNext(),
                 wellnessInfoItemList);
 
-        return WellnessInfoResponse.from(themaList, sigunguList, request, WellnessInfoList);
-
+        return WellnessInfoResponse.from(new ArrayList<>(searchedThemaSet), new ArrayList<>(searchedSigunguSet), request, WellnessInfoList);
     }
 
     /**
