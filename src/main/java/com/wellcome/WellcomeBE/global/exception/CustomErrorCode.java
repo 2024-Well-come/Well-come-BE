@@ -27,7 +27,7 @@ public enum CustomErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 멤버를 찾을 수 없습니다."),
 
     // WellnessInfo (5xxx)
-
+    WELLNESSINFO_NOT_FOUND(HttpStatus.NOT_FOUND, 4002, "해당하는 웰니스 정보를 찾을 수 없습니다."),
 
     // TripPlan (6xxx)
 
