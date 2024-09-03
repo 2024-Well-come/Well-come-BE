@@ -118,7 +118,7 @@ public class MemberService {
      */
     public MemberProfileResponse getMemberProfile() {
 
-        Member member = memberRepository.findById(tokenProvider.getMemberId())
+        Member member = memberRepository.findById(tokenProvider.getMemberID())
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
         return MemberProfileResponse.from(member);

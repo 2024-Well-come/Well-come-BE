@@ -47,8 +47,16 @@ public class TokenProvider {
     }
 
     // * 로그인이 필수인 엔드포인트에서 사용
-    // SecurityContextHolder 를 통해 memberId를 가져옴
-    public Long getMemberId() {
+    // SecurityContextHolder 를 통해 member 객체를 가져옴
+    public Member getMember() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) authentication.getPrincipal()).getMember();
+        }
+        throw new CustomException(AUTHENTICATION_NOT_FOUND);
+    }
+
+    public Long getMemberID() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
             return ((CustomUserDetails) authentication.getPrincipal()).getMemberId();
@@ -57,22 +65,22 @@ public class TokenProvider {
     }
 
     // * 로그인이 필수가 아닌 엔드포인트에서 사용
-    // SecurityContextHolder 또는 HttpServletRequest 를 통해 memberId를 가져옴
-    public Long getMemberIdByServlet(HttpServletRequest request) {
+    // SecurityContextHolder 또는 HttpServletRequest 를 통해 member 객체를 가져옴
+    public Member getMemberByServlet(HttpServletRequest request) {
 
-        // 먼저 SecurityContextHolder 에서 memberId를 확인
-        Long memberId = getMemberId();
-        if (memberId != null) {
-            return memberId;
+        // 먼저 SecurityContextHolder 에서 member를 확인
+        Member member = getMember();
+        if (member != null) {
+            return member;
         }
 
         // SecurityContextHolder 에 정보가 없을 경우, HttpServletRequest 에서 토큰 확인
         String token = extractToken(request);
         if (token != null) {
             Long kakaoId = getKakaoIdByToken(token);
-            Member member = memberRepository.findByKakaoId(kakaoId)
+            member = memberRepository.findByKakaoId(kakaoId)
                     .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
-            return member.getId();
+            return member;
         }
 
         return null;

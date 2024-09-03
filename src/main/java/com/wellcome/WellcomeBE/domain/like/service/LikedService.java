@@ -6,14 +6,13 @@ import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
-import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.MEMBER_NOT_FOUND;
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESSINFO_NOT_FOUND;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -30,9 +29,9 @@ public class LikedService {
     public void createLiked(Long wellnessInfoId) {
 
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
-                .orElseThrow(() -> new CustomException(WELLNESSINFO_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
 
-        Member member = memberRepository.findById(tokenProvider.getMemberId())
+        Member member = memberRepository.findById(tokenProvider.getMemberID())
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
         // 좋아요 내역이 없을 경우, 좋아요 등록
@@ -46,9 +45,9 @@ public class LikedService {
     public void deleteLiked(Long wellnessInfoId) {
 
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
-                .orElseThrow(() -> new CustomException(WELLNESSINFO_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
 
-        Member member = memberRepository.findById(tokenProvider.getMemberId())
+        Member member = memberRepository.findById(tokenProvider.getMemberID())
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
         // 좋아요 내역이 있을 경우, 좋아요 삭제
