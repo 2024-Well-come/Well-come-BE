@@ -22,8 +22,8 @@ public class TripPlanService {
 
         TripPlan tripPlan = TripPlan.builder()
                 .title(request.getName())
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
+                .startDate(request.getTripStartDate())
+                .endDate(request.getTripEndDate())
                 .member( tokenProvider.getMember())
                 .build();
         tripPlanRepository.save(tripPlan);
