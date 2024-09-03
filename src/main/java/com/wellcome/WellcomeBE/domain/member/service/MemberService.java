@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.member.service;
 
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.member.dto.response.MemberProfileResponse;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoTokenResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
@@ -16,8 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.REFRESH_TOKEN_EXPIRED;
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOKEN_MISSING;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -111,6 +111,17 @@ public class MemberService {
 
         // SecurityContextHolder 초기화
         tokenProvider.clearContext();
+    }
+
+    /**
+     * 사용자 프로필 조회
+     */
+    public MemberProfileResponse getMemberProfile() {
+
+        Member member = memberRepository.findById(tokenProvider.getMemberID())
+                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+
+        return MemberProfileResponse.from(member);
     }
 
 }

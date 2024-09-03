@@ -56,6 +56,14 @@ public class TokenProvider {
         throw new CustomException(AUTHENTICATION_NOT_FOUND);
     }
 
+    public Long getMemberID() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) authentication.getPrincipal()).getMemberId();
+        }
+        throw new CustomException(AUTHENTICATION_NOT_FOUND);
+    }
+
     // * 로그인이 필수가 아닌 엔드포인트에서 사용
     // SecurityContextHolder 또는 HttpServletRequest 를 통해 member 객체를 가져옴
     public Member getMemberByServlet(HttpServletRequest request) {

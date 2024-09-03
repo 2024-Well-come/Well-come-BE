@@ -27,10 +27,10 @@ public enum CustomErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 멤버를 찾을 수 없습니다."),
 
     // WellnessInfo (5xxx)
-    WELLNESS_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, 5001,"해당하는 웰니스 정보가 없습니다."),
+    WELLNESS_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, 5001,"해당하는 웰니스 정보를 찾을 수 없습니다."),
 
     // TripPlan (6xxx)
-    TRIP_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 60001,"해당하는 여행 폴더가 없습니다."),
+    TRIP_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 60001,"해당하는 여행 폴더를 칮을 수 없습니다."),
 
 
     // TripPlanPlace (7xxx)

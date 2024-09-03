@@ -9,4 +9,6 @@ import java.util.Optional;
 
 public interface LikedRepository extends JpaRepository<Liked,Long> {
     Boolean findLikedByWellnessInfoAndMember(WellnessInfo wellnessInfo, Member member);
+
+    Optional<Liked> findByMemberId(Long memberId);
 }
