@@ -7,9 +7,9 @@ import lombok.*;
 
 @Entity
 @Getter
-@Builder
+//@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+//@AllArgsConstructor
 public class Liked {
 
     @Id
@@ -25,4 +25,16 @@ public class Liked {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    @Builder
+    private Liked(WellnessInfo wellnessInfo, Member member){
+        this.wellnessInfo = wellnessInfo;
+        this.member = member;
+    }
+
+    public static Liked create(WellnessInfo wellnessInfo, Member member){
+        return Liked.builder()
+                .wellnessInfo(wellnessInfo)
+                .member(member)
+                .build();
+    }
 }
