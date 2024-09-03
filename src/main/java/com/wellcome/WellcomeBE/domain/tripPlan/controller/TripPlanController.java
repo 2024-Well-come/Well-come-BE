@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.domain.tripPlan.controller;
 
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.service.TripPlanPlaceService;
@@ -20,8 +21,15 @@ public class TripPlanController {
 
     //TODO: 전체적으로 로그인 회원 로직 추가
 
+
+    @PostMapping("plans")
+    public ResponseEntity<?> addTripPlan(@RequestBody TripPlanRequest request){
+        tripPlanService.createTripPlan(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     @PostMapping("/plans/{planId}/places")
-    public ResponseEntity<?> addTripPlace(@PathVariable Long planId, @RequestBody TripPlanPlaceRequest request){
+    public ResponseEntity<?> addTripPlanPlace(@PathVariable Long planId, @RequestBody TripPlanPlaceRequest request){
         tripPlanPlaceService.createTripPlanPlace(planId,request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
