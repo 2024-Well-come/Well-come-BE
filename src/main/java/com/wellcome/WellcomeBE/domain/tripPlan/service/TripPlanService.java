@@ -2,9 +2,13 @@ package com.wellcome.WellcomeBE.domain.tripPlan.service;
 
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,5 +24,11 @@ public class TripPlanService {
                 .endDate(request.getEndDate())
                 .build();
         tripPlanRepository.save(tripPlan);
+    }
+
+    public TripPlanResponse.TripPlanListResponse getTripPlanList(){
+        List<TripPlan> result = tripPlanRepository.findAll();
+        List<TripPlanResponse.TripPlanPlaceItem> planPlaceItems = result.stream().map(TripPlanResponse.TripPlanPlaceItem::from).collect(Collectors.toList());
+        return TripPlanResponse.TripPlanListResponse.builder().tripPlanList(planPlaceItems).build();
     }
 }
