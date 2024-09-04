@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.INVALID_VALUE;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +53,7 @@ public class TripPlanService {
         Member currentMember = tokenProvider.getMember();
 
         // 여행 폴더 삭제 권한 확인
-        List<Long> tripPlanIdList = request.getDeletePlanList();
+        List<Long> tripPlanIdList = request.getDeletePlanIdList();
 
         boolean allMatch = tripPlanRepository.findByIdIn(tripPlanIdList).stream()
                 .allMatch(tripPlan -> tripPlan.getMember().getId().equals(currentMember.getId()));
@@ -61,7 +62,7 @@ public class TripPlanService {
         }
 
         // 여행 폴더 내 여행지 삭제
-        List<TripPlanPlace> tripPlanPlaceList = tripPlanPlaceRepository.findByIdIn(tripPlanIdList);
+        List<TripPlanPlace> tripPlanPlaceList = tripPlanPlaceRepository.findByTripPlanIdIn(tripPlanIdList);
         tripPlanPlaceRepository.deleteAllInBatch(tripPlanPlaceList);
 
         // 여행 폴더 일괄 삭제 처리
