@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.domain.tripPlan.controller;
 
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
@@ -10,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController()
+@RestController
 @RequestMapping("/api/my-trips")
 @RequiredArgsConstructor
 public class TripPlanController {
@@ -18,7 +19,7 @@ public class TripPlanController {
     private final TripPlanService tripPlanService;
     private final TripPlanPlaceService tripPlanPlaceService;
 
-    @PostMapping("plans")
+    @PostMapping("/plans")
     public ResponseEntity<?> addTripPlan(@RequestBody TripPlanRequest request){
         tripPlanService.createTripPlan(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -34,4 +35,11 @@ public class TripPlanController {
     public ResponseEntity<TripPlanResponse.TripPlanListResponse> tripPlanList(){
         return ResponseEntity.ok(tripPlanService.getTripPlanList());
     }
+
+    @DeleteMapping("/plans")
+    public ResponseEntity<Void> deleteTripPlan(@RequestBody TripPlanDeleteRequest request){
+        tripPlanService.deleteTripPlan(request);
+        return ResponseEntity.ok().build();
+    }
+
 }

@@ -25,6 +25,7 @@ public enum CustomErrorCode {
 
     // Member (4xxx)
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 멤버를 찾을 수 없습니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, 4002, "해당 요청에 대해 권한이 없습니다."),
 
     // WellnessInfo (5xxx)
     WELLNESS_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, 5001,"해당하는 웰니스 정보를 찾을 수 없습니다."),
