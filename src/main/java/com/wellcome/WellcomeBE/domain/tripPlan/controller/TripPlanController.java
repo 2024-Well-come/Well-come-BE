@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController()
+@RestController
 @RequestMapping("/api/my-trips")
 @RequiredArgsConstructor
 public class TripPlanController {
@@ -33,5 +33,11 @@ public class TripPlanController {
     @GetMapping("/plans/brief")
     public ResponseEntity<TripPlanResponse.TripPlanListResponse> tripPlanList(){
         return ResponseEntity.ok(tripPlanService.getTripPlanList());
+    }
+
+    @PatchMapping("plans/{planId}")
+    public ResponseEntity<?> modifyTripPlan(@PathVariable Long planId, @RequestBody TripPlanRequest request){
+        tripPlanService.updateTripPlan(planId,request);
+        return ResponseEntity.ok().build();
     }
 }
