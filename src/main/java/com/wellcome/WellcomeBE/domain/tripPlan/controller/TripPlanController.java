@@ -1,12 +1,14 @@
 package com.wellcome.WellcomeBE.domain.tripPlan.controller;
 
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanPlaceDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceRequest;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.service.TripPlanPlaceService;
+import com.wellcome.WellcomeBE.global.type.Thema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -52,9 +54,21 @@ public class TripPlanController {
     @DeleteMapping("/plans/{planId}/places")
     public ResponseEntity<Void> deleteTripPlanPlace(
             @PathVariable Long planId,
-            @Valid @RequestBody TripPlanPlaceDeleteRequest request){
+            @Valid @RequestBody TripPlanPlaceDeleteRequest request
+    ){
         tripPlanPlaceService.deleteTripPlanPlace(planId, request);
         return ResponseEntity.ok().build();
     }
+
+    // 여행 폴더 상세 조회
+    @GetMapping("/plans/{planId}")
+    public ResponseEntity<TripPlanDetailResponse> getTripPlan(
+            @PathVariable Long planId,
+            @RequestParam(value = "thema", required = false) Thema thema,
+            @RequestParam(value = "page") int page
+    ){
+        return ResponseEntity.ok(tripPlanService.getTripPlan(planId, thema, page));
+    }
+
 
 }
