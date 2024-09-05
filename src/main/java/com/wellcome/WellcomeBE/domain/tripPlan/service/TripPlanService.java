@@ -1,6 +1,8 @@
 package com.wellcome.WellcomeBE.domain.tripPlan.service;
 
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
+import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDetailResponse;
@@ -9,6 +11,7 @@ import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
+import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Thema;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,6 +38,7 @@ public class TripPlanService {
     private final TripPlanRepository tripPlanRepository;
     private final TripPlanPlaceRepository tripPlanPlaceRepository;
     private final TokenProvider tokenProvider;
+    private final GoogleMapInfoService googleMapInfoService;
 
     public void createTripPlan(TripPlanRequest request){
         //TODO: 무작위 생성 폴더 이름 추가
@@ -101,8 +106,13 @@ public class TripPlanService {
                         themaSet.add(tripPlanPlace.getWellnessInfo().getThema().getName());
                     }
 
+                    // 구글맵 API 정보
+                    String parentId = tripPlanPlace.getWellnessInfo().getParentId();
+                    PlaceReviewResponse.PlaceResult placeDetails =
+                            parentId == null ? null : googleMapInfoService.getPlaceDetails(parentId).block().getResult();
+
                     // DTO 반환
-                    return TripPlanDetailResponse.SavedWellnessInfoList.SavedWellnessInfoItem.from(tripPlanPlace.getWellnessInfo());
+                    return TripPlanDetailResponse.SavedWellnessInfoList.SavedWellnessInfoItem.from(tripPlanPlace.getWellnessInfo(), placeDetails);
                 })
                 .collect(Collectors.toList());
         TripPlanDetailResponse.SavedWellnessInfoList savedWellnessInfoList = TripPlanDetailResponse.SavedWellnessInfoList.from(

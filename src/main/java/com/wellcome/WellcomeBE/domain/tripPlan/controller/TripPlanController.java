@@ -70,5 +70,4 @@ public class TripPlanController {
         return ResponseEntity.ok(tripPlanService.getTripPlan(planId, thema, page));
     }
 
-
 }
