@@ -31,4 +31,15 @@ public class TripPlan extends BaseTimeEntity {
 
     private String summary;
 
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void updateStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public void updateEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
 }
