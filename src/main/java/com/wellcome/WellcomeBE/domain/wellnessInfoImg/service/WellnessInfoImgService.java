@@ -56,11 +56,11 @@ public class WellnessInfoImgService {
 
     // 이미지 API 호출 및 DB에 저장하는 메서드
     private Mono<Void> fetchAndSaveImage(WellnessInfo wellnessInfo) {
-        return fetchImage(wellnessInfo.getContent()) // 이미지 API 호출
+        return fetchImage(wellnessInfo.getContentId()) // 이미지 API 호출
                 .flatMapMany(response -> {
                     TourImageApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
                     if (items == null || items.getItem() == null || items.getItem().isEmpty()) {
-                        log.info("{}에 상세 이미지에 대한 검색 결과 없음", wellnessInfo.getContent());
+                        log.info("{}에 상세 이미지에 대한 검색 결과 없음", wellnessInfo.getContentId());
                         return Flux.empty();
                     }
                     return Flux.fromIterable(items.getItem()); // API 응답에서 이미지 리스트 추출

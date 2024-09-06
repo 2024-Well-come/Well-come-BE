@@ -4,6 +4,7 @@ import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_NOT_FOUND;
 
 
 @Service
@@ -102,7 +102,7 @@ public class WellnessInfoApiService {
 
         // 1. 웰니스 정보 가져오기
         WellnessInfo wellness = wellnessInfoRepository.findById(wellnessInfoId)
-                 .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
+                 .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
         // 2. Google Place API를 통해 장소 세부 정보 가져오기
         String parentId = wellness.getParentId();
