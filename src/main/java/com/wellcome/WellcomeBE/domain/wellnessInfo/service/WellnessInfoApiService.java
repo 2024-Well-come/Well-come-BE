@@ -48,8 +48,7 @@ public class WellnessInfoApiService {
     public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request) {
 
         // 사용자 정보 조회
-        Member member = memberRepository.findById(tokenProvider.getMemberId())
-                .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+        Member member = tokenProvider.getMember();
 
         // 웰니스 정보 조회
         List<Thema> themaList = request.getThemaList();
