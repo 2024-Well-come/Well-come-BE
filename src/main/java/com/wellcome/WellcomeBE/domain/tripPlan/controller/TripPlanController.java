@@ -45,7 +45,7 @@ public class TripPlanController {
 
     // 여행 폴더 내 여행지 추가
     @PostMapping("/plans/{planId}/places")
-    public ResponseEntity<?> addTripPlanPlace(@PathVariable Long planId, @RequestBody TripPlanPlaceRequest request){
+    public ResponseEntity<?> addTripPlanPlace(@PathVariable("planId") Long planId, @RequestBody TripPlanPlaceRequest request){
         tripPlanPlaceService.createTripPlanPlace(planId,request);
         return ResponseEntity.ok().build();
     }
@@ -53,7 +53,7 @@ public class TripPlanController {
     // 여행 폴더 내 여행지 삭제
     @DeleteMapping("/plans/{planId}/places")
     public ResponseEntity<Void> deleteTripPlanPlace(
-            @PathVariable Long planId,
+            @PathVariable("planId") Long planId,
             @Valid @RequestBody TripPlanPlaceDeleteRequest request
     ){
         tripPlanPlaceService.deleteTripPlanPlace(planId, request);
@@ -63,7 +63,7 @@ public class TripPlanController {
     // 여행 폴더 상세 조회
     @GetMapping("/plans/{planId}")
     public ResponseEntity<TripPlanDetailResponse> getTripPlan(
-            @PathVariable Long planId,
+            @PathVariable("planId") Long planId,
             @RequestParam(value = "thema", required = false) Thema thema,
             @RequestParam(value = "page") int page
     ){

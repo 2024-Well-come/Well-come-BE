@@ -70,6 +70,7 @@ public class WellnessInfoService {
                 .collectList()
                 .doOnNext(wellnessInfoRepository::saveAll)
                 .block();
+
     }
 
     private Flux<WellnessInfo> fetchData(CategoryDetail categoryDetail) {
