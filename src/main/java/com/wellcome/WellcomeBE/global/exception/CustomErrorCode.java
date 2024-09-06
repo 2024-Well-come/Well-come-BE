@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+
 @Getter
 @RequiredArgsConstructor
 public enum CustomErrorCode {
@@ -22,12 +24,13 @@ public enum CustomErrorCode {
 
 
     // Member (4xxx)
-
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 멤버를 찾을 수 없습니다."),
 
     // WellnessInfo (5xxx)
-
+    WELLNESS_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, 5001,"해당하는 웰니스 정보를 찾을 수 없습니다."),
 
     // TripPlan (6xxx)
+    TRIP_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 60001,"해당하는 여행 폴더를 칮을 수 없습니다."),
 
 
     // TripPlanPlace (7xxx)
@@ -35,6 +38,12 @@ public enum CustomErrorCode {
 
     // Community (8xxx)
 
+
+    // Auth (9xxx)
+    TOKEN_MISSING(UNAUTHORIZED, 9001, "토큰이 누락되었습니다."),
+    REFRESH_TOKEN_EXPIRED(UNAUTHORIZED, 9002, "인증이 만료되었습니다. 다시 로그인하세요."),
+    AUTHENTICATION_NOT_FOUND(UNAUTHORIZED, 9003, "인증 정보를 찾을 수 없습니다."),
+    KAKAO_LOGIN_CLIENT_ERROR(UNAUTHORIZED, 9004, "카카오 로그인 API 호출 오류 (Client Error)")
     ;
 
     private final HttpStatus httpStatus;

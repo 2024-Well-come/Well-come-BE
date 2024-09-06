@@ -19,6 +19,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +54,6 @@ public class WellnessInfoService {
         this.wellnessInfoRepository = wellnessInfoRepository;
         this.webClientConfig = webClientConfig;
     }
-
     public void fetchAndSaveTourInfo() {
 
         // Basic API 호출 및 저장
@@ -64,7 +68,7 @@ public class WellnessInfoService {
         Flux.fromIterable(KEYWORDS)
                 .flatMap(this::fetchDataByKeyword)
                 .collectList()
-                .doOnNext(entities -> wellnessInfoRepository.saveAll(entities))
+                .doOnNext(wellnessInfoRepository::saveAll)
                 .block();
     }
 
@@ -105,9 +109,17 @@ public class WellnessInfoService {
             params.put("cat3", categoryDetail.getCat3());
         }
 
-        return webClient.get()
-                .uri(webClientConfig.getTourBasicApiUrl(params))
-                .exchangeToMono(this::handleResponse);
+        String uriString = webClientConfig.getTourBasicApiUrl(params);
+
+        try {
+            URI uri = new URI(uriString);
+            return webClient.get()
+                    .uri(uri)
+                    .exchangeToMono(this::handleResponse);
+        } catch (URISyntaxException e) {
+            log.error("Invalid URI syntax: {}", e.getMessage());
+            return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, "Invalid URI syntax"));
+        }
 
     }
 
@@ -141,18 +153,35 @@ public class WellnessInfoService {
         params.put("areaCode", GANGWONDO_AREACODE);
         params.put("pageNo", String.valueOf(pageNo));
         params.put("numOfRows", String.valueOf(NUM_OF_ROWS_SEARCH));
-        params.put("keyword", keyword);
+        //params.put("keyword", keyword);
 
-        return webClient.get()
-                .uri(webClientConfig.getTourSearchApiUrl(params))
-                .exchangeToMono(this::handleResponse);
+        // 파라미터 값 UTF-8로 인코딩
+        try {
+            String encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8.toString());
+            params.put("keyword", encodedKeyword);
+        } catch (UnsupportedEncodingException e) {
+            log.error("Encoding failed for keyword: {}", e.getMessage());
+            return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, "Encoding failed for keyword"));
+        }
+
+        String uriString = webClientConfig.getTourSearchApiUrl(params);
+
+        try {
+            URI uri = new URI(uriString);
+            return webClient.get()
+                    .uri(uri)
+                    .exchangeToMono(this::handleResponse);
+        } catch (URISyntaxException e) {
+            log.error("Invalid URI syntax: {}", e.getMessage());
+            return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, "Invalid URI syntax"));
+        }
     }
 
     private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item){
         try {
             return item.toEntity();
         } catch (ParseException e) {
-            throw new RuntimeException("Failed to convert item to entity: {}", e);
+            throw new RuntimeException("Failed to convert item to entity: ", e);
         }
     }
 
@@ -200,5 +229,8 @@ public class WellnessInfoService {
 //        String errorMessage = errorHandler.handleXmlErrorResponse(responseBody);
 //        return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, TOUR_API_RESPONSE_ERROR.getMessage() + ": " + errorMessage));
 //    }
+
+
+
 
 }
