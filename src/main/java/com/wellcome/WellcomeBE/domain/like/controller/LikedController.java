@@ -1,12 +1,10 @@
 package com.wellcome.WellcomeBE.domain.like.controller;
 
+import com.wellcome.WellcomeBE.domain.like.dto.response.LikedResponse;
 import com.wellcome.WellcomeBE.domain.like.service.LikedService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +24,12 @@ public class LikedController {
     public ResponseEntity<Void> deleteLiked(@PathVariable("wellnessInfoId") Long wellnessInfoId){
         likedService.deleteLiked(wellnessInfoId);
         return ResponseEntity.ok().build();
+    }
+
+    // 좋아요 목록 조회
+    @GetMapping("/api/my-trips/likes")
+    public ResponseEntity<LikedResponse.LikedList> getLikedList(@RequestParam(required = false) String thema){
+        return ResponseEntity.ok(likedService.LikedList(thema));
     }
 
 }

@@ -52,4 +52,16 @@ public class TourInfoApiWebClientConfig {
         return uriBuilder.build(true).toUriString();
     }
 
+    @Bean
+    public WebClient tourImageApiWebClient() {
+        return WebClient.builder()
+                .baseUrl("http://apis.data.go.kr/B551011/KorService1/")
+                .defaultHeader("accept", "application/json")
+                .build();
+    }
+
+    public String getServiceKey() {
+        return apiKey;
+    }
+
 }

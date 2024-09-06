@@ -11,7 +11,7 @@ import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
-import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Thema;
@@ -21,7 +21,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -126,4 +125,20 @@ public class TripPlanService {
         return TripPlanDetailResponse.from(new ArrayList<>(themaSet), tripPlan, savedWellnessInfoList);
     }
 
+
+    @Transactional
+    public void updateTripPlan(Long planId, TripPlanRequest request) {
+        TripPlan existingPlan = tripPlanRepository.findById(planId).orElseThrow(() -> new CustomException(CustomErrorCode.TRIP_PLAN_NOT_FOUND));
+
+        if (request.getName() != null) {
+            existingPlan.updateTitle(request.getName());
+        }
+        if (request.getTripStartDate() != null) {
+            existingPlan.updateStartDate(request.getTripStartDate());
+        }
+        if (request.getTripEndDate() != null) {
+            existingPlan.updateEndDate(request.getTripEndDate());
+        }
+
+    }
 }
