@@ -16,6 +16,8 @@ public class WellnessInfoBasicResponse {
     private String title;
     private String category;
     private String address;
+    private Double mapX;
+    private Double mapY;
     private Boolean isLiked;
     private Boolean isOpen;
     private String openDetail;
