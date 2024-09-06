@@ -10,6 +10,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResp
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
+import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,8 @@ public class WellnessInfoApiService {
     private final GoogleMapInfoService googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
+
+    private TokenProvider tokenProvider;
 
     /**
      * 웰니스 장소 추천 목록 조회
@@ -70,12 +73,15 @@ public class WellnessInfoApiService {
      */
     public WellnessInfoBasicResponse getWellnessInfoBasic(Long wellnessInfoId){
 
+
         // 1. 웰니스 정보 가져오기
         WellnessInfo wellness = wellnessInfoRepository.findById(wellnessInfoId)
                 .orElseThrow(() -> new RuntimeException("[임시] 해당하는 웰니스가 존재하지 않습니다."));
 
         // 2. Google Place API를 통해 장소 세부 정보 가져오기
-        PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellness.getParentId()).block().getResult();
+        String parentId = wellness.getParentId();
+        PlaceReviewResponse.PlaceResult placeResult =
+                parentId == null ? null : googleMapInfoService.getPlaceDetails(parentId).block().getResult();
 
         // 3. 웰니스 이미지 목록 가져오기
         List<String> wellnessInfoImg = wellnessInfoImgRepository.findByWellnessInfo(wellness);
@@ -91,7 +97,9 @@ public class WellnessInfoApiService {
                 .title(wellness.getTitle())
                 .category(wellness.getCategory().getName())
                 .address(wellness.getAddress())
-                //.isLiked(likedRepository.findLikedByWellnessInfoAndMember())
+                .mapX(wellness.getMapX())
+                .mapY(wellness.getMapY())
+                .isLiked(likedRepository.findLikedByWellnessInfoAndMember(wellness,tokenProvider.getMember()))
                 .isOpen(openStatus.getIsOpen())
                 .openDetail(openStatus.getOpenDetail())
                 .tel(wellness.getTel())
