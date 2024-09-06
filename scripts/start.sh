@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 환경 변수 파일 설정
+source ~/.bash_profile
+
 PROJECT_ROOT="/home/ubuntu/spring-github-action"
 JAR_FILE="$PROJECT_ROOT/build/libs/WellcomeBE-0.0.1-SNAPSHOT.jar"
 

@@ -1,2 +1,42 @@
-logging-module:
-  version: 0.01
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    dialect: org.hibernate.spatial.dialect.mysql.MySQL8SpatialDialect
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+ssh:
+  local_port: ${SSH_LOCAL_PORT}
+  remote_jump_host: ${SSH_REMOTE_JUMP_HOST}
+  user: ${SSH_USER}
+  private_key_path: ${SSH_PRIVATE_KEY_PATH}
+  database_endpoint: ${DB_ENDPOINT}
+  database_port: ${DB_PORT}
+
+logging.level:
+  com.wellcome.WellcomeBE: debug
+
+tour_api:
+  key: ${TOUR_API_KEY}
+
+google_api:
+  key: ${GOOGLE_API_KEY}
+
+# 카카오 로그인
+kakao:
+  client_id: ${KAKAO_CLIENT_ID}
+  redirect_uri: ${KAKAO_REDIRECT_URI}

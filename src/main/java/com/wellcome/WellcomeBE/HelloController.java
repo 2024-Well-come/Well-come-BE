@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class HelloController {
 
     // jar 빌드 테스트용 
-    @GetMapping("/health-check")
+    @GetMapping("/hello")
     public String hello(){
         return "health-check";
     }
