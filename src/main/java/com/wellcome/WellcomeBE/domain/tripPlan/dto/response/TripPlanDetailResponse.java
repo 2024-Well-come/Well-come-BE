@@ -1,4 +1,4 @@
-package com.wellcome.WellcomeBE.domain.tripPlan.dto.request;
+package com.wellcome.WellcomeBE.domain.tripPlan.dto.response;
 
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;

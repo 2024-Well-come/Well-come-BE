@@ -5,7 +5,7 @@ import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
-import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDetailResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -40,7 +41,6 @@ public class TripPlanService {
     private final GoogleMapInfoService googleMapInfoService;
 
     public void createTripPlan(TripPlanRequest request){
-        //TODO: 무작위 생성 폴더 이름 추가
 
         TripPlan tripPlan = TripPlan.builder()
                 .title(request.getName())
@@ -51,11 +51,52 @@ public class TripPlanService {
         tripPlanRepository.save(tripPlan);
     }
 
-    public TripPlanResponse.TripPlanListResponse getTripPlanList(){
+    public TripPlanResponse.TripPlanBriefResponse getTripPlanList(){
         List<TripPlan> result = tripPlanRepository.findByMember(tokenProvider.getMember());
         List<TripPlanResponse.TripPlanPlaceItem> planPlaceItems = result.stream().map(TripPlanResponse.TripPlanPlaceItem::from).collect(Collectors.toList());
-        return TripPlanResponse.TripPlanListResponse.builder().tripPlanList(planPlaceItems).build();
+        return TripPlanResponse.TripPlanBriefResponse.builder().tripPlanList(planPlaceItems).build();
     }
+
+    public TripPlanResponse.TripPlanListResponse getTripPlans(String sort, int page){
+        PageRequest pageRequest = PageRequest.of(page,5);
+        Page<TripPlan> tripPlans;
+        if ("upcoming".equalsIgnoreCase(sort)) {
+            tripPlans = tripPlanRepository.findUpcomingPlans(pageRequest);
+        } else {
+            tripPlans = tripPlanRepository.findCreateLatestPlans(pageRequest);
+        }
+        // TripPlanItem으로 변환
+        List<TripPlanResponse.TripPlanItem> tripPlanItems = tripPlans.getContent().stream()
+                .map(tripPlan -> TripPlanResponse.TripPlanItem.from(
+                        tripPlan,
+                        tripPlan.getTripPlanPlaces().isEmpty() ? null : tripPlan.getTripPlanPlaces().get(0).getWellnessInfo().getThumbnailUrl(),
+                        tripPlan.getTripPlanPlaces().size()))
+                .collect(Collectors.toList());
+
+        // TripPlanListItem 생성
+        TripPlanResponse.TripPlanListItem tripPlanListItem = TripPlanResponse.TripPlanListItem.from(
+                tripPlans.getTotalElements(),
+                tripPlans.getNumber(),
+                tripPlans.hasPrevious(),
+                tripPlans.hasNext(),
+                tripPlanItems);
+
+        return TripPlanResponse.TripPlanListResponse.builder()
+                .upcomingTripList(getUpcomingTrips())
+                .tripPlanList(tripPlanListItem)
+                .build();
+
+    }
+    private List<TripPlanResponse.TripPlanItem> getUpcomingTrips() {
+        LocalDate today = LocalDate.now();
+        List<TripPlan> upcomingTrips = tripPlanRepository.findAllByTripStartDateAfter(today);
+        return upcomingTrips.stream().map(tripPlan -> TripPlanResponse.TripPlanItem.from(
+                        tripPlan,
+                        tripPlan.getTripPlanPlaces().isEmpty() ? null : tripPlan.getTripPlanPlaces().get(0).getWellnessInfo().getThumbnailUrl(),
+                        tripPlan.getTripPlanPlaces().size()))
+                .collect(Collectors.toList());
+    }
+
 
     @Transactional
     public void deleteTripPlan(TripPlanDeleteRequest request) {
