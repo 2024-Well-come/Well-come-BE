@@ -30,11 +30,13 @@ public class TripPlanDetailResponse {
             SavedWellnessInfoList wellnessInfoList
     ){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        LocalDate startDate = tripPlan.getStartDate();
+        LocalDate endDate = tripPlan.getEndDate();
 
         return TripPlanDetailResponse.builder()
                 .themaList(themaList)
-                .tripStartDate(tripPlan.getStartDate().format(formatter))
-                .tripEndDate(tripPlan.getEndDate().format(formatter))
+                .tripStartDate(startDate != null ? startDate.format(formatter) : null)
+                .tripEndDate(endDate != null ? endDate.format(formatter) : null)
                 .folderName(tripPlan.getTitle())
                 .wellnessInfoList(wellnessInfoList)
                 .build();
