@@ -47,7 +47,7 @@ public class LikedService {
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
         // 좋아요 내역이 없을 경우, 좋아요 등록
-        likedRepository.findByMemberId(member.getId())
+        likedRepository.findByMemberIdAndWellnessInfoId(member.getId(), wellnessInfoId)
                 .orElseGet(() -> likedRepository.save(Liked.create(wellnessInfo, member)));
     }
 
@@ -63,7 +63,7 @@ public class LikedService {
                 .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
         // 좋아요 내역이 있을 경우, 좋아요 삭제
-        likedRepository.findByMemberId(member.getId())
+        likedRepository.findByMemberIdAndWellnessInfoId(member.getId(), wellnessInfoId)
                 .ifPresent(likedRepository::delete);
     }
 
