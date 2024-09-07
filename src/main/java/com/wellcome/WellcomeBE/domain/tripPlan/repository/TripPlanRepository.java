@@ -24,8 +24,13 @@ public interface TripPlanRepository extends JpaRepository<TripPlan,Long> {
     @Query("SELECT t FROM TripPlan t " +
             "LEFT JOIN FETCH t.tripPlanPlaces tp " +
             "LEFT JOIN FETCH tp.wellnessInfo wi " +
-            "WHERE t.startDate >= CURRENT_DATE ORDER BY t.startDate ASC")
+            "ORDER BY " +
+            "CASE WHEN t.startDate >= CURRENT_DATE THEN 0 ELSE 1 END, " +
+            "CASE WHEN t.startDate IS NULL THEN t.createdAt END DESC, " +
+            "CASE WHEN t.startDate IS NOT NULL THEN t.startDate END DESC, " +
+            "t.createdAt DESC")
     Page<TripPlan> findUpcomingPlans(PageRequest pageRequest);
+
 
     @Query("SELECT t FROM TripPlan t " +
             "LEFT JOIN FETCH t.tripPlanPlaces tp " +
@@ -33,7 +38,7 @@ public interface TripPlanRepository extends JpaRepository<TripPlan,Long> {
             "ORDER BY t.createdAt DESC")
     Page<TripPlan> findCreateLatestPlans(PageRequest pageRequest);
 
-    @Query("SELECT t FROM TripPlan t LEFT JOIN FETCH t.tripPlanPlaces tp LEFT JOIN FETCH tp.wellnessInfo wi WHERE t.startDate >= :today ORDER BY t.startDate ASC")
-    List<TripPlan> findAllByTripStartDateAfter(@Param("today") LocalDate today);
+    @Query("SELECT t FROM TripPlan t LEFT JOIN FETCH t.tripPlanPlaces tp LEFT JOIN FETCH tp.wellnessInfo wi WHERE t.startDate >= CURRENT_DATE ORDER BY t.startDate ASC")
+    List<TripPlan> findAllByTripStartDateAfter();
 
 }

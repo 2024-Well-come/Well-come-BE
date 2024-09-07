@@ -88,8 +88,7 @@ public class TripPlanService {
 
     }
     private List<TripPlanResponse.TripPlanItem> getUpcomingTrips() {
-        LocalDate today = LocalDate.now();
-        List<TripPlan> upcomingTrips = tripPlanRepository.findAllByTripStartDateAfter(today);
+        List<TripPlan> upcomingTrips = tripPlanRepository.findAllByTripStartDateAfter();
         return upcomingTrips.stream().map(tripPlan -> TripPlanResponse.TripPlanItem.from(
                         tripPlan,
                         tripPlan.getTripPlanPlaces().isEmpty() ? null : tripPlan.getTripPlanPlaces().get(0).getWellnessInfo().getThumbnailUrl(),

@@ -1,17 +1,18 @@
 package com.wellcome.WellcomeBE.domain.tripPlan.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
  * 여행 폴더 조회 Response DTO
  */
 public class TripPlanResponse {
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+
     // 폴더 메뉴 내부 목록 조회
     @Getter
     @Builder
@@ -36,8 +37,8 @@ public class TripPlanResponse {
             return TripPlanItem.builder()
                     .planId(tripPlan.getId())
                     .representativeImage(representativeImage)
-                    .tripStartDate(tripPlan.getStartDate().toString())
-                    .tripEndDate(tripPlan.getStartDate().toString())
+                    .tripStartDate(tripPlan.getStartDate() != null ? tripPlan.getStartDate().format(formatter) : null)
+                    .tripEndDate(tripPlan.getEndDate() != null ? tripPlan.getEndDate().format(formatter) : null)
                     .name(tripPlan.getTitle())
                     .placeNum(placeNum)
                     .build();
@@ -81,20 +82,18 @@ public class TripPlanResponse {
     public static class TripPlanPlaceItem {
         private Long planId;
 
-        @JsonFormat(pattern = "yyyy.MM.dd")
-        private LocalDate tripStartDate;
+        private String tripStartDate;
 
-        @JsonFormat(pattern = "yyyy.MM.dd")
-        private LocalDate tripEndDate;
+        private String tripEndDate;
         private String name;
 
-        public static TripPlanPlaceItem from(
-                TripPlan tripPlan) {
+        public static TripPlanPlaceItem from(TripPlan tripPlan) {
+
             return TripPlanPlaceItem.builder()
                     .planId(tripPlan.getId())
                     .name(tripPlan.getTitle())
-                    .tripStartDate(tripPlan.getStartDate() != null ? tripPlan.getStartDate() : null)
-                    .tripEndDate(tripPlan.getEndDate() != null ? tripPlan.getEndDate() : null)
+                    .tripStartDate(tripPlan.getStartDate() != null ? tripPlan.getStartDate().format(formatter) : null)
+                    .tripEndDate(tripPlan.getEndDate() != null ? tripPlan.getEndDate().format(formatter) : null)
                     .build();
         }
     }
