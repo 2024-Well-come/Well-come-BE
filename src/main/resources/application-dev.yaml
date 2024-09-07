@@ -1,0 +1,40 @@
+### DEV DB
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/wellcome?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: wellcome
+    password: 2024
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging.level:
+  com.wellcome.WellcomeBE: debug
+
+# 카카오 로그인
+kakao:
+  client_id: ${kakao_client_id}
+  redirect_uri: ${kakao_redirect_uri}
+
+# 한국관광공사 Tour API
+tour_api:
+  key: ${tour_api_key}
+
+# 구글맵 API
+google_api:
+  key: ${google_api_key}
