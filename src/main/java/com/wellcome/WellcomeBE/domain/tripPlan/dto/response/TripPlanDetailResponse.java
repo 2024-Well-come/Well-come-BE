@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.time.LocalDate;
 
 /**
  * 여행 폴더 상세 조회 Response DTO
