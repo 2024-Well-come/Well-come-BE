@@ -1,6 +1,5 @@
 package com.wellcome.WellcomeBE.domain.tripPlanPlace.repository;
 
-import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import org.springframework.data.domain.Page;
