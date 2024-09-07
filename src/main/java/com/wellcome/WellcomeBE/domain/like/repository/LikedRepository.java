@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LikedRepository extends JpaRepository<Liked,Long> {
-    Boolean findLikedByWellnessInfoAndMember(WellnessInfo wellnessInfo, Member member);
+    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN TRUE ELSE FALSE END FROM Liked l WHERE l.wellnessInfo = :wellnessInfo AND l.member = :member")
+    boolean existsByWellnessInfoAndMember(@Param("wellnessInfo") WellnessInfo wellnessInfo, @Param("member") Member member);
 
     Optional<Liked> findByMemberId(Long memberId);
 

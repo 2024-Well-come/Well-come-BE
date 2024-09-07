@@ -2,6 +2,7 @@ package com.wellcome.WellcomeBE.domain.like.controller;
 
 import com.wellcome.WellcomeBE.domain.like.dto.response.LikedResponse;
 import com.wellcome.WellcomeBE.domain.like.service.LikedService;
+import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class LikedController {
 
     // 좋아요 목록 조회
     @GetMapping("/api/my-trips/likes")
-    public ResponseEntity<LikedResponse.LikedList> getLikedList(@RequestParam(required = false, defaultValue = "FOOD") String thema){
+    public ResponseEntity<LikedResponse.LikedList> getLikedList(@RequestParam(required = false) Thema thema){
         return ResponseEntity.ok(likedService.LikedList(thema));
     }
 
