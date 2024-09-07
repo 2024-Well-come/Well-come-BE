@@ -1,7 +1,7 @@
 package com.wellcome.WellcomeBE.domain.tripPlan.controller;
 
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
-import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDetailResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanPlaceDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
@@ -11,7 +11,6 @@ import com.wellcome.WellcomeBE.domain.tripPlanPlace.service.TripPlanPlaceService
 import com.wellcome.WellcomeBE.global.type.Thema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
