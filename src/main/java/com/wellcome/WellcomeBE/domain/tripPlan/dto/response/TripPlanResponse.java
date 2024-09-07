@@ -93,8 +93,8 @@ public class TripPlanResponse {
             return TripPlanPlaceItem.builder()
                     .planId(tripPlan.getId())
                     .name(tripPlan.getTitle())
-                    .tripStartDate(tripPlan.getStartDate())
-                    .tripEndDate(tripPlan.getEndDate())
+                    .tripStartDate(tripPlan.getStartDate() != null ? tripPlan.getStartDate() : null)
+                    .tripEndDate(tripPlan.getEndDate() != null ? tripPlan.getEndDate() : null)
                     .build();
         }
     }
