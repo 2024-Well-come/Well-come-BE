@@ -16,15 +16,24 @@ CURRENT_PID=$(pgrep -f $JAR_FILE)
 
 # 프로세스가 켜져 있으면 종료
 if [ -z "$CURRENT_PID" ]; then
-  echo "$TIME_NOW > 현재 실행 중인 애플리케이션이 없습니다." >> $DEPLOY_LOG
+  echo "$TIME_NOW > 현재 실행중인 애플리케이션이 없습니다" >> $DEPLOY_LOG
 else
-  echo "$TIME_NOW > 실행 중인 애플리케이션 (PID: $CURRENT_PID) 종료 시도" >> $DEPLOY_LOG
+  echo "$TIME_NOW > 실행중인 $CURRENT_PID 애플리케이션 종료" >> $DEPLOY_LOG
   kill -15 $CURRENT_PID
 
-  # 프로세스가 종료되지 않은 경우 강제 종료
-  sleep 5
-  if pgrep -f $JAR_FILE > /dev/null; then
-    echo "$TIME_NOW > 프로세스가 여전히 실행 중입니다. 강제 종료합니다." >> $DEPLOY_LOG
-    kill -9 $CURRENT_PID
+  # 애플리케이션이 완전히 종료될 때까지 대기
+  for i in {1..10}; do
+    CURRENT_PID=$(pgrep -f $JAR_FILE)
+    if [ -z "$CURRENT_PID" ]; then
+      echo "$TIME_NOW > 애플리케이션이 성공적으로 종료되었습니다." >> $DEPLOY_LOG
+      break
+    fi
+    echo "$TIME_NOW > 애플리케이션 종료 대기 중... ($i/10)" >> $DEPLOY_LOG
+    sleep 3
+  done
+
+  if [ -n "$CURRENT_PID" ]; then
+    echo "$TIME_NOW > 애플리케이션 종료 실패, 프로세스가 여전히 실행 중입니다." >> $DEPLOY_LOG
+    exit 1
   fi
 fi
