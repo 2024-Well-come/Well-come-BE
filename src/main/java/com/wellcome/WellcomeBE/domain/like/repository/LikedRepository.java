@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface LikedRepository extends JpaRepository<Liked,Long> {
     Boolean findLikedByWellnessInfoAndMember(WellnessInfo wellnessInfo, Member member);
 
-    Optional<Liked> findByMemberId(Long memberId);
+    Optional<Liked> findByMemberIdAndWellnessInfoId(Long memberId, Long wellnessInfoId);
 
     @Query("SELECT new com.wellcome.WellcomeBE.domain.wellnessInfo.vo.LikeWellnessInfoVo(w.parentId, w.id, w.thumbnailUrl, w.title, w.thema, w.address) " +
             "FROM Liked l " +
