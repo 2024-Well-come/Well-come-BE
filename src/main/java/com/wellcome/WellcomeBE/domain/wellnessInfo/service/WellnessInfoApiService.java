@@ -4,17 +4,19 @@ import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
+import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
-import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImgRepository;
+
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
-import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +25,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.MEMBER_NOT_FOUND;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_NOT_FOUND;
 
 
@@ -43,6 +43,7 @@ public class WellnessInfoApiService {
     private final GoogleMapInfoService googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
+
 
     /**
      * 웰니스 장소 추천 목록 조회
@@ -101,12 +102,15 @@ public class WellnessInfoApiService {
      */
     public WellnessInfoBasicResponse getWellnessInfoBasic(Long wellnessInfoId){
 
+
         // 1. 웰니스 정보 가져오기
         WellnessInfo wellness = wellnessInfoRepository.findById(wellnessInfoId)
-                .orElseThrow(() -> new RuntimeException("[임시] 해당하는 웰니스가 존재하지 않습니다."));
+                 .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
         // 2. Google Place API를 통해 장소 세부 정보 가져오기
-        PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellness.getParentId()).block().getResult();
+        String parentId = wellness.getParentId();
+        PlaceReviewResponse.PlaceResult placeResult =
+                parentId == null ? null : googleMapInfoService.getPlaceDetails(parentId).block().getResult();
 
         // 3. 웰니스 이미지 목록 가져오기
         List<String> wellnessInfoImg = wellnessInfoImgRepository.findByWellnessInfo(wellness);
@@ -122,7 +126,9 @@ public class WellnessInfoApiService {
                 .title(wellness.getTitle())
                 .category(wellness.getCategory().getName())
                 .address(wellness.getAddress())
-                //.isLiked(likedRepository.findLikedByWellnessInfoAndMember())
+                .mapX(wellness.getMapX())
+                .mapY(wellness.getMapY())
+                .isLiked(likedRepository.findLikedByWellnessInfoAndMember(wellness,tokenProvider.getMember()))
                 .isOpen(openStatus.getIsOpen())
                 .openDetail(openStatus.getOpenDetail())
                 .tel(wellness.getTel())

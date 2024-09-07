@@ -25,15 +25,18 @@ public enum CustomErrorCode {
 
     // Member (4xxx)
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 멤버를 찾을 수 없습니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, 4002, "해당 요청에 대해 권한이 없습니다."),
 
     // WellnessInfo (5xxx)
     WELLNESS_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, 5001,"해당하는 웰니스 정보를 찾을 수 없습니다."),
 
     // TripPlan (6xxx)
-    TRIP_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 60001,"해당하는 여행 폴더를 칮을 수 없습니다."),
+    TRIP_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 6001,"해당하는 여행 폴더를 찾을 수 없습니다."),
 
 
     // TripPlanPlace (7xxx)
+    TRIP_PLAN_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, 6001,"해당하는 여행지 정보를 찾을 수 없습니다."),
+    TRIP_PLAN_PLACE_NOT_IN_FOLDER(HttpStatus.BAD_REQUEST, 7001, "해당 여행지가 요청된 폴더에 속하지 않습니다."),
 
 
     // Community (8xxx)

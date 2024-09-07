@@ -8,7 +8,7 @@ spring:
   jpa:
     dialect: org.hibernate.spatial.dialect.mysql.MySQL8SpatialDialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         show_sql: true
@@ -40,3 +40,9 @@ google_api:
 kakao:
   client_id: ${KAKAO_CLIENT_ID}
   redirect_uri: ${KAKAO_REDIRECT_URI}
+
+server:
+  servlet:
+    encoding:
+      force: true
+      charset: UTF-8

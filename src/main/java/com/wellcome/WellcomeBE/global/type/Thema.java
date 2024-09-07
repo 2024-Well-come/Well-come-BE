@@ -3,6 +3,10 @@ package com.wellcome.WellcomeBE.global.type;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Getter
 @RequiredArgsConstructor
 public enum Thema {
@@ -41,6 +45,21 @@ public enum Thema {
                 return FOOD;
         }
 
+        return NONE;
+    }
+
+    public static List<Thema> getThemaList() {
+        return Arrays.stream(Thema.values())
+                .filter(thema -> !thema.equals(NONE)) // NONE 제외
+                .collect(Collectors.toList());
+    }
+
+    public static Thema fromString(String thema) {
+        for (Thema t : values()) {
+            if (t.getName().equalsIgnoreCase(thema)) {
+                return t;
+            }
+        }
         return NONE;
     }
 
