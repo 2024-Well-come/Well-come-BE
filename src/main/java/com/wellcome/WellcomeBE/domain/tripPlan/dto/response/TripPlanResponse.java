@@ -81,19 +81,21 @@ public class TripPlanResponse {
     @Builder
     public static class TripPlanPlaceItem {
         private Long planId;
-
+        private String representativeImage;
         private String tripStartDate;
-
         private String tripEndDate;
         private String name;
+        private int placeNum;
 
         public static TripPlanPlaceItem from(TripPlan tripPlan) {
 
             return TripPlanPlaceItem.builder()
                     .planId(tripPlan.getId())
-                    .name(tripPlan.getTitle())
+                    .representativeImage(tripPlan.getTripPlanPlaces().isEmpty() ? null : tripPlan.getTripPlanPlaces().get(0).getWellnessInfo().getThumbnailUrl())
                     .tripStartDate(tripPlan.getStartDate() != null ? tripPlan.getStartDate().format(formatter) : null)
                     .tripEndDate(tripPlan.getEndDate() != null ? tripPlan.getEndDate().format(formatter) : null)
+                    .name(tripPlan.getTitle())
+                    .placeNum(tripPlan.getTripPlanPlaces().size())
                     .build();
         }
     }
