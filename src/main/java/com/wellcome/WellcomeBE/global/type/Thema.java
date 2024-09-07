@@ -54,13 +54,5 @@ public enum Thema {
                 .collect(Collectors.toList());
     }
 
-    public static Thema fromString(String thema) {
-        for (Thema t : values()) {
-            if (t.getName().equalsIgnoreCase(thema)) {
-                return t;
-            }
-        }
-        return NONE;
-    }
 
 }

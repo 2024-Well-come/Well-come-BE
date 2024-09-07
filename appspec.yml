@@ -23,10 +23,10 @@ hooks:
 #    - location: scripts/switch.sh
 #      timeout: 180
 #      runas: ubuntu
-  BeforeInstall:
-    - location: scripts/setup_environment.sh
-      timeout: 300
-      runas: ubuntu
+#  BeforeInstall:
+#    - location: scripts/setup_environment.sh
+#      timeout: 300
+#      runas: ubuntu
   AfterInstall:
     - location: scripts/stop.sh
       timeout: 60

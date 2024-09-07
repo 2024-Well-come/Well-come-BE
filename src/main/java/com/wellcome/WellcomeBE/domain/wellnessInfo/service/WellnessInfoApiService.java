@@ -126,7 +126,7 @@ public class WellnessInfoApiService {
                 .address(wellness.getAddress())
                 .mapX(wellness.getMapX())
                 .mapY(wellness.getMapY())
-                .isLiked(likedRepository.findLikedByWellnessInfoAndMember(wellness,tokenProvider.getMember()))
+                .isLiked(likedRepository.existsByWellnessInfoAndMember(wellness,tokenProvider.getMember()))
                 .isOpen(openStatus.getIsOpen())
                 .openDetail(openStatus.getOpenDetail())
                 .tel(wellness.getTel())
