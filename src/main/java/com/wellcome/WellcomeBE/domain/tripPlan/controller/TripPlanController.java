@@ -22,9 +22,9 @@ public class TripPlanController {
     private final TripPlanService tripPlanService;
     private final TripPlanPlaceService tripPlanPlaceService;
 
-    // 여행 폴더 목록 조회
+    // 여행 폴더 미리보기
     @GetMapping("/plans/brief")
-    public ResponseEntity<TripPlanResponse.TripPlanListResponse> tripPlanList(){
+    public ResponseEntity<TripPlanResponse.TripPlanBriefResponse> tripPlanList(){
         return ResponseEntity.ok(tripPlanService.getTripPlanList());
     }
 
@@ -40,6 +40,14 @@ public class TripPlanController {
     public ResponseEntity<Void> deleteTripPlan(@Valid @RequestBody TripPlanDeleteRequest request){
         tripPlanService.deleteTripPlan(request);
         return ResponseEntity.ok().build();
+    }
+    // 여행 폴더 목록 조회
+    @GetMapping("/plans")
+    public ResponseEntity<TripPlanResponse.TripPlanListResponse> getTripPlans(
+            @RequestParam(defaultValue = "latest") String sort,
+            @RequestParam(defaultValue = "0") int page
+    ){
+        return ResponseEntity.ok(tripPlanService.getTripPlans(sort, page));
     }
 
     // 여행 폴더 내 여행지 추가
@@ -67,5 +75,11 @@ public class TripPlanController {
             @RequestParam(value = "page") int page
     ){
         return ResponseEntity.ok(tripPlanService.getTripPlan(planId, thema, page));
+    }
+
+    @PatchMapping("plans/{planId}")
+    public ResponseEntity<?> modifyTripPlan(@PathVariable Long planId, @RequestBody TripPlanRequest request){
+        tripPlanService.updateTripPlan(planId,request);
+        return ResponseEntity.ok().build();
     }
 }
