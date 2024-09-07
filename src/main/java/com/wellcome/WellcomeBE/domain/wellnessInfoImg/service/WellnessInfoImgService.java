@@ -16,9 +16,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 
@@ -77,16 +79,19 @@ public class WellnessInfoImgService {
 
     // tour4.0 Image API 요청
     private Mono<TourImageApiResponse> fetchImage(String wellnessInfoId) {
+        URI uriString = UriComponentsBuilder.fromUriString("http://apis.data.go.kr/B551011/KorService1/detailImage1")
+                .queryParam("serviceKey", config.getServiceKey())
+                .queryParam("MobileOS", "AND")
+                .queryParam("MobileApp", "Wellcome")
+                .queryParam("_type", "json")
+                .queryParam("contentId", wellnessInfoId)
+                .queryParam("imageYN", "Y")
+                .queryParam("subImageYN", "Y")
+                .build(true)
+                .toUri();
+
         return tourImageApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder.path("detailImage1")
-                        .queryParam("serviceKey", config.getServiceKey())
-                        .queryParam("MobileOS", "AND")
-                        .queryParam("MobileApp", "Wellcome")
-                        .queryParam("_type", "json")
-                        .queryParam("contentId", wellnessInfoId)
-                        .queryParam("imageYN", "Y")
-                        .queryParam("subImageYN", "Y")
-                        .build())
+                .uri(uriString)
                 .exchangeToMono(this::handleResponse);
     }
 

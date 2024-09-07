@@ -90,6 +90,7 @@ public class TourBasicApiResponse {
 
                         WellnessInfo wellnessSpot = WellnessInfo.builder()
                                 .title(title)
+                                .contentId(contentid)
                                 .thumbnailUrl(firstimage)
                                 .tel(tel)
                                 .area(area)

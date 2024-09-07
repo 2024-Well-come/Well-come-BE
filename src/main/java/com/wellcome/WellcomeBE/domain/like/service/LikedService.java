@@ -14,6 +14,7 @@ import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.MEMBER_NOT_FOUND;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_NOT_FOUND;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LikedService {
@@ -71,7 +73,7 @@ public class LikedService {
      * 좋아요 담긴 thema 리스트 전달
      * 각 테마별 좋아요 목록 전달
      */
-    public LikedResponse.LikedList LikedList(String thema){
+    public LikedResponse.LikedList LikedList(Thema thema){
         Member member = tokenProvider.getMember();
 
         // 조회할 테마 목록 설정
@@ -79,7 +81,10 @@ public class LikedService {
         if (thema == null) {
             themaList = Thema.getThemaList();
         } else {
-            themaList.add(Thema.fromString(thema));
+            themaList.add(thema);
+            log.info(String.valueOf(thema));
+            log.info(themaList.toString());
+
         }
 
         List<LikeWellnessInfoVo> likeWellnessInfoVo = likedRepository.findByMemberIdAndThemaIn(member, themaList);

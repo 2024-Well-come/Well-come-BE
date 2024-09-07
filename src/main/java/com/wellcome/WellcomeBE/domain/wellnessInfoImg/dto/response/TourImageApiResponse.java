@@ -35,6 +35,10 @@ public class TourImageApiResponse {
             @JsonDeserialize(using = ItemsDeserializer.class)
             private Items items;
 
+            private int numOfRows;
+            private int pageNo;
+            private int totalCount;
+
             @Data
             @JsonInclude(JsonInclude.Include.NON_NULL)
             public static class Items {
