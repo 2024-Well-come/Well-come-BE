@@ -8,6 +8,7 @@ import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImgRepository;
@@ -22,11 +23,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.MEMBER_NOT_FOUND;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_NOT_FOUND;
 
 
 @Service
@@ -125,6 +128,31 @@ public class WellnessInfoApiService {
                 .tel(wellness.getTel())
                 .website(placeResult.getWebsite())
                 .build();
+    }
+
+    /**
+     * 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
+     */
+    public WellnessInfoGoogleReviewResponse getWellnessInfoGoogleReviews(Long wellnessInfoId) {
+        
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+                        .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
+
+        Double rating = null;
+        List<WellnessInfoGoogleReviewResponse.GoogleReview> reviewList = new ArrayList<>();
+
+        if(wellnessInfo.getParentId() != null){
+            PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellnessInfo.getParentId()).block().getResult();
+            rating = placeResult.getRating();
+            reviewList = Optional.ofNullable(placeResult.getReviews())
+                    .filter(reviews -> !reviews.isEmpty())
+                    .map(reviews -> reviews.stream()
+                            .map(WellnessInfoGoogleReviewResponse.GoogleReview::from)
+                            .collect(Collectors.toList()))
+                    .orElseGet(ArrayList::new);
+        }
+
+        return WellnessInfoGoogleReviewResponse.from(rating, reviewList);
     }
 
 }

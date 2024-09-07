@@ -2,6 +2,7 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.controller;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoApiService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService;
@@ -35,6 +36,14 @@ public class WellnessInfoController {
     @GetMapping("/api/wellness-info/{wellnessInfoId}/basic")
     public ResponseEntity<WellnessInfoBasicResponse> wellnessInfoBasic(@PathVariable Long wellnessInfoId){
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoBasic(wellnessInfoId));
+    }
+
+    // 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/google-reviews")
+    public ResponseEntity<WellnessInfoGoogleReviewResponse> getWellnessInfoGoogleReviews(
+            @PathVariable("wellnessInfoId") Long wellnessInfoId
+    ){
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoGoogleReviews(wellnessInfoId));
     }
 
 }
