@@ -24,7 +24,7 @@ public class WellnessInfoController {
     }
 
     // 웰니스 장소 추천 목록
-    @GetMapping("/api/wellness-info")
+    @PostMapping("/api/wellness-info")
     public ResponseEntity<WellnessInfoResponse> getWellnessInfoList(
             @RequestParam(value = "page") int page,
             @RequestBody WellnessInfoListRequest request
