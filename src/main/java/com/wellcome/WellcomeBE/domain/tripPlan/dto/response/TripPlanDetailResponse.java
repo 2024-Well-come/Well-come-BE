@@ -1,4 +1,4 @@
-package com.wellcome.WellcomeBE.domain.tripPlan.dto.request;
+package com.wellcome.WellcomeBE.domain.tripPlan.dto.response;
 
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -30,11 +31,13 @@ public class TripPlanDetailResponse {
             SavedWellnessInfoList wellnessInfoList
     ){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        LocalDate startDate = tripPlan.getStartDate();
+        LocalDate endDate = tripPlan.getEndDate();
 
         return TripPlanDetailResponse.builder()
                 .themaList(themaList)
-                .tripStartDate(tripPlan.getStartDate().format(formatter))
-                .tripEndDate(tripPlan.getEndDate().format(formatter))
+                .tripStartDate(startDate != null ? startDate.format(formatter) : null)
+                .tripEndDate(endDate != null ? endDate.format(formatter) : null)
                 .folderName(tripPlan.getTitle())
                 .wellnessInfoList(wellnessInfoList)
                 .build();
