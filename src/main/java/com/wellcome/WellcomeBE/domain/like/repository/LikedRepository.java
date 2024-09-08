@@ -25,7 +25,7 @@ public interface LikedRepository extends JpaRepository<Liked,Long> {
     List<LikeWellnessInfoVo> findByMemberIdAndThemaIn(@Param("member") Member member, @Param("thema") List<Thema> thema);
 
 
-    @Query("SELECT w.thema from Liked l join l.wellnessInfo w where l.member = :member ")
+    @Query("SELECT DISTINCT w.thema from Liked l join l.wellnessInfo w where l.member = :member ")
     List<Thema> findLikedThemaByMember(@Param("member") Member member);
 
 
