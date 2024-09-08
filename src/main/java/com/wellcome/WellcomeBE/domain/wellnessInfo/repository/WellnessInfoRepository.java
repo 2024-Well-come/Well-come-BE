@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long> {
+    List<WellnessInfo> findTop10ByOrderByIdAsc();
 
     /**
      * 목록 조회
@@ -103,5 +104,22 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
     List<Object[]> findDistinctThemaAndSigunguBySigungu(
             @Param("sigunguList") List<Sigungu> sigunguList
     );
+
+
+    /**
+     * 임시 반경 계산
+     */
+    @Query(value = "SELECT * FROM wellness_info wi " +
+            "WHERE wi.wellness_info_id != :wellness_info_id " +
+            "AND (6371 * acos(cos(radians(:mapY)) * cos(radians(wi.mapy)) * cos(radians(wi.mapx) - radians(:mapX)) + sin(radians(:mapY)) * sin(radians(wi.mapy)))) < :radius " +
+            "ORDER BY (6371 * acos(cos(radians(:mapY)) * cos(radians(wi.mapy)) * cos(radians(wi.mapx) - radians(:mapX)) + sin(radians(:mapY)) * sin(radians(wi.mapy)))) " +
+            "LIMIT 6", nativeQuery = true)
+    List<WellnessInfo> findTop6NearbyWellnessInfo(@Param("mapX") Double mapX,
+                                                  @Param("mapY") Double mapY,
+                                                  @Param("wellness_info_id") Long wellnessInfoId,
+                                                  @Param("radius") Double radius);
+
+
+
 
 }

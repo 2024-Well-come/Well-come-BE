@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.controller;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessNearbyDto;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
@@ -9,6 +10,8 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,6 +39,12 @@ public class WellnessInfoController {
     @GetMapping("/api/wellness-info/{wellnessInfoId}/basic")
     public ResponseEntity<WellnessInfoBasicResponse> wellnessInfoBasic(@PathVariable Long wellnessInfoId){
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoBasic(wellnessInfoId));
+    }
+
+    // 웰니스 장소 상세 조회(2) - 주변 추전 장소
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/nearby-places")
+    public ResponseEntity<List<WellnessNearbyDto>>getSurroundingPlaces(@PathVariable Long wellnessInfoId){
+        return ResponseEntity.ok(wellnessInfoApiService.getSurroundingWellnessInfo(wellnessInfoId));
     }
 
     // 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
