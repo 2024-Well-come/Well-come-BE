@@ -1,22 +1,22 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
 
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
+import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
-import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
-import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
-import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
-import com.wellcome.WellcomeBE.global.security.TokenProvider;
-import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessNearbyDto;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
-
+import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
+import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
@@ -159,6 +159,40 @@ public class WellnessInfoApiService {
         }
 
         return WellnessInfoGoogleReviewResponse.from(rating, reviewList);
+    }
+
+    /**
+     *  [FEAT] 웰니스 장소 상세 조회(2) - 주변 장소 추천
+     */
+    public List<WellnessNearbyDto> getSurroundingWellnessInfo(Long wellnessInfoId) {
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
+
+        Double mapX = wellnessInfo.getMapX();
+        Double mapY = wellnessInfo.getMapY();
+        Double radius = 5.0; // 예시로 5km 설정
+
+        List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
+
+        return nearbyWellness.stream()
+                .map(WellnessInfo -> {
+                    PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellnessInfo.getParentId()).block().getResult();
+                    double distance = calculateDistance(mapY, mapX, WellnessInfo.getMapY(), WellnessInfo.getMapX());
+
+                    return WellnessNearbyDto.form(WellnessInfo, placeResult, distance);
+                })
+                .collect(Collectors.toList());
+    }
+
+    private static double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
+        final int R = 6371; // 지구의 반지름 (km)
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // km 단위로 변환
     }
 
 }
