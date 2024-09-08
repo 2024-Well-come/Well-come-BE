@@ -5,10 +5,13 @@ import com.wellcome.WellcomeBE.domain.member.dto.response.LoginResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.MemberProfileResponse;
 import com.wellcome.WellcomeBE.domain.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,7 +20,13 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    // 카카오 로그인
+    // 카카오 로그인 요청
+    @GetMapping("/api/oauth2/kakao/login")
+    public void login(HttpServletResponse response) throws IOException {
+        memberService.login(response);
+    }
+
+    // 토큰 발급
     @GetMapping("/api/oauth2/kakao")
     public ResponseEntity<LoginResponse> kakaoLogin(@RequestParam("code") String code){
         return ResponseEntity.ok(memberService.handleKakaoLogin(code));

@@ -1,20 +1,19 @@
 package com.wellcome.WellcomeBE.domain.member.service;
 
 import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.member.dto.response.MemberProfileResponse;
+import com.wellcome.WellcomeBE.domain.member.dto.response.*;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
-import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoTokenResponse;
-import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
-import com.wellcome.WellcomeBE.domain.member.dto.response.LoginResponse;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.KakaoAuthService;
 import com.wellcome.WellcomeBE.global.security.RefreshTokenService;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
@@ -32,6 +31,11 @@ public class MemberService {
     /**
      * 카카오 로그인 & 회원가입 처리
      */
+    public void login(HttpServletResponse response) throws IOException {
+        String requestUrl = kakaoAuthService.getAuthorizationCode();
+        response.sendRedirect(requestUrl);
+    }
+
     public LoginResponse handleKakaoLogin(String code) {
 
         // 토큰 발급
