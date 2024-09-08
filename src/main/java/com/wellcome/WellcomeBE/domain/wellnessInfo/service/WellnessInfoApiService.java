@@ -7,10 +7,7 @@ import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessNearbyDto;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
@@ -164,7 +161,7 @@ public class WellnessInfoApiService {
     /**
      *  [FEAT] 웰니스 장소 상세 조회(2) - 주변 장소 추천
      */
-    public List<WellnessNearbyDto> getSurroundingWellnessInfo(Long wellnessInfoId) {
+    public WellnessInfoNearbyList getSurroundingWellnessInfo(Long wellnessInfoId) {
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
@@ -174,7 +171,7 @@ public class WellnessInfoApiService {
 
         List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
 
-        return nearbyWellness.stream()
+        List<WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
                 .map(WellnessInfo -> {
                     PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellnessInfo.getParentId()).block().getResult();
                     double distance = calculateDistance(mapY, mapX, WellnessInfo.getMapY(), WellnessInfo.getMapX());
@@ -182,6 +179,7 @@ public class WellnessInfoApiService {
                     return WellnessNearbyDto.form(WellnessInfo, placeResult, distance);
                 })
                 .collect(Collectors.toList());
+        return WellnessInfoNearbyList.from(wellnessNearbyDtoList);
     }
 
     private static double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {

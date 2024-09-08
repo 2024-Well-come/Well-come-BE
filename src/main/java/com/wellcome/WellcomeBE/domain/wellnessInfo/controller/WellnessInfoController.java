@@ -1,10 +1,7 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.controller;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessNearbyDto;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoApiService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +40,7 @@ public class WellnessInfoController {
 
     // 웰니스 장소 상세 조회(2) - 주변 추전 장소
     @GetMapping("/api/wellness-info/{wellnessInfoId}/nearby-places")
-    public ResponseEntity<List<WellnessNearbyDto>>getSurroundingPlaces(@PathVariable Long wellnessInfoId){
+    public ResponseEntity<WellnessInfoNearbyList>getSurroundingPlaces(@PathVariable Long wellnessInfoId){
         return ResponseEntity.ok(wellnessInfoApiService.getSurroundingWellnessInfo(wellnessInfoId));
     }
 
