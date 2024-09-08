@@ -29,7 +29,7 @@ public class WellnessInfoController {
     // 웰니스 장소 추천 목록
     @PostMapping("/api/wellness-info")
     public ResponseEntity<WellnessInfoResponse> getWellnessInfoList(
-            @RequestParam(value = "page") int page,
+            @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestBody WellnessInfoListRequest request
     ){
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoList(page, request));

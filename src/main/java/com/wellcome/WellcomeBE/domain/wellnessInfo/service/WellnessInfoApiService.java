@@ -62,7 +62,7 @@ public class WellnessInfoApiService {
         boolean isSigunguListEmpty = sigunguList == null || sigunguList.isEmpty();
 
         Page<Object[]> data;
-        Pageable pageable = PageRequest.of(page, 5);
+        Pageable pageable = PageRequest.of(page, 10);
         List<Object[]> types;
 
         if(isThemaListEmpty && isSigunguListEmpty){

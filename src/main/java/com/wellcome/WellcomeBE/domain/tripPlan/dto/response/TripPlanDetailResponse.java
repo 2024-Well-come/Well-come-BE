@@ -4,6 +4,7 @@ import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
+import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -19,14 +20,14 @@ import java.time.LocalDate;
 @Builder
 @Slf4j
 public class TripPlanDetailResponse {
-    private List<String> themaList;
+    private List<Thema> themaList;
     private String tripStartDate;
     private String tripEndDate;
     private String folderName;
     private SavedWellnessInfoList wellnessInfoList;
 
     public static TripPlanDetailResponse from(
-            List<String> themaList,
+            List<Thema> themaList,
             TripPlan tripPlan,
             SavedWellnessInfoList wellnessInfoList
     ){

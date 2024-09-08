@@ -72,7 +72,7 @@ public class TripPlanController {
     public ResponseEntity<TripPlanDetailResponse> getTripPlan(
             @PathVariable("planId") Long planId,
             @RequestParam(value = "thema", required = false) Thema thema,
-            @RequestParam(value = "page") int page
+            @RequestParam(value = "page", defaultValue = "0") int page
     ){
         return ResponseEntity.ok(tripPlanService.getTripPlan(planId, thema, page));
     }

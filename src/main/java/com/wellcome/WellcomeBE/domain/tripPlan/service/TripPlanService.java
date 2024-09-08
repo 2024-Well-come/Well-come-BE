@@ -58,7 +58,7 @@ public class TripPlanService {
     }
 
     public TripPlanResponse.TripPlanListResponse getTripPlans(String sort, int page){
-        PageRequest pageRequest = PageRequest.of(page,5);
+        PageRequest pageRequest = PageRequest.of(page,10);
         Page<TripPlan> tripPlans;
         if ("upcoming".equalsIgnoreCase(sort)) {
             tripPlans = tripPlanRepository.findUpcomingPlans(pageRequest);
@@ -131,9 +131,9 @@ public class TripPlanService {
         }
 
         // 상세 조회
-        Set<String> themaSet = new HashSet<>();
+        Set<Thema> themaSet = new HashSet<>();
         if(thema != null){
-            themaSet.add(thema.getName());
+            themaSet.add(thema);
         }
 
         PageRequest pageRequest = PageRequest.of(page, 8);
@@ -142,7 +142,7 @@ public class TripPlanService {
                 .map(tripPlanPlace -> {
                     // 전체 조회할 경우 테마 종류 누적
                     if(thema == null){
-                        themaSet.add(tripPlanPlace.getWellnessInfo().getThema().getName());
+                        themaSet.add(tripPlanPlace.getWellnessInfo().getThema());
                     }
 
                     // 구글맵 API 정보
