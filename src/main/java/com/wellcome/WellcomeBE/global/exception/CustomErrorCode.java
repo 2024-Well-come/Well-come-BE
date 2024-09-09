@@ -35,8 +35,9 @@ public enum CustomErrorCode {
 
 
     // TripPlanPlace (7xxx)
-    TRIP_PLAN_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, 6001,"해당하는 여행지 정보를 찾을 수 없습니다."),
-    TRIP_PLAN_PLACE_NOT_IN_FOLDER(HttpStatus.BAD_REQUEST, 7001, "해당 여행지가 요청된 폴더에 속하지 않습니다."),
+    TRIP_PLAN_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, 7001,"해당하는 여행지 정보를 찾을 수 없습니다."),
+    TRIP_PLAN_PLACE_NOT_IN_FOLDER(HttpStatus.BAD_REQUEST, 7002, "해당 여행지가 요청된 폴더에 속하지 않습니다."),
+    TRIP_PLAN_PLACE_DUPLICATION(HttpStatus.BAD_REQUEST,7003, "여행 폴더 내 해당 여행지가 이미 추가되어 있습니다. 중복 불가"),
 
 
     // Community (8xxx)

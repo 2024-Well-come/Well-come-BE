@@ -3,9 +3,9 @@ package com.wellcome.WellcomeBE.domain.tripPlanPlace.service;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanPlaceDeleteRequest;
-import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceRequest;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -17,9 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
 
 
 @Service
@@ -32,8 +30,18 @@ public class TripPlanPlaceService {
     private final TokenProvider tokenProvider;
 
     public void createTripPlanPlace(Long planId, TripPlanPlaceRequest request){
+        // 웰니스 정보 존재 확인
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(request.getWellnessInfoId()).orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
-        TripPlan tripPlan = tripPlanRepository.findById(planId).orElseThrow(() -> new CustomException(TRIP_PLAN_NOT_FOUND));
+
+        // 여행 폴더 생성 여부 확인
+        TripPlan tripPlan = tripPlanRepository.findById(planId).orElseThrow(() -> new CustomException(CustomErrorCode.TRIP_PLAN_NOT_FOUND));
+
+        // 기존에 추가된 여행지 여부 확인
+        if(tripPlanPlaceRepository.existsByTripPlanAndWellnessInfoAndMember(tripPlan,wellnessInfo,tokenProvider.getMember())){
+            throw new CustomException(CustomErrorCode.TRIP_PLAN_PLACE_DUPLICATION);
+        }
+
+
         TripPlanPlace tripPlanPlace = TripPlanPlace.builder()
                 .tripPlan(tripPlan)
                 .wellnessInfo(wellnessInfo)
@@ -51,21 +59,21 @@ public class TripPlanPlaceService {
         // 삭제 요청 유효성 검사
         // 1. 여행 폴더 존재 유무 + 유저가 해당 여행 폴더에 대해 권한이 있는지 확인
         TripPlan tripPlan = tripPlanRepository.findByIdAndMemberId(planId, currentMember.getId())
-                .orElseThrow(() -> new CustomException(ACCESS_DENIED));
+                .orElseThrow(() -> new CustomException(CustomErrorCode.ACCESS_DENIED));
 
         // 2. 삭제하려는 여행지 리스트가 모두 해당 여행 폴더에 속해 있는지 확인
         List<TripPlanPlace> tripPlanPlaceList = tripPlanPlaceRepository.findByIdIn(tripPlanPlaceIdList);
 
         // 해당하는 TripPlanPlaceId가 존재하지 않을 경우
         if(tripPlanPlaceList.size() != tripPlanPlaceIdList.size()){
-            throw new CustomException(TRIP_PLAN_PLACE_NOT_FOUND, "존재하지 않는 여행지 식별자가 포함되어 있습니다.");
+            throw new CustomException(CustomErrorCode.TRIP_PLAN_PLACE_NOT_FOUND, "존재하지 않는 여행지 식별자가 포함되어 있습니다.");
         }
 
         // TripPlanPlace가 요청된 TripPlan 내 여행지가 아닐 경우
         tripPlanPlaceList.stream()
                 .filter(tripPlanPlace -> tripPlanPlace.getTripPlan().getId() != tripPlan.getId())
                 .findAny()
-                .ifPresent(tripPlanPlace -> { throw new CustomException(TRIP_PLAN_PLACE_NOT_IN_FOLDER); });
+                .ifPresent(tripPlanPlace -> { throw new CustomException(CustomErrorCode.TRIP_PLAN_PLACE_NOT_IN_FOLDER); });
 
         // 일괄 삭제 (이미 삭제된 여행지일 경우 무시)
         tripPlanPlaceRepository.deleteAllByIdInBatch(tripPlanPlaceIdList);
