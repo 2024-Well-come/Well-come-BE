@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final TokenProvider tokenProvider;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public CustomAuthenticationFilter customAuthenticationFilter() {
@@ -45,8 +46,12 @@ public class SecurityConfig {
                 })
 
                 // CustomAuthenticationFilter 추가
-                .addFilterBefore(customAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(customAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 
+                // CustomAccessDeniedHandler 추가
+                .exceptionHandling(exception ->
+                    exception.accessDeniedHandler(customAccessDeniedHandler)
+                );
         return http.build();
     }
 
