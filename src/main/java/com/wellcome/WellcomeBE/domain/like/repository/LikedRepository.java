@@ -16,7 +16,7 @@ public interface LikedRepository extends JpaRepository<Liked,Long> {
     @Query("SELECT CASE WHEN COUNT(l) > 0 THEN TRUE ELSE FALSE END FROM Liked l WHERE l.wellnessInfo = :wellnessInfo AND l.member = :member")
     boolean existsByWellnessInfoAndMember(@Param("wellnessInfo") WellnessInfo wellnessInfo, @Param("member") Member member);
 
-    Optional<Liked> findByMemberId(Long memberId);
+    Optional<Liked> findByMemberIdAndWellnessInfoId(Long memberId, Long wellnessInfoId);
 
     @Query("SELECT new com.wellcome.WellcomeBE.domain.wellnessInfo.vo.LikeWellnessInfoVo(w.parentId, w.id, w.thumbnailUrl, w.title, w.thema, w.address) " +
             "FROM Liked l " +
@@ -25,7 +25,7 @@ public interface LikedRepository extends JpaRepository<Liked,Long> {
     List<LikeWellnessInfoVo> findByMemberIdAndThemaIn(@Param("member") Member member, @Param("thema") List<Thema> thema);
 
 
-    @Query("SELECT w.thema from Liked l join l.wellnessInfo w where l.member = :member ")
+    @Query("SELECT DISTINCT w.thema from Liked l join l.wellnessInfo w where l.member = :member ")
     List<Thema> findLikedThemaByMember(@Param("member") Member member);
 
 

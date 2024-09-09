@@ -2,10 +2,12 @@ package com.wellcome.WellcomeBE.domain.tripPlan;
 
 import com.wellcome.WellcomeBE.domain.BaseTimeEntity;
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,6 +30,10 @@ public class TripPlan extends BaseTimeEntity {
 
     private LocalDate startDate;
     private LocalDate endDate;
+
+    @OneToMany(mappedBy = "tripPlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TripPlanPlace> tripPlanPlaces;
+
 
     private String summary;
 

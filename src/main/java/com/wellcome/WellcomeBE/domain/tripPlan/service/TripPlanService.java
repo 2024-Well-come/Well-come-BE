@@ -5,8 +5,8 @@ import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
-import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -40,22 +41,61 @@ public class TripPlanService {
     private final GoogleMapInfoService googleMapInfoService;
 
     public void createTripPlan(TripPlanRequest request){
-        //TODO: 무작위 생성 폴더 이름 추가
 
         TripPlan tripPlan = TripPlan.builder()
                 .title(request.getName())
                 .startDate(request.getTripStartDate())
                 .endDate(request.getTripEndDate())
-                .member( tokenProvider.getMember())
+                .member(tokenProvider.getMember())
                 .build();
         tripPlanRepository.save(tripPlan);
     }
 
-    public TripPlanResponse.TripPlanListResponse getTripPlanList(){
+    public TripPlanResponse.TripPlanBriefResponse getTripPlanList(){
         List<TripPlan> result = tripPlanRepository.findByMember(tokenProvider.getMember());
         List<TripPlanResponse.TripPlanPlaceItem> planPlaceItems = result.stream().map(TripPlanResponse.TripPlanPlaceItem::from).collect(Collectors.toList());
-        return TripPlanResponse.TripPlanListResponse.builder().tripPlanList(planPlaceItems).build();
+        return TripPlanResponse.TripPlanBriefResponse.builder().tripPlanList(planPlaceItems).build();
     }
+
+    public TripPlanResponse.TripPlanListResponse getTripPlans(String sort, int page){
+        PageRequest pageRequest = PageRequest.of(page,10);
+        Page<TripPlan> tripPlans;
+        if ("upcoming".equalsIgnoreCase(sort)) {
+            tripPlans = tripPlanRepository.findUpcomingPlansByMember(tokenProvider.getMember(),pageRequest);
+        } else {
+            tripPlans = tripPlanRepository.findCreateLatestPlansByMember(tokenProvider.getMember(),pageRequest);
+        }
+        // TripPlanItem으로 변환
+        List<TripPlanResponse.TripPlanItem> tripPlanItems = tripPlans.getContent().stream()
+                .map(tripPlan -> TripPlanResponse.TripPlanItem.from(
+                        tripPlan,
+                        tripPlan.getTripPlanPlaces().isEmpty() ? null : tripPlan.getTripPlanPlaces().get(0).getWellnessInfo().getThumbnailUrl(),
+                        tripPlan.getTripPlanPlaces().size()))
+                .collect(Collectors.toList());
+
+        // TripPlanListItem 생성
+        TripPlanResponse.TripPlanListItem tripPlanListItem = TripPlanResponse.TripPlanListItem.from(
+                tripPlans.getTotalElements(),
+                tripPlans.getNumber(),
+                tripPlans.hasPrevious(),
+                tripPlans.hasNext(),
+                tripPlanItems);
+
+        return TripPlanResponse.TripPlanListResponse.builder()
+                .upcomingTripList(getUpcomingTrips())
+                .tripPlanList(tripPlanListItem)
+                .build();
+
+    }
+    private List<TripPlanResponse.TripPlanItem> getUpcomingTrips() {
+        List<TripPlan> upcomingTrips = tripPlanRepository.findAllByTripStartDateAfterByMember(tokenProvider.getMember());
+        return upcomingTrips.stream().map(tripPlan -> TripPlanResponse.TripPlanItem.from(
+                        tripPlan,
+                        tripPlan.getTripPlanPlaces().isEmpty() ? null : tripPlan.getTripPlanPlaces().get(0).getWellnessInfo().getThumbnailUrl(),
+                        tripPlan.getTripPlanPlaces().size()))
+                .collect(Collectors.toList());
+    }
+
 
     @Transactional
     public void deleteTripPlan(TripPlanDeleteRequest request) {
@@ -91,9 +131,9 @@ public class TripPlanService {
         }
 
         // 상세 조회
-        Set<String> themaSet = new HashSet<>();
+        Set<Thema> themaSet = new HashSet<>();
         if(thema != null){
-            themaSet.add(thema.getName());
+            themaSet.add(thema);
         }
 
         PageRequest pageRequest = PageRequest.of(page, 8);
@@ -102,7 +142,7 @@ public class TripPlanService {
                 .map(tripPlanPlace -> {
                     // 전체 조회할 경우 테마 종류 누적
                     if(thema == null){
-                        themaSet.add(tripPlanPlace.getWellnessInfo().getThema().getName());
+                        themaSet.add(tripPlanPlace.getWellnessInfo().getThema());
                     }
 
                     // 구글맵 API 정보

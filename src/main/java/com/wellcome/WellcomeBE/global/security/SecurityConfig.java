@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final TokenProvider tokenProvider;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public CustomAuthenticationFilter customAuthenticationFilter() {
@@ -36,19 +37,21 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> {
                     authorize
                             .requestMatchers("/health-check").permitAll()
-                            .requestMatchers("/api/oauth2/kakao").permitAll()
-                            .requestMatchers("/api/oauth2/kakao/refresh").permitAll()
-                            .requestMatchers("/api/oauth2/kakao/logout").permitAll()
+                            .requestMatchers("/api/oauth2/kakao/**").permitAll()
                             .requestMatchers("/getTourBasicApiData").permitAll()
                             .requestMatchers("/getTourImgApiData").permitAll()
-                            .requestMatchers("/place/details").permitAll()
+                            .requestMatchers("/{place}/details").permitAll()
                             .requestMatchers("/place/id").permitAll()
                             .anyRequest().authenticated();
                 })
 
                 // CustomAuthenticationFilter 추가
-                .addFilterBefore(customAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(customAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 
+                // CustomAccessDeniedHandler 추가
+                .exceptionHandling(exception ->
+                    exception.accessDeniedHandler(customAccessDeniedHandler)
+                );
         return http.build();
     }
 

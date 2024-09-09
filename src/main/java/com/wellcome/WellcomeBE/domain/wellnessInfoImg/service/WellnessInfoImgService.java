@@ -46,8 +46,7 @@ public class WellnessInfoImgService {
 
     // DB WellnessInfo에 해당하는 데이터를 조회
     public void fetchAndSaveTourImg() {
-
-        List<WellnessInfo> wellnessInfoList = wellnessInfoRepository.findAll();
+        List<WellnessInfo> wellnessInfoList = wellnessInfoRepository.findTop10ByOrderByIdAsc();
         Flux.fromIterable(wellnessInfoList) // DB 조회 결과에 대해 Iterable 사용
                 .flatMap(this::fetchAndSaveImage, CONCURRENT_REQUESTS) // 이미지 API 호출 및 저장
                 .buffer(BATCH_SIZE)
@@ -60,11 +59,12 @@ public class WellnessInfoImgService {
     private Mono<Void> fetchAndSaveImage(WellnessInfo wellnessInfo) {
         return fetchImage(wellnessInfo.getContentId()) // 이미지 API 호출
                 .flatMapMany(response -> {
-                    TourImageApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
-                    if (items == null || items.getItem() == null || items.getItem().isEmpty()) {
+                    TourImageApiResponse.Response response1 = response.getResponse();
+                    if (response1 == null || response1.getBody().getItems() == null || response1.getBody().getItems().getItem() == null || response1.getBody().getItems().getItem().isEmpty()) {
                         log.info("{}에 상세 이미지에 대한 검색 결과 없음", wellnessInfo.getContentId());
                         return Flux.empty();
                     }
+                    TourImageApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
                     return Flux.fromIterable(items.getItem()); // API 응답에서 이미지 리스트 추출
                 })
                 .map(imgItem -> WellnessInfoImg.builder() // WellnessInfoImg 엔티티 생성
@@ -80,15 +80,17 @@ public class WellnessInfoImgService {
     // tour4.0 Image API 요청
     private Mono<TourImageApiResponse> fetchImage(String wellnessInfoId) {
         URI uriString = UriComponentsBuilder.fromUriString("http://apis.data.go.kr/B551011/KorService1/detailImage1")
-                .queryParam("serviceKey", config.getServiceKey())
                 .queryParam("MobileOS", "AND")
                 .queryParam("MobileApp", "Wellcome")
                 .queryParam("_type", "json")
                 .queryParam("contentId", wellnessInfoId)
                 .queryParam("imageYN", "Y")
                 .queryParam("subImageYN", "Y")
+                .queryParam("serviceKey", config.getServiceKey())
                 .build(true)
                 .toUri();
+
+        log.info("Requesting URL: {}", uriString.toString());
 
         return tourImageApiWebClient.get()
                 .uri(uriString)

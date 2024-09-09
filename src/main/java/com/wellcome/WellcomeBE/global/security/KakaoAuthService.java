@@ -3,6 +3,7 @@ package com.wellcome.WellcomeBE.global.security;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoTokenResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,17 @@ public class KakaoAuthService {
 
     public KakaoAuthService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
+    }
+
+    // 카카오 API 호출 - 인가 코드 발급
+    public String getAuthorizationCode(){
+        return UriComponentsBuilder
+                .fromUriString("https://kauth.kakao.com/oauth/authorize")
+                .queryParam("client_id", clientId)
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("response_type", "code")
+                .build()
+                .toUriString();
     }
 
     // 카카오 API 호출 - 토큰 받기

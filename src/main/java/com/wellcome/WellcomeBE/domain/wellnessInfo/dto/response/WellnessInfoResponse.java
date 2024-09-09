@@ -7,6 +7,7 @@ import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Getter
@@ -21,15 +22,19 @@ public class WellnessInfoResponse {
 
     public static WellnessInfoResponse from (
             List<Thema> themaList, List<Sigungu> sigunguList,
-            //String tripStartDate, String tripEndDate,
             WellnessInfoListRequest request,
             WellnessInfoList wellnessInfoList
     ){
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        String tripStartDate = request.getTripStartDate() != null ? request.getTripStartDate().format(formatter) : null;
+        String tripEndDate = request.getTripEndDate() != null ? request.getTripEndDate().format(formatter) : null;
+
         return WellnessInfoResponse.builder()
                 .themaList(themaList)
                 .sigunguList(sigunguList)
-                .tripStartDate(request.getTripStartDate())
-                .tripEndDate(request.getTripEndDate())
+                .tripStartDate(tripStartDate)
+                .tripEndDate(tripEndDate)
                 .wellnessInfoList(wellnessInfoList)
                 .build();
     }

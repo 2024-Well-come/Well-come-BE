@@ -1,7 +1,9 @@
 package com.wellcome.WellcomeBE.domain.tripPlanPlace.repository;
 
+import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,4 +35,13 @@ public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Lon
                                                  @Param("planId") Long planId,
                                                  @Param("thema") Thema thema);
 
+    @Query("SELECT COUNT(tp) > 0 FROM TripPlanPlace tp " +
+            "JOIN tp.wellnessInfo wi " +
+            "JOIN tp.tripPlan t " +
+            "WHERE t = :tripPlan " +
+            "AND wi = :wellnessInfo " +
+            "AND t.member = :member")
+    boolean existsByTripPlanAndWellnessInfoAndMember(@Param("tripPlan") TripPlan tripPlan,
+                                                     @Param("wellnessInfo") WellnessInfo wellnessInfo,
+                                                     @Param("member") Member member);
 }

@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.global.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -7,8 +8,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-
 @Configuration
 @Slf4j
 public class TourInfoApiWebClientConfig {
@@ -63,5 +65,4 @@ public class TourInfoApiWebClientConfig {
     public String getServiceKey() {
         return apiKey;
     }
-
 }
