@@ -12,7 +12,6 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNear
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
-import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
@@ -112,26 +111,9 @@ public class WellnessInfoApiService {
 
         // 3. 웰니스 이미지 목록 가져오기
         List<String> wellnessInfoImg = wellnessInfoImgRepository.findByWellnessInfo(wellness);
+        boolean liked = likedRepository.existsByWellnessInfoAndMember(wellness, tokenProvider.getMember());
 
-        // 4. JSON 데이터에서 운영 시간 찾기
-        OpeningHoursUtils.OpenStatus openStatus = OpeningHoursUtils.getOpenStatus(placeResult);
-
-
-        return WellnessInfoBasicResponse.builder()
-                .wellnessInfoId(wellness.getId())
-                .thumbnailUrl(wellness.getThumbnailUrl())
-                .imgList(wellnessInfoImg)
-                .title(wellness.getTitle())
-                .category(wellness.getCategory().getName())
-                .address(wellness.getAddress())
-                .mapX(wellness.getMapX())
-                .mapY(wellness.getMapY())
-                .isLiked(likedRepository.existsByWellnessInfoAndMember(wellness,tokenProvider.getMember()))
-                .isOpen(openStatus.getIsOpen())
-                .openDetail(openStatus.getOpenDetail())
-                .tel(wellness.getTel())
-                .website(placeResult.getWebsite())
-                .build();
+        return WellnessInfoBasicResponse.from(wellness,wellnessInfoImg,placeResult,liked);
     }
 
     /**
