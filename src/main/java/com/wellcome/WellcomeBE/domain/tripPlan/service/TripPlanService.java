@@ -5,8 +5,8 @@ import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
-import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
@@ -22,14 +22,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +46,7 @@ public class TripPlanService {
                 .title(request.getName())
                 .startDate(request.getTripStartDate())
                 .endDate(request.getTripEndDate())
-                .member( tokenProvider.getMember())
+                .member(tokenProvider.getMember())
                 .build();
         tripPlanRepository.save(tripPlan);
     }
@@ -61,9 +61,9 @@ public class TripPlanService {
         PageRequest pageRequest = PageRequest.of(page,10);
         Page<TripPlan> tripPlans;
         if ("upcoming".equalsIgnoreCase(sort)) {
-            tripPlans = tripPlanRepository.findUpcomingPlans(pageRequest);
+            tripPlans = tripPlanRepository.findUpcomingPlansByMember(tokenProvider.getMember(),pageRequest);
         } else {
-            tripPlans = tripPlanRepository.findCreateLatestPlans(pageRequest);
+            tripPlans = tripPlanRepository.findCreateLatestPlansByMember(tokenProvider.getMember(),pageRequest);
         }
         // TripPlanItem으로 변환
         List<TripPlanResponse.TripPlanItem> tripPlanItems = tripPlans.getContent().stream()
@@ -88,7 +88,7 @@ public class TripPlanService {
 
     }
     private List<TripPlanResponse.TripPlanItem> getUpcomingTrips() {
-        List<TripPlan> upcomingTrips = tripPlanRepository.findAllByTripStartDateAfter();
+        List<TripPlan> upcomingTrips = tripPlanRepository.findAllByTripStartDateAfterByMember(tokenProvider.getMember());
         return upcomingTrips.stream().map(tripPlan -> TripPlanResponse.TripPlanItem.from(
                         tripPlan,
                         tripPlan.getTripPlanPlaces().isEmpty() ? null : tripPlan.getTripPlanPlaces().get(0).getWellnessInfo().getThumbnailUrl(),
