@@ -2,12 +2,14 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
 
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNearbyList;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
@@ -171,7 +173,7 @@ public class WellnessInfoApiService {
         List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
 
 
-        List<WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
+        List<WellnessInfoNearbyList.WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
                 .map(place -> {
                     PlaceReviewResponse.PlaceResult placeResult = null;
                     if(place.getParentId() != null) {
@@ -179,7 +181,7 @@ public class WellnessInfoApiService {
                     }
                     double distance = calculateDistance(mapY, mapX, place.getMapY(), place.getMapX());
 
-                    return WellnessNearbyDto.form(place, placeResult, distance);
+                    return WellnessInfoNearbyList.WellnessNearbyDto.form(place, placeResult, distance);
                 })
                 .collect(Collectors.toList());
         return WellnessInfoNearbyList.from(wellnessNearbyDtoList);
