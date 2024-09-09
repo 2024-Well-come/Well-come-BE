@@ -40,7 +40,7 @@ public class SecurityConfig {
                             .requestMatchers("/api/oauth2/kakao/**").permitAll()
                             .requestMatchers("/getTourBasicApiData").permitAll()
                             .requestMatchers("/getTourImgApiData").permitAll()
-                            .requestMatchers("/place/details").permitAll()
+                            .requestMatchers("/{place}/details").permitAll()
                             .requestMatchers("/place/id").permitAll()
                             .anyRequest().authenticated();
                 })

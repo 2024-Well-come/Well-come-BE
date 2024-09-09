@@ -2,12 +2,14 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
 
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNearbyList;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
@@ -36,7 +38,6 @@ public class WellnessInfoApiService {
 
     private final WellnessInfoRepository wellnessInfoRepository;
     private final TokenProvider tokenProvider;
-    private final MemberRepository memberRepository;
     private final GoogleMapInfoService googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
@@ -167,16 +168,20 @@ public class WellnessInfoApiService {
 
         Double mapX = wellnessInfo.getMapX();
         Double mapY = wellnessInfo.getMapY();
-        Double radius = 5.0; // 예시로 5km 설정
+        Double radius = 10.0; // 예시로 10km 설정
 
         List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
 
-        List<WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
-                .map(WellnessInfo -> {
-                    PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellnessInfo.getParentId()).block().getResult();
-                    double distance = calculateDistance(mapY, mapX, WellnessInfo.getMapY(), WellnessInfo.getMapX());
 
-                    return WellnessNearbyDto.form(WellnessInfo, placeResult, distance);
+        List<WellnessInfoNearbyList.WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
+                .map(place -> {
+                    PlaceReviewResponse.PlaceResult placeResult = null;
+                    if(place.getParentId() != null) {
+                        placeResult = googleMapInfoService.getPlaceDetails(place.getParentId()).block().getResult();
+                    }
+                    double distance = calculateDistance(mapY, mapX, place.getMapY(), place.getMapX());
+
+                    return WellnessInfoNearbyList.WellnessNearbyDto.form(place, placeResult, distance);
                 })
                 .collect(Collectors.toList());
         return WellnessInfoNearbyList.from(wellnessNearbyDtoList);

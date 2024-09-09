@@ -68,11 +68,11 @@ public class GoogleMapInfoService {
 
     // 비동기적으로 PlaceId 가져오기
     private Mono<PlacePredictionResponse> getPlaceId(String address, String title) {
-        return getPlaceIdByAddress(address)
-                .doOnNext(response -> log.info("Response from address lookup: {}", response))
+        return getPlaceIdByTitle(title)
+                .doOnNext(response -> log.info("Response from title lookup: {}", response))
                 .switchIfEmpty(
-                        getPlaceIdByTitle(title)
-                                .doOnNext(response -> log.info("Response from title lookup: {}", response))
+                        getPlaceIdByAddress(address)
+                                .doOnNext(response -> log.info("Response from address lookup: {}", response))
                 );
     }
 
