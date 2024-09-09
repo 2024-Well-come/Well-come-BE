@@ -42,7 +42,7 @@ public class WellnessInfoBasicResponse {
                 .mapX(wellness.getMapX())
                 .mapY(wellness.getMapY())
                 .isLiked(isLiked)
-                .isOpen(placeResult != null ? OpeningHoursUtils.getOpenStatus(placeResult).getIsOpen() : false)
+                .isOpen(placeResult != null ? OpeningHoursUtils.getOpenStatus(placeResult).getIsOpen() : null)
                 .openDetail(placeResult != null ? OpeningHoursUtils.getOpenStatus(placeResult).getOpenDetail() : "정보 없음")
                 .tel(wellness.getTel())
                 .website(placeResult != null ? placeResult.getWebsite() : "")

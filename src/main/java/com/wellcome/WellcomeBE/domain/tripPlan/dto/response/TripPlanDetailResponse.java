@@ -75,7 +75,7 @@ public class TripPlanDetailResponse {
             private String title;
             private Double rating;
             private Integer ratingNum;
-            private Boolean isOpen;
+            //private Boolean isOpen;
             private String thema;
             private String address;
             private Double mapX;
@@ -87,13 +87,13 @@ public class TripPlanDetailResponse {
             ){
 
                 // 구글맵 API 정보 (평점, 평점 수, 영업 상황)
-                Double rating = null; Integer ratingNum = null; Boolean isOpen = null;
+                Double rating = null; Integer ratingNum = null; //Boolean isOpen = null;
                 if(placeDetails != null) {
                     rating = placeDetails.getRating();
                     ratingNum = placeDetails.getUser_ratings_total();
 
-                    OpeningHoursUtils.OpenStatus openStatus = OpeningHoursUtils.getOpenStatus(placeDetails);
-                    isOpen = openStatus.getIsOpen();
+                    //OpeningHoursUtils.OpenStatus openStatus = OpeningHoursUtils.getOpenStatus(placeDetails);
+                    //isOpen = openStatus.getIsOpen();
                 }
 
                 return SavedWellnessInfoItem.builder()
@@ -102,7 +102,7 @@ public class TripPlanDetailResponse {
                         .title(wellnessInfo.getTitle())
                         .rating(rating)
                         .ratingNum(ratingNum)
-                        .isOpen(isOpen)
+                        //.isOpen(isOpen)
                         .thema(wellnessInfo.getThema().getName())
                         .address(wellnessInfo.getAddress())
                         .mapX(wellnessInfo.getMapX())
