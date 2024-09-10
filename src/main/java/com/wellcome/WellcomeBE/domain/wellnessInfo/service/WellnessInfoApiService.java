@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -96,7 +97,9 @@ public class WellnessInfoApiService {
 
     /**
      *  [FEAT] 웰니스 장소 상세 조회(1) - 기본 정보 조회
+     *
      */
+    @Transactional
     public WellnessInfoBasicResponse getWellnessInfoBasic(Long wellnessInfoId){
 
 
@@ -112,6 +115,9 @@ public class WellnessInfoApiService {
         // 3. 웰니스 이미지 목록 가져오기
         List<String> wellnessInfoImg = wellnessInfoImgRepository.findByWellnessInfo(wellness);
         boolean liked = likedRepository.existsByWellnessInfoAndMember(wellness, tokenProvider.getMember());
+
+        // 조회 수 추가
+        wellness.updateViewNum();
 
         return WellnessInfoBasicResponse.from(wellness,wellnessInfoImg,placeResult,liked);
     }
