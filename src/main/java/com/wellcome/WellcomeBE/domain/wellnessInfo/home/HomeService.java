@@ -16,7 +16,7 @@ public class HomeService {
 
     private final WellnessInfoRepository wellnessInfoRepository;
 
-    private static final List<Long> RECOMMENDED_PLACE_LIST = List.of(10L, 20L, 30L, 40L, 50L);
+    private static final List<Long> RECOMMENDED_PLACE_LIST = List.of(7L, 333L, 864L, 921L, 1088L, 1105L, 1115L);
 
     public HomeResponse getRandomWellnessInfoList() {
 
