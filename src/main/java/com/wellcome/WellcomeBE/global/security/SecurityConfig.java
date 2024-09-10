@@ -42,6 +42,7 @@ public class SecurityConfig {
                             .requestMatchers("/getTourImgApiData").permitAll()
                             .requestMatchers("/{place}/details").permitAll()
                             .requestMatchers("/place/id").permitAll()
+                            .requestMatchers("/api/home").permitAll()
                             .anyRequest().authenticated();
                 })
 

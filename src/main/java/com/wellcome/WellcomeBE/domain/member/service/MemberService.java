@@ -32,9 +32,7 @@ public class MemberService {
      * 카카오 로그인 & 회원가입 처리
      */
     public void login(HttpServletResponse response) throws IOException {
-        log.info("*** 카카오 로그인 요청 controller");
         String requestUrl = kakaoAuthService.getAuthorizationCode();
-        log.info("*** 카카오 로그인 redirection url: {}", requestUrl);
         response.sendRedirect(requestUrl);
     }
 
