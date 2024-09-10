@@ -3,10 +3,13 @@ package com.wellcome.WellcomeBE.domain.member.service;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.dto.response.*;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
+import com.wellcome.WellcomeBE.global.S3Service;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.KakaoAuthService;
 import com.wellcome.WellcomeBE.global.security.RefreshTokenService;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
+import com.wellcome.WellcomeBE.global.type.Role;
+import com.wellcome.WellcomeBE.global.type.SocialLogin;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,14 +30,13 @@ public class MemberService {
     private final KakaoAuthService kakaoAuthService;
     private final RefreshTokenService refreshTokenService;
     private final MemberRepository memberRepository;
+    private final S3Service s3Service;
 
     /**
      * 카카오 로그인 & 회원가입 처리
      */
     public void login(HttpServletResponse response) throws IOException {
-        log.info("*** 카카오 로그인 요청 controller");
         String requestUrl = kakaoAuthService.getAuthorizationCode();
-        log.info("*** 카카오 로그인 redirection url: {}", requestUrl);
         response.sendRedirect(requestUrl);
     }
 
@@ -60,7 +62,7 @@ public class MemberService {
     private void verifyAndRegisterMember(KakaoUserInfoResponse userInfoResponse) {
         Optional<Member> member = memberRepository.findByKakaoId(userInfoResponse.getId());
         if(!member.isPresent()){
-            memberRepository.save(Member.createKakaoUser(userInfoResponse));
+            memberRepository.save(this.createKakaoUser(userInfoResponse));
         }
     }
 
@@ -72,12 +74,14 @@ public class MemberService {
 
         // refresh token 추출
         String refreshToken = tokenProvider.extractToken(httpServletRequest);
+        log.info("*** refreshToken:{}", refreshToken);
         if(refreshToken == null) {
             throw new CustomException(TOKEN_MISSING, "refresh token이 누락되었습니다.");
         }
 
         // refresh token 유효성 확인
         String savedKakaoId = refreshTokenService.getKakaoIdByRefreshToken(refreshToken);
+        log.info("*** savedKakaoId:{}", savedKakaoId);
         if(savedKakaoId == null) { //refresh token 만료
             throw new CustomException(REFRESH_TOKEN_EXPIRED);
         }
@@ -130,4 +134,18 @@ public class MemberService {
         return MemberProfileResponse.from(member);
     }
 
+
+    public Member createKakaoUser(KakaoUserInfoResponse userInfoResponse) {
+        KakaoUserInfoResponse.KakaoAccount.Profile profile = userInfoResponse.getKakaoAccount().getProfile();
+
+        String profileImg = profile.getIsDefaultImage() ? s3Service.getDefaultImageUrl() : profile.getProfileImgUrl();
+
+        return Member.builder()
+                .nickname(profile.getNickname())
+                .profileImg(profileImg)
+                .role(Role.USER)
+                .socialType(SocialLogin.KAKAO)
+                .kakaoId(userInfoResponse.getId())
+                .build();
+    }
 }

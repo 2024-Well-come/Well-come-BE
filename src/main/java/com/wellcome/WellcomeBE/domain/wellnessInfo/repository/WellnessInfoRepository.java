@@ -120,6 +120,5 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
                                                   @Param("radius") Double radius);
 
 
-
-
+    List<WellnessInfo> findByIdIn(List<Long> wellnessInfoIdList);
 }

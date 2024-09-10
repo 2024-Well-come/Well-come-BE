@@ -3,7 +3,9 @@ package com.wellcome.WellcomeBE.domain.review;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,20 +17,21 @@ import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
+@Qualifier("jsonRedisTemplate")
 public class GoogleMapInfoService {
 
     @Value("${google_api.key}")
     private String apiKey;
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> jsonRedisTemplate;
     private final WebClient webClient;
     private final WellnessInfoRepository wellnessInfoRepository;
 
 
     // 생성자 주입
-    public GoogleMapInfoService(WebClient googlePlaceInfoWebClient, RedisTemplate<String, Object> redisTemplate, WellnessInfoRepository wellnessInfoRepository) {
+    public GoogleMapInfoService(WebClient googlePlaceInfoWebClient, RedisTemplate<String, Object> jsonRedisTemplate, WellnessInfoRepository wellnessInfoRepository) {
         this.webClient = googlePlaceInfoWebClient;
-        this.redisTemplate = redisTemplate;
+        this.jsonRedisTemplate = jsonRedisTemplate;
         this.wellnessInfoRepository = wellnessInfoRepository;
     }
 
@@ -108,7 +111,7 @@ public class GoogleMapInfoService {
 
     public Mono<PlaceReviewResponse> getPlaceDetails(String placeId) {
         // Redis에서 캐시된 데이터를 먼저 조회
-        PlaceReviewResponse cachedResponse = (PlaceReviewResponse) redisTemplate.opsForValue().get(placeId);
+        PlaceReviewResponse cachedResponse = (PlaceReviewResponse) jsonRedisTemplate.opsForValue().get(placeId);
         if (cachedResponse != null) {
             // 캐시에 데이터가 있으면 이를 반환
             return Mono.just(cachedResponse);
@@ -125,7 +128,7 @@ public class GoogleMapInfoService {
                 .bodyToMono(PlaceReviewResponse.class)
                 .doOnNext(response -> {
                     // API 호출 후 데이터를 Redis에 캐싱
-                    redisTemplate.opsForValue().set(placeId, response, Duration.ofDays(7));
+                    jsonRedisTemplate.opsForValue().set(placeId, response, Duration.ofDays(7));
                 });
     }
 
