@@ -23,14 +23,12 @@ public class MemberController {
     // 카카오 로그인 요청
     @GetMapping("/api/oauth2/kakao/login")
     public void login(HttpServletResponse response) throws IOException {
-        log.info("*** 카카오 로그인 요청 controller");
         memberService.login(response);
     }
 
     // 토큰 발급
     @GetMapping("/api/oauth2/kakao")
     public ResponseEntity<LoginResponse> kakaoLogin(@RequestParam("code") String code){
-        log.info("*** 토큰 발급 요청");
         return ResponseEntity.ok(memberService.handleKakaoLogin(code));
     }
 
