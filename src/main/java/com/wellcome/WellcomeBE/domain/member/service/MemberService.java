@@ -74,12 +74,14 @@ public class MemberService {
 
         // refresh token 추출
         String refreshToken = tokenProvider.extractToken(httpServletRequest);
+        log.info("*** refreshToken:{}", refreshToken);
         if(refreshToken == null) {
             throw new CustomException(TOKEN_MISSING, "refresh token이 누락되었습니다.");
         }
 
         // refresh token 유효성 확인
         String savedKakaoId = refreshTokenService.getKakaoIdByRefreshToken(refreshToken);
+        log.info("*** savedKakaoId:{}", savedKakaoId);
         if(savedKakaoId == null) { //refresh token 만료
             throw new CustomException(REFRESH_TOKEN_EXPIRED);
         }
