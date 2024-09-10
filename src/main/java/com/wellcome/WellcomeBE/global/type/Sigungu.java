@@ -12,24 +12,24 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public enum Sigungu {
 
-    GANGNEUNG("강릉", 1),
-    GOSEONG("고성", 2),
-    DONGHAE("동해", 3),
-    SAMCHEOK("삼척", 4),
-    SOKCHO("속초", 5),
-    YANGGU("양구", 6),
-    YANGYANG("양양", 7),
-    YEONGWOL("영월", 8),
-    WONJU("원주", 9),
-    INJE("인제", 10),
-    JEONGSEON("정선", 11),
-    CHEORWON("철원", 12),
-    CHUNCHEON("춘천", 13),
-    TAEBAEK("태백", 14),
-    PYEONGCHANG("평창", 15),
-    HONGCHEON("홍천", 16),
-    HWACHEON("화천", 17),
-    HOENGSEONG("횡성", 18);
+    GANGNEUNG("강릉시", 1),
+    GOSEONG("고성군", 2),
+    DONGHAE("동해시", 3),
+    SAMCHEOK("삼척시", 4),
+    SOKCHO("속초시", 5),
+    YANGGU("양구군", 6),
+    YANGYANG("양양군", 7),
+    YEONGWOL("영월군", 8),
+    WONJU("원주시", 9),
+    INJE("인제군", 10),
+    JEONGSEON("정선군", 11),
+    CHEORWON("철원군", 12),
+    CHUNCHEON("춘천시", 13),
+    TAEBAEK("태백시", 14),
+    PYEONGCHANG("평창군", 15),
+    HONGCHEON("홍천군", 16),
+    HWACHEON("화천군", 17),
+    HOENGSEONG("횡성군", 18);
 
     private final String name;
     private final int code;
