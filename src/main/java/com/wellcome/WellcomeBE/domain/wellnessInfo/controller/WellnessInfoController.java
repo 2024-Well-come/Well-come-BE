@@ -4,6 +4,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListR
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoApiService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService;
+import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,13 +24,23 @@ public class WellnessInfoController {
         wellnessInfoService.fetchAndSaveTourInfo();
     }
 
-    // 웰니스 장소 추천 목록
-    @PostMapping("/api/wellness-info")
-    public ResponseEntity<WellnessInfoResponse> getWellnessInfoList(
+    // TODO 이미지 저장 방식 선택 후 endpoint 수정 필요
+    // 웰니스 장소 추천 목록 (썸네일 이미지 URL DB에 바로 저장)
+    @PostMapping("/api/v1/wellness-info")
+    public ResponseEntity<WellnessInfoResponse> getWellnessInfoListWithOriginalThumbnail(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestBody WellnessInfoListRequest request
     ){
-        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoList(page, request));
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoList(page, request, ImgSavedType.ORIGINAL));
+    }
+
+    // 웰니스 장소 추천 목록 (썸네일 이미지 URL DB에 바로 저장)
+    @PostMapping("/api/v2/wellness-info")
+    public ResponseEntity<WellnessInfoResponse> getWellnessInfoListWithS3Thumbnail(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestBody WellnessInfoListRequest request
+    ){
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoList(page, request, ImgSavedType.S3));
     }
 
     // 웰니스 장소 상세 조회(1) - 기본 정보 조회

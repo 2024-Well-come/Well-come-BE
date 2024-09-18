@@ -1,4 +1,4 @@
-package com.wellcome.WellcomeBE.global;
+package com.wellcome.WellcomeBE.global.image;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PutObjectRequest;

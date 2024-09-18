@@ -9,6 +9,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoReposi
 import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
+import com.wellcome.WellcomeBE.global.image.TourApiS3Service;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
@@ -39,6 +40,7 @@ public class WellnessInfoService {
     private final TourInfoApiWebClientConfig webClientConfig;
     private final WellnessInfoRepository wellnessInfoRepository;
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
+    private final TourApiS3Service tourApiS3Service;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -49,10 +51,13 @@ public class WellnessInfoService {
     public WellnessInfoService(
             WebClient webClient,
             WellnessInfoRepository wellnessInfoRepository,
-            TourInfoApiWebClientConfig webClientConfig) {
+            TourInfoApiWebClientConfig webClientConfig,
+            TourApiS3Service tourApiS3Service
+    ) {
         this.webClient = webClient;
         this.wellnessInfoRepository = wellnessInfoRepository;
         this.webClientConfig = webClientConfig;
+        this.tourApiS3Service = tourApiS3Service;
     }
     public void fetchAndSaveTourInfo() {
 
@@ -92,7 +97,7 @@ public class WellnessInfoService {
                     }
                     return Flux.fromIterable(items.getItem());
                 })
-                .map(this::convertToEntity);
+                .map(this::processImgByItem);
     }
 
     private Mono<TourBasicApiResponse> fetchFromTourBasicApi(CategoryDetail categoryDetail, int pageNo){
@@ -144,7 +149,7 @@ public class WellnessInfoService {
                     }
                     return Flux.fromIterable(response.getResponse().getBody().getItems().getItem());
                 })
-                .map(this::convertToEntity);
+                .map(this::processImgByItem);
     }
 
     private Mono<TourBasicApiResponse> fetchDataFromTourSearchApi(String keyword, int pageNo) {
@@ -178,9 +183,9 @@ public class WellnessInfoService {
         }
     }
 
-    private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item){
+    private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item, String s3ThumbnailUrl){
         try {
-            return item.toEntity();
+            return item.toEntity(s3ThumbnailUrl);
         } catch (ParseException e) {
             throw new RuntimeException("Failed to convert item to entity: ", e);
         }
@@ -231,7 +236,17 @@ public class WellnessInfoService {
 //        return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, TOUR_API_RESPONSE_ERROR.getMessage() + ": " + errorMessage));
 //    }
 
+    // 썸네일 이미지가 있을 경우 S3에 업로드
+    private WellnessInfo processImgByItem(TourBasicApiResponse.Response.Body.Items.Item item) {
+        String originalUrl = item.getFirstimage2();
+        String s3Url = null;
 
+        // 이미지 URL이 있는 경우 S3에 업로드
+        if (originalUrl != null && !originalUrl.trim().isEmpty()) {
+            s3Url = tourApiS3Service.uploadImg(originalUrl, item.getContentid());
+        }
 
+        return convertToEntity(item, s3Url);
+    }
 
 }
