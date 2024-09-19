@@ -46,3 +46,17 @@ server:
     encoding:
       force: true
       charset: UTF-8
+
+# promethus 설정
+management:
+  endpoint:
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+
+  # Actuator 설정
+  endpoints:
+    web:
+      exposure:
+        include: "*"

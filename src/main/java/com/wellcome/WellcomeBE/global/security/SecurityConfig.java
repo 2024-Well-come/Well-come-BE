@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> {
                     authorize
                             .requestMatchers("/health-check").permitAll()
+                            .requestMatchers("/actuator/**").permitAll()
                             .requestMatchers("/api/oauth2/kakao/**").permitAll()
                             .requestMatchers("/getTourBasicApiData").permitAll()
                             .requestMatchers("/getTourImgApiData").permitAll()
