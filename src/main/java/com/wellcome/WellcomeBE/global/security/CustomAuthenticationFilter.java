@@ -29,7 +29,8 @@ public class CustomAuthenticationFilter extends GenericFilterBean {
     private static final List<String> EXCLUDE_URLS = Arrays.asList(
             "/api/oauth2/kakao/refresh",
             "/api/oauth2/kakao/login",
-            "/api/oauth2/kakao"
+            "/api/oauth2/kakao",
+            "/api/home"
     );
 
     @Override

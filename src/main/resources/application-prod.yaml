@@ -47,6 +47,7 @@ server:
       force: true
       charset: UTF-8
 
+
 # promethus 설정
 management:
   endpoint:
@@ -60,3 +61,27 @@ management:
     web:
       exposure:
         include: "*"
+
+# Multipart 파일 업로드 설정
+    multipart:
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:8MB}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:128MB}
+
+# AWS 설정
+cloud:
+  aws:
+    credentials:
+      accessKey: ${CLOUD_AWS_CREDENTIALS_ACCESS_KEY:}
+      secretKey: ${CLOUD_AWS_CREDENTIALS_SECRET_KEY:}
+    s3:
+      bucketName: ${CLOUD_AWS_S3_BUCKET_NAME:}
+    region:
+      static: ${CLOUD_AWS_REGION_STATIC:ap-northeast-2}
+
+# 기본 이미지 URL
+app:
+  default:
+    image:
+      url: ${APP_DEFAULT_IMAGE_URL:https://serviceimagefolder.s3.ap-northeast-2.amazonaws.com/LogdoImg.png}
+
+
