@@ -59,8 +59,6 @@ cloud:
       accessKey: ${CLOUD_AWS_CREDENTIALS_ACCESS_KEY:}
       secretKey: ${CLOUD_AWS_CREDENTIALS_SECRET_KEY:}
     s3:
-      tour_api_img:
-        bucketName: ${CLOUD_AWS_S3_TOUR_API_IMG_BUCKET_NAME}
       bucketName: ${CLOUD_AWS_S3_BUCKET_NAME:}
     region:
       static: ${CLOUD_AWS_REGION_STATIC:ap-northeast-2}

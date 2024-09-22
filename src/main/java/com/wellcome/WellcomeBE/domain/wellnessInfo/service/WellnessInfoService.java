@@ -9,7 +9,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoReposi
 import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
-import com.wellcome.WellcomeBE.global.image.TourApiS3Service;
+import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
@@ -40,7 +40,7 @@ public class WellnessInfoService {
     private final TourInfoApiWebClientConfig webClientConfig;
     private final WellnessInfoRepository wellnessInfoRepository;
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
-    private final TourApiS3Service tourApiS3Service;
+    private final S3Service s3Service;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -52,12 +52,12 @@ public class WellnessInfoService {
             WebClient webClient,
             WellnessInfoRepository wellnessInfoRepository,
             TourInfoApiWebClientConfig webClientConfig,
-            TourApiS3Service tourApiS3Service
+            S3Service s3Service
     ) {
         this.webClient = webClient;
         this.wellnessInfoRepository = wellnessInfoRepository;
         this.webClientConfig = webClientConfig;
-        this.tourApiS3Service = tourApiS3Service;
+        this.s3Service = s3Service;
     }
     public void fetchAndSaveTourInfo() {
 
@@ -243,7 +243,7 @@ public class WellnessInfoService {
 
         // 이미지 URL이 있는 경우 S3에 업로드
         if (originalUrl != null && !originalUrl.trim().isEmpty()) {
-            s3Url = tourApiS3Service.uploadImg(originalUrl, item.getContentid());
+            s3Url = s3Service.uploadImgFromUrl(originalUrl, item.getContentid());
         }
 
         return convertToEntity(item, s3Url);
