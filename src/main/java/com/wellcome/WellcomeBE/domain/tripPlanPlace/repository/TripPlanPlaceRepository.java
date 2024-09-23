@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Long> {
 
@@ -44,4 +45,6 @@ public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Lon
     boolean existsByTripPlanAndWellnessInfoAndMember(@Param("tripPlan") TripPlan tripPlan,
                                                      @Param("wellnessInfo") WellnessInfo wellnessInfo,
                                                      @Param("member") Member member);
+
+    Optional<TripPlanPlace> findByTripPlanIdAndWellnessInfoId(Long planId, Long wellnessInfoId);
 }
