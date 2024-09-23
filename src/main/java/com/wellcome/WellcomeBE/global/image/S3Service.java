@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.UUID;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_IMG_S3_UPLOAD_FAILED;
 
@@ -36,6 +37,21 @@ public class S3Service {
         String fileName = System.currentTimeMillis() + "_" + multipartFile.getOriginalFilename();
         amazonS3.putObject(new PutObjectRequest(bucketName, fileName, file));
         file.delete();
+    }
+
+    public String uploadImgFile(MultipartFile multipartFile) throws IOException {
+        File file = multiPartFileToFile(multipartFile);
+
+        // 'UUID.확장자' 형태의 파일명으로 이미지 업로드
+        String originalFileName = multipartFile.getOriginalFilename();
+        String fileExtension =  originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
+
+        String folderPath = "community-images/";
+        String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
+        amazonS3.putObject(new PutObjectRequest(bucketName, fileName, file));
+        file.delete();
+
+        return amazonS3.getUrl(bucketName, fileName).toString();
     }
 
     private File multiPartFileToFile(MultipartFile file) throws IOException {

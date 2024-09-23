@@ -7,9 +7,12 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.IMG_UPLOAD_ERROR;
 
 @RestControllerAdvice
 @Slf4j
@@ -36,6 +39,14 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
 
         return buildResponseEntity(CustomErrorCode.INVALID_VALUE, errorMessage);
+    }
+
+    // MultipartFile 파일 크기 제한 초과 Exception
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxSizeException(MaxUploadSizeExceededException e, HttpServletRequest request) {
+        log.error("*** MaxUploadSizeExceeded Exception - url: {} ({}), errorMessage: {}",
+                request.getRequestURL(), request.getMethod(), e.getMessage());
+        return buildResponseEntity(IMG_UPLOAD_ERROR, "파일 크기가 허용된 최대 용량을 초과했습니다.");
     }
 
     // 기타 Exception
