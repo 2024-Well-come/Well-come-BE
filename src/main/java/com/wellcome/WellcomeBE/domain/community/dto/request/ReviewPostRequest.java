@@ -1,5 +1,7 @@
 package com.wellcome.WellcomeBE.domain.community.dto.request;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -18,13 +20,14 @@ public class ReviewPostRequest {
     @NotBlank(message = "여행 전체 후기는 필수 입력값입니다.")
     private String content;
 
+    @Valid
     private List<UserReview> reviewList;
 
     @Getter
     public static class UserReview {
         private Long wellnessInfoId;
 
-        @Min(value = 0, message = "평점은 0이상의 정수여야 합니다.")
+        @Min(value = 1, message = "평점은 1이상의 정수여야 합니다.")
         @Max(value = 5, message = "평점은 5이하의 정수여야 합니다.")
         private Integer rating;
 

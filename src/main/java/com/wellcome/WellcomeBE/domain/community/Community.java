@@ -1,11 +1,13 @@
 package com.wellcome.WellcomeBE.domain.community;
 
 import com.wellcome.WellcomeBE.domain.BaseTimeEntity;
+import com.wellcome.WellcomeBE.domain.communityImg.CommunityImg;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
-import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 
 @Entity
@@ -47,6 +49,9 @@ public class Community extends BaseTimeEntity {
     public enum PostType{
         GENERAL, TRIP_PLAN
     }
+
+    @OneToMany(mappedBy = "community")
+    private List<CommunityImg> communityImgs;
 
     @Builder
     private Community(Member member, TripPlan tripPlan,
