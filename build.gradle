@@ -56,6 +56,12 @@ dependencies {
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.0'
 	implementation 'javax.xml.bind:jaxb-api:2.3.1'
 
+
+	// 모니터링을 위해 actuator를 추가
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// prometheus를 위한 micrometer를 추가
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+
 	// S3
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 	implementation 'com.amazonaws:aws-java-sdk-s3'
