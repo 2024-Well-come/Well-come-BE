@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.community.service;
 
 import com.wellcome.WellcomeBE.domain.community.Community;
+import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.community.dto.request.ReviewPostRequest;
 import com.wellcome.WellcomeBE.domain.communityImg.CommunityImg;
@@ -17,14 +18,18 @@ import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
 
@@ -41,6 +46,8 @@ public class CommunityService {
     private final S3Service s3Service;
     private final CommunityImgRepository communityImgRepository;
     private static final int MAX_IMG_COUNT = 10;
+    private static final int REVIEW_POST_RECOMMEND_LIST_SIZE = 2;
+    private static final int REVIEW_POST_LIST_PAGE_SIZE = 5;
 
     /**
      * 후기 게시글 등록
@@ -106,4 +113,46 @@ public class CommunityService {
         });
         communityImgRepository.saveAll(communityImgList);
     }
+
+    /**
+     * 후기 게시글 목록 조회
+     */
+    public ReviewPostResponse getReviewPostList(String sort, int page) {
+
+        //tokenProvider.getMember();
+
+        // [웰컴인들이 공감해요] 조회 (추천순 정렬 상위 2개)
+        List<ReviewPostResponse.ReviewPostBrief> recommendPostList = communityRepository
+                .findByPostTypeOrderBySupportCount(PageRequest.of(0, REVIEW_POST_RECOMMEND_LIST_SIZE), Community.PostType.TRIP_PLAN)
+                .stream()
+                .map(ReviewPostResponse.ReviewPostBrief::from)
+                .collect(Collectors.toList());
+        
+        // [전체글] 조회
+        PageRequest pageRequest = PageRequest.of(page, REVIEW_POST_LIST_PAGE_SIZE);
+        Page<Community> result;
+        if(sort.equalsIgnoreCase("latest")){ //최신순 정렬
+            result = communityRepository.findByPostTypeOrderByCreatedAtDesc(pageRequest, Community.PostType.TRIP_PLAN);
+        }else if(sort.equalsIgnoreCase("recommend")){ //추천순 정렬
+            result = communityRepository.findByPostTypeOrderBySupportCount(pageRequest, Community.PostType.TRIP_PLAN);
+        }else{
+            throw new CustomException(INVALID_VALUE, "지원하지 않는 정렬 조건입니다.");
+        }
+
+        // 전체글 응답 생성
+        List<ReviewPostResponse.ReviewPostBrief> data =
+                result.hasContent()
+                        ? result.stream().map(ReviewPostResponse.ReviewPostBrief::from).collect(Collectors.toList())
+                        : Collections.emptyList();
+        ReviewPostResponse.ReviewPostList reviewPostList = ReviewPostResponse.ReviewPostList.from(
+                        result.getTotalElements(),
+                        result.getNumber(),
+                        result.hasPrevious(),
+                        result.hasNext(),
+                        data
+        );
+
+        return ReviewPostResponse.from(recommendPostList, reviewPostList);
+    }
+
 }
