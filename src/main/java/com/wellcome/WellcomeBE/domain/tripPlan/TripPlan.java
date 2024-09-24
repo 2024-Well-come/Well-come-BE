@@ -35,7 +35,7 @@ public class TripPlan extends BaseTimeEntity {
     private List<TripPlanPlace> tripPlanPlaces;
 
 
-    //private String summary;
+    private Boolean isActive;
 
     public void updateTitle(String title) {
         this.title = title;

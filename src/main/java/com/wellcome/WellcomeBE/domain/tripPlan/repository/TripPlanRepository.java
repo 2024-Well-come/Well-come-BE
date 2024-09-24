@@ -4,10 +4,12 @@ import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,4 +49,6 @@ public interface TripPlanRepository extends JpaRepository<TripPlan,Long> {
             "ORDER BY t.startDate ASC")
     List<TripPlan> findAllByTripStartDateAfterByMember(@Param("member") Member member);
 
+    @Query("SELECT tp FROM TripPlan tp WHERE tp.member = :member AND (tp.endDate IS NULL OR tp.endDate < :currentDate) ORDER BY tp.createdAt DESC")
+    Page<TripPlan> findPastTripPlans(@Param("member") Member member, @Param("currentDate") LocalDate currentDate, Pageable pageable);
 }
