@@ -2,7 +2,7 @@ package com.wellcome.WellcomeBE.domain.community.service;
 
 import com.wellcome.WellcomeBE.domain.community.Community;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
-import com.wellcome.WellcomeBE.domain.community.dto.request.CommunityReviewRequest;
+import com.wellcome.WellcomeBE.domain.community.dto.request.ReviewPostRequest;
 import com.wellcome.WellcomeBE.domain.communityImg.CommunityImg;
 import com.wellcome.WellcomeBE.domain.communityImg.repository.CommunityImgRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
@@ -46,7 +46,7 @@ public class CommunityService {
      * 후기 게시글 등록
      */
     @Transactional
-    public void createReviewPost(CommunityReviewRequest request, List<MultipartFile> imgFileList) {
+    public void createReviewPost(ReviewPostRequest request, List<MultipartFile> imgFileList) {
 
         // 사용자 인증
         Member currentMember = tokenProvider.getMember();

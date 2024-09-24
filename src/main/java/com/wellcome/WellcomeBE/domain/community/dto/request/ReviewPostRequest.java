@@ -8,7 +8,7 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class CommunityReviewRequest {
+public class ReviewPostRequest {
 
     private Long planId;
 

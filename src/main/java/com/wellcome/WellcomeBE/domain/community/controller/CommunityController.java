@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.domain.community.controller;
 
-import com.wellcome.WellcomeBE.domain.community.dto.request.CommunityReviewRequest;
+import com.wellcome.WellcomeBE.domain.community.dto.request.ReviewPostRequest;
 import com.wellcome.WellcomeBE.domain.community.service.CommunityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class CommunityController {
     // 후기 게시글 등록
     @PostMapping("/api/communities")
     public ResponseEntity<Void> createReviewPost(
-            @RequestPart(value = "request") @Valid CommunityReviewRequest request,
+            @RequestPart(value = "request") @Valid ReviewPostRequest request,
             @RequestPart(value = "imgList", required = false) List<MultipartFile> imgList
     ){
         communityService.createReviewPost(request, imgList);
