@@ -2,6 +2,7 @@ package com.wellcome.WellcomeBE.domain.community;
 
 import com.wellcome.WellcomeBE.domain.BaseTimeEntity;
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,8 +10,8 @@ import lombok.*;
 
 @Entity
 @Getter
-@Builder
-@AllArgsConstructor
+//@Builder
+//@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Community extends BaseTimeEntity {
 
@@ -23,9 +24,9 @@ public class Community extends BaseTimeEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @OneToOne
-    @JoinColumn(name = "trip_plan_place_id")
-    private TripPlanPlace tripPlanPlace;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "trip_plan_id")
+    private TripPlan tripPlan;
 
     @Column(nullable = false)
     private String title;
@@ -34,17 +35,37 @@ public class Community extends BaseTimeEntity {
     @Column(nullable = false)
     private String content;
 
-    @Builder.Default
+    //@Builder.Default
     @Column(nullable = false)
     private Long view = 0L;
 
-    @Builder.Default
+    //@Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PostType postType = PostType.GENERAL;
+    private PostType postType = PostType.TRIP_PLAN;
 
     public enum PostType{
         GENERAL, TRIP_PLAN
+    }
+
+    @Builder
+    private Community(Member member, TripPlan tripPlan,
+                      String title, String content
+    ){
+        this.member = member;
+        this.tripPlan= tripPlan;
+        this.title = title;
+        this.content = content;
+    }
+
+    public static Community createByTripPlan(Member member, TripPlan tripPlan,
+                                             String title, String content){
+        return Community.builder()
+                .member(member)
+                .tripPlan(tripPlan)
+                .title(title)
+                .content(content)
+                .build();
     }
 
 }
