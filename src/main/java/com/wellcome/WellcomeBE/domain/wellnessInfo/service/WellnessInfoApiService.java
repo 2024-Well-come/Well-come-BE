@@ -15,6 +15,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImg
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
+import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,7 @@ public class WellnessInfoApiService {
      * 웰니스 장소 추천 목록 조회
      * - 로그인 가정
      */
-    public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request) {
+    public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request, ImgSavedType savedType) {
 
         // 사용자 정보 조회
         Member member = tokenProvider.getMember();
@@ -85,7 +86,7 @@ public class WellnessInfoApiService {
         }
 
         List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = data.stream()
-                .map(objects -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from((WellnessInfo) objects[0], (Boolean) objects[1]))
+                .map(objects -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from((WellnessInfo) objects[0], (Boolean) objects[1], savedType))
                 .collect(Collectors.toList());
         WellnessInfoResponse.WellnessInfoList WellnessInfoList = WellnessInfoResponse.WellnessInfoList.from(
                 data.getTotalElements(), data.getNumber(),

@@ -3,7 +3,7 @@ package com.wellcome.WellcomeBE.domain.member.service;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.dto.response.*;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
-import com.wellcome.WellcomeBE.global.S3Service;
+import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.KakaoAuthService;
 import com.wellcome.WellcomeBE.global.security.RefreshTokenService;

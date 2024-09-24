@@ -74,7 +74,7 @@ public class TourBasicApiResponse {
                     private String tel;
                     private String title;
 
-                    public WellnessInfo toEntity() throws ParseException {
+                    public WellnessInfo toEntity(String s3ThumbnailUrl) throws ParseException {
 
                         // WKTReader를 통해 WKT -> 실제 타입으로 변환
                         String pointWKT = String.format("POINT(%s %s)", mapx, mapy);
@@ -91,7 +91,8 @@ public class TourBasicApiResponse {
                         WellnessInfo wellnessSpot = WellnessInfo.builder()
                                 .title(title)
                                 .contentId(contentid)
-                                .thumbnailUrl(firstimage)
+                                .originalThumbnailUrl(firstimage2)
+                                .thumbnailUrl(s3ThumbnailUrl)
                                 .tel(tel)
                                 .area(area)
                                 .sigungu(sigungu)
