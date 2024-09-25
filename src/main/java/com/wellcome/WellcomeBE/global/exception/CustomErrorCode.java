@@ -58,7 +58,8 @@ public enum CustomErrorCode {
     SUPPORT_COMMUNITY_CNT(BAD_REQUEST,100001, "COMMUNITY 타입은 커뮤니티 값이 필요합니다."),
     SUPPORT_TRIP_PLAN_PLACE(BAD_REQUEST,100002,"TRIP_PLAN_PLACE 타입은 ID 리스트가 필요합니다." ),
     SUPPORT_TYPE_MISMATCH(BAD_REQUEST,100003, "유효하지 않은 타입입니다."),
-    SUPPORT_NOT_FOUND(NOT_FOUND,100004,"추천 내용을 찾을 수 없습니다.")
+    SUPPORT_NOT_FOUND(NOT_FOUND,100004,"추천 내용을 찾을 수 없습니다."),
+
     ;
 
     private final HttpStatus httpStatus;

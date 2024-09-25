@@ -81,6 +81,14 @@ public class SupportService {
         Support support = supportRepository.findById(supportId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.SUPPORT_NOT_FOUND));
 
+        // 현재 요청을 보낸 사용자
+        Member currentMember = tokenProvider.getMember();
+
+        // 추천 추가자인지 검증
+        if (!support.getMember().getId().equals(currentMember.getId())) {
+            throw new CustomException(CustomErrorCode.ACCESS_DENIED);
+        }
+
         boolean isValidType = switch (type) {
             case "COMMUNITY" -> support.getCommunity() != null;
             case "TRIP_PLAN_PLACE" -> support.getTripPlanPlace() != null;
