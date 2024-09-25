@@ -19,4 +19,10 @@ public class SupportController {
         supportService.createSupport(id, type);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{supportId}")
+    public ResponseEntity<Void> deleteSupport(@PathVariable Long supportId, @RequestParam String type) {
+        supportService.deleteSupport(supportId, type);
+        return ResponseEntity.ok().build();
+    }
 }

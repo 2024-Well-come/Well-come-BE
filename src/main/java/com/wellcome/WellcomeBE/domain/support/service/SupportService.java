@@ -44,7 +44,7 @@ public class SupportService {
             createTripPlanPlaceSupport(ids, member);
         }
         else {
-            throw new CustomException(CustomErrorCode.SUPPORT_TYPE_UNDEFINED);
+            throw new CustomException(CustomErrorCode.SUPPORT_TYPE_MISMATCH);
         }
     }
 
@@ -74,6 +74,24 @@ public class SupportService {
 
             supportRepository.save(support);
         });
+    }
+
+    @Transactional
+    public void deleteSupport(Long supportId, String type) {
+        Support support = supportRepository.findById(supportId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.SUPPORT_NOT_FOUND));
+
+        boolean isValidType = switch (type) {
+            case "COMMUNITY" -> support.getCommunity() != null;
+            case "TRIP_PLAN_PLACE" -> support.getTripPlanPlace() != null;
+            default -> false;
+        };
+
+        if (!isValidType) {
+            throw new CustomException(CustomErrorCode.SUPPORT_TYPE_MISMATCH);
+        }
+
+        supportRepository.delete(support);
     }
 
 }
