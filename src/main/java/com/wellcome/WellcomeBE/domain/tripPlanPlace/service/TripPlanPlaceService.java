@@ -2,10 +2,10 @@ package com.wellcome.WellcomeBE.domain.tripPlanPlace.service;
 
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
-import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanPlaceDeleteRequest;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
-import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceRequest;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -29,7 +29,7 @@ public class TripPlanPlaceService {
     private final TripPlanPlaceRepository tripPlanPlaceRepository;
     private final TokenProvider tokenProvider;
 
-    public void createTripPlanPlace(Long planId, TripPlanPlaceRequest request){
+    public void createTripPlanPlace(Long planId, TripPlanPlaceCreateRequest request){
         // 웰니스 정보 존재 확인
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(request.getWellnessInfoId()).orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
