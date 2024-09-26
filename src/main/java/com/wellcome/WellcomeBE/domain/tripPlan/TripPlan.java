@@ -34,8 +34,7 @@ public class TripPlan extends BaseTimeEntity {
     @OneToMany(mappedBy = "tripPlan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TripPlanPlace> tripPlanPlaces;
 
-
-    private Boolean isActive;
+    private Boolean isActive = true;
 
     public void updateTitle(String title) {
         this.title = title;
@@ -48,5 +47,8 @@ public class TripPlan extends BaseTimeEntity {
     public void updateEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
+
+    public void updateIsActive(){this.isActive = false;}
+
 
 }
