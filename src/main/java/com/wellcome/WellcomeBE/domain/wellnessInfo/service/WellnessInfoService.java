@@ -266,6 +266,8 @@ public class WellnessInfoService {
 
             wellnessInfo.updateS3ThumbnailUrl(s3Url);
         });
+
+        wellnessInfoRepository.saveAll(hasThumbnailUrlWellnessInfoList);
     }
 
 }
