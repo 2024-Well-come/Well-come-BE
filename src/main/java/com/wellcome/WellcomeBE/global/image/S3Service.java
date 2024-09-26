@@ -3,6 +3,7 @@ package com.wellcome.WellcomeBE.global.image;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
@@ -17,6 +18,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.UUID;
 
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.IMG_UPLOAD_ERROR;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_IMG_S3_UPLOAD_FAILED;
 
 @Service
@@ -40,7 +42,9 @@ public class S3Service {
     }
 
     public String uploadImgFile(MultipartFile multipartFile) throws IOException {
-        File file = multiPartFileToFile(multipartFile);
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(multipartFile.getSize());
+        metadata.setContentType(multipartFile.getContentType());
 
         // 'UUID.확장자' 형태의 파일명으로 이미지 업로드
         String originalFileName = multipartFile.getOriginalFilename();
@@ -48,11 +52,32 @@ public class S3Service {
 
         String folderPath = "community-images/";
         String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
-        amazonS3.putObject(new PutObjectRequest(bucketName, fileName, file));
-        file.delete();
+
+        try (InputStream inputStream = multipartFile.getInputStream()){
+            amazonS3.putObject(new PutObjectRequest(bucketName, fileName, inputStream, metadata)
+                    .withCannedAcl(CannedAccessControlList.PublicRead));
+        } catch (Exception e){
+            log.error("AWS S3 uploadImgFile Error: {}", e.getMessage());
+            throw new CustomException(IMG_UPLOAD_ERROR);
+        }
 
         return amazonS3.getUrl(bucketName, fileName).toString();
     }
+
+//    public String uploadImgFile(MultipartFile multipartFile) throws IOException {
+//        File file = multiPartFileToFile(multipartFile);
+//
+//        // 'UUID.확장자' 형태의 파일명으로 이미지 업로드
+//        String originalFileName = multipartFile.getOriginalFilename();
+//        String fileExtension =  originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
+//
+//        String folderPath = "community-images/";
+//        String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
+//        amazonS3.putObject(new PutObjectRequest(bucketName, fileName, file));
+//        file.delete();
+//
+//        return amazonS3.getUrl(bucketName, fileName).toString();
+//    }
 
     private File multiPartFileToFile(MultipartFile file) throws IOException {
         File convertedFile = new File(file.getOriginalFilename());
