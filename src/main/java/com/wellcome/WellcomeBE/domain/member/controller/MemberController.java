@@ -20,6 +20,13 @@ public class MemberController {
 
     private final MemberService memberService;
 
+    // 회원가입
+    @PostMapping("/api/oauth2/kakao/signup")
+    public ResponseEntity<Void> kakaoSignup(HttpServletRequest httpServletRequest){
+        memberService.handleKakaoSignup(httpServletRequest);
+        return ResponseEntity.ok().build();
+    }
+
     // 카카오 로그인 요청
     @GetMapping("/api/oauth2/kakao/login")
     public void login(HttpServletResponse response) throws IOException {
