@@ -85,7 +85,7 @@ public class WellnessInfoResponse {
                 String thumbnailUrl = null;
                 if(savedType == ImgSavedType.ORIGINAL){
                     //thumbnailUrl = wellnessInfo.getOriginalThumbnailUrl();
-                    thumbnailUrl = wellnessInfo.getS3ThumbnailUrl();
+                    thumbnailUrl = wellnessInfo.getThumbnailUrl();
                 }else if(savedType == ImgSavedType.S3){
                     //thumbnailUrl = wellnessInfo.getThumbnailUrl();
                     thumbnailUrl = wellnessInfo.getS3ThumbnailUrl();
