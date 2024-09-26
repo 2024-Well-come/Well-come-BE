@@ -258,7 +258,7 @@ public class WellnessInfoService {
      */
     @Transactional
     public void uploadThumbnailImgToS3(){
-        List<WellnessInfo> hasThumbnailUrlWellnessInfoList = wellnessInfoRepository.findByThumbnailUrlANotNull();
+        List<WellnessInfo> hasThumbnailUrlWellnessInfoList = wellnessInfoRepository.findByThumbnailUrlNotNull();
 
         hasThumbnailUrlWellnessInfoList.forEach(wellnessInfo -> {
             String originalUrl = wellnessInfo.getThumbnailUrl();
