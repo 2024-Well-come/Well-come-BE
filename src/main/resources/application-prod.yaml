@@ -8,11 +8,13 @@ spring:
   jpa:
     dialect: org.hibernate.spatial.dialect.mysql.MySQL8SpatialDialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         show_sql: true
         format_sql: true
+        jdbc:
+          batch_size: 50
 
   data:
     redis:
