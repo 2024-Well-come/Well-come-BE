@@ -263,7 +263,7 @@ public class WellnessInfoService {
         hasThumbnailUrlWellnessInfoList.forEach(wellnessInfo -> {
             String originalUrl = wellnessInfo.getThumbnailUrl();
 
-            if(originalUrl != null){
+            if(originalUrl != null && !originalUrl.trim().isEmpty()){
                 String s3Url = s3Service.uploadImgFromUrl(originalUrl, wellnessInfo.getContentId());
                 wellnessInfo.updateS3ThumbnailUrl(s3Url);
             }
