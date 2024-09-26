@@ -80,11 +80,11 @@ public class S3Service {
     }
 
     private File multiPartFileToFile(MultipartFile file) throws IOException {
-        File convertedFile = new File(file.getOriginalFilename());
-        try (FileOutputStream fileOutputStream = new FileOutputStream(convertedFile)) {
+        File tempFile = File.createTempFile("temp", file.getOriginalFilename());
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
             fileOutputStream.write(file.getBytes());
         }
-        return convertedFile;
+        return tempFile;
     }
 
     @Value("${app.default.image.url}")
