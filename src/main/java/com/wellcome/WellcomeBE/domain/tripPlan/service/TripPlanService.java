@@ -8,6 +8,7 @@ import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
@@ -19,9 +20,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -180,5 +183,24 @@ public class TripPlanService {
             existingPlan.updateEndDate(request.getTripEndDate());
         }
 
+    }
+
+    public TripPlanReviewResponse getTripPlanWriteReview(int page) {
+        // 회원 정보
+        Member member = tokenProvider.getMember();
+
+        // 조회 당시의 날짜
+        LocalDate currentDate = LocalDate.now();
+        int pageSize = 10;
+        Pageable pageable = PageRequest.of(page, pageSize);
+
+        // 3. 회원의 과거 여행 계획을 날짜 기준으로 최신순 정렬
+        Page<TripPlan> tripPlanPage = tripPlanRepository.findPastTripPlans(member, currentDate, pageable);
+
+        List<TripPlanReviewResponse.TripPlanReviewItem> reviewItems = tripPlanPage.getContent().stream()
+                .map(tripPlan -> TripPlanReviewResponse.TripPlanReviewItem.from(tripPlan, tripPlan.getTripPlanPlaces().size()))
+                .collect(Collectors.toList());
+
+        return TripPlanReviewResponse.from(tripPlanPage.getTotalElements(),tripPlanPage.getTotalPages(),tripPlanPage.hasPrevious(),tripPlanPage.hasNext(),reviewItems);
     }
 }

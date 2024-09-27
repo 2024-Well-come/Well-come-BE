@@ -5,6 +5,7 @@ import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailRespon
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.service.TripPlanPlaceService;
@@ -81,5 +82,14 @@ public class TripPlanController {
     public ResponseEntity<?> modifyTripPlan(@PathVariable Long planId, @RequestBody TripPlanCreateRequest request){
         tripPlanService.updateTripPlan(planId,request);
         return ResponseEntity.ok().build();
+    }
+
+    // 리뷰 작성할 여행 폴더 목록
+    @GetMapping("/review")
+    public ResponseEntity<TripPlanReviewResponse> writeReviewTripPlan(
+            @RequestParam(value = "page", defaultValue = "0") int page
+    ) {
+        TripPlanReviewResponse tripPlanWriteReview = tripPlanService.getTripPlanWriteReview(page);
+        return ResponseEntity.ok(tripPlanWriteReview);
     }
 }
