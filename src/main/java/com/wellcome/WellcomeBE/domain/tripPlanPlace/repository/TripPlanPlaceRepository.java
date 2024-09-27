@@ -47,4 +47,9 @@ public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Lon
                                                      @Param("member") Member member);
 
     Optional<TripPlanPlace> findByTripPlanIdAndWellnessInfoId(Long planId, Long wellnessInfoId);
+
+    @Query("SELECT tpp.tripPlan FROM TripPlanPlace tpp " +
+            "WHERE tpp.wellnessInfo = :wellnessInfo " +
+            "AND (tpp.rating IS NOT NULL OR tpp.review IS NOT NULL)")
+    List<TripPlan> findByWellnessInfoAndReviewConditionsExist(WellnessInfo wellnessInfo);
 }

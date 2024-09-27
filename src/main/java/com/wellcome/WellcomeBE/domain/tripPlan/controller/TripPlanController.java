@@ -2,12 +2,12 @@ package com.wellcome.WellcomeBE.domain.tripPlan.controller;
 
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
-import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanPlaceDeleteRequest;
-import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceDeleteRequest;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
-import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceRequest;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.service.TripPlanPlaceService;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import jakarta.validation.Valid;
@@ -31,7 +31,7 @@ public class TripPlanController {
 
     // 여행 폴더 생성
     @PostMapping("/plans")
-    public ResponseEntity<?> addTripPlan(@RequestBody TripPlanRequest request){
+    public ResponseEntity<?> createTripPlan(@RequestBody @Valid TripPlanCreateRequest request){
         tripPlanService.createTripPlan(request);
         return ResponseEntity.ok().build();
     }
@@ -53,7 +53,7 @@ public class TripPlanController {
 
     // 여행 폴더 내 여행지 추가
     @PostMapping("/plans/{planId}/places")
-    public ResponseEntity<?> addTripPlanPlace(@PathVariable("planId") Long planId, @RequestBody TripPlanPlaceRequest request){
+    public ResponseEntity<?> createTripPlanPlace(@PathVariable("planId") Long planId, @RequestBody @Valid TripPlanPlaceCreateRequest request){
         tripPlanPlaceService.createTripPlanPlace(planId,request);
         return ResponseEntity.ok().build();
     }
@@ -79,7 +79,7 @@ public class TripPlanController {
     }
 
     @PatchMapping("plans/{planId}")
-    public ResponseEntity<?> modifyTripPlan(@PathVariable Long planId, @RequestBody TripPlanRequest request){
+    public ResponseEntity<?> modifyTripPlan(@PathVariable Long planId, @RequestBody TripPlanCreateRequest request){
         tripPlanService.updateTripPlan(planId,request);
         return ResponseEntity.ok().build();
     }

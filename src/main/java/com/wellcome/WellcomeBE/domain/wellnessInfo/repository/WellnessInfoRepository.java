@@ -121,4 +121,6 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
 
 
     List<WellnessInfo> findByIdIn(List<Long> wellnessInfoIdList);
+
+    List<WellnessInfo> findByThumbnailUrlNotNull();
 }

@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -26,6 +27,7 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_JSON_PARSING_ERROR;
@@ -247,6 +249,27 @@ public class WellnessInfoService {
         }
 
         return convertToEntity(item, s3Url);
+    }
+
+    /**
+     * 이미 저장된 웰니스 정보에 대해, 썸네일 이미지 S3에 업로드 후 컬럼 업데이트(s3ThumbnailUrl)
+     * - thumbnailUrl: API에서 제공하는 썸네일 이미지 URL
+     * - s3ThumbnailUrl: S3 객체 URL
+     */
+    @Transactional
+    public void uploadThumbnailImgToS3(){
+        List<WellnessInfo> hasThumbnailUrlWellnessInfoList = wellnessInfoRepository.findByThumbnailUrlNotNull();
+
+        hasThumbnailUrlWellnessInfoList.forEach(wellnessInfo -> {
+            String originalUrl = wellnessInfo.getThumbnailUrl();
+
+            if(originalUrl != null && !originalUrl.trim().isEmpty()){
+                String s3Url = s3Service.uploadImgFromUrl(originalUrl, wellnessInfo.getContentId());
+                wellnessInfo.updateS3ThumbnailUrl(s3Url);
+            }
+        });
+
+        wellnessInfoRepository.saveAll(hasThumbnailUrlWellnessInfoList);
     }
 
 }

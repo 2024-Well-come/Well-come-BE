@@ -1,4 +1,4 @@
-package com.wellcome.WellcomeBE.domain.tripPlan.dto.request;
+package com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

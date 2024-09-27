@@ -84,9 +84,11 @@ public class WellnessInfoResponse {
                 // TODO 이미지 저장 방식 선택 후 수정 필요
                 String thumbnailUrl = null;
                 if(savedType == ImgSavedType.ORIGINAL){
-                    thumbnailUrl = wellnessInfo.getOriginalThumbnailUrl();
-                }else if(savedType == ImgSavedType.S3){
+                    //thumbnailUrl = wellnessInfo.getOriginalThumbnailUrl();
                     thumbnailUrl = wellnessInfo.getThumbnailUrl();
+                }else if(savedType == ImgSavedType.S3){
+                    //thumbnailUrl = wellnessInfo.getThumbnailUrl();
+                    thumbnailUrl = wellnessInfo.getS3ThumbnailUrl();
                 }
 
                 return WellnessInfoItem.builder()
