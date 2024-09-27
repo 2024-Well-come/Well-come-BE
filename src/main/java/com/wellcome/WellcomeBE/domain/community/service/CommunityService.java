@@ -87,6 +87,7 @@ public class CommunityService {
                             .orElseThrow(() -> new CustomException(TRIP_PLAN_PLACE_NOT_FOUND, "해당 여행 폴더에 추가되지 않은 웰니스 정보입니다."));
 
                     tripPlanPlace.updatePlaceReview(review.getRating(), review.getReview());
+                    tripPlan.updateIsActive();
                 }));
 
     }

@@ -5,6 +5,8 @@ import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.vo.LikeWellnessInfoVo;
 import com.wellcome.WellcomeBE.global.type.Thema;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +24,7 @@ public interface LikedRepository extends JpaRepository<Liked,Long> {
             "FROM Liked l " +
             "JOIN l.wellnessInfo w " +
             "WHERE l.member = :member AND w.thema IN :thema")
-    List<LikeWellnessInfoVo> findByMemberIdAndThemaIn(@Param("member") Member member, @Param("thema") List<Thema> thema);
+    Page<LikeWellnessInfoVo> findByMemberIdAndThemaIn(@Param("member") Member member, @Param("thema") List<Thema> thema,Pageable pageable);
 
 
     @Query("SELECT DISTINCT w.thema from Liked l join l.wellnessInfo w where l.member = :member ")
