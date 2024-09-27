@@ -67,4 +67,12 @@ public class WellnessInfoController {
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoGoogleReviews(wellnessInfoId));
     }
 
+    // 웰니스 장소 상세 조회(4) - 후기 게시글 조회
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/reviews")
+    public ResponseEntity<WellnessInfoReviewPostResponse> getWellnessInfoReviewPosts(
+            @PathVariable("wellnessInfoId") Long wellnessInfoId
+    ){
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoReviewPosts(wellnessInfoId));
+    }
+
 }
