@@ -35,7 +35,7 @@ public class TripPlan extends BaseTimeEntity {
     private List<TripPlanPlace> tripPlanPlaces;
 
 
-    private String summary;
+    //private String summary;
 
     public void updateTitle(String title) {
         this.title = title;
@@ -48,4 +48,5 @@ public class TripPlan extends BaseTimeEntity {
     public void updateEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
+
 }

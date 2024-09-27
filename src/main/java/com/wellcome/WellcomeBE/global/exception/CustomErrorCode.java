@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+import static org.springframework.http.HttpStatus.*;
 
 @Getter
 @RequiredArgsConstructor
@@ -19,6 +19,7 @@ public enum CustomErrorCode {
     TOUR_API_RESPONSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2001, "한국관광공사 API 호출 오류"),
     TOUR_API_XML_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2002, "XML 파싱 중 오류가 발생했습니다."),
     TOUR_API_JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2003, "JSON 파싱 중 오류가 발생했습니다."),
+    TOUR_API_IMG_S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 2004, "한국관광공사 API 이미지 S3 업로드 오류가 발생했습니다."),
 
     // 구글맵 API (3xxx)
 
@@ -41,6 +42,9 @@ public enum CustomErrorCode {
 
 
     // Community (8xxx)
+    COMMUNITY_ALREADY_EXISTS(HttpStatus.CONFLICT, 8001, "해당 여행 폴더에 대한 후기 게시글이 이미 존재합니다."),
+    IMG_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, 8002, "이미지 업로드 제한 개수를 초과했습니다."),
+    IMG_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 8003, "이미지 업로드 중 오류가 발생했습니다."),
 
 
     // Auth (9xxx)

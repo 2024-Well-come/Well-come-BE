@@ -3,7 +3,7 @@ package com.wellcome.WellcomeBE.domain.member.service;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.dto.response.*;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
-import com.wellcome.WellcomeBE.global.S3Service;
+import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.KakaoAuthService;
 import com.wellcome.WellcomeBE.global.security.RefreshTokenService;
@@ -31,6 +31,22 @@ public class MemberService {
     private final RefreshTokenService refreshTokenService;
     private final MemberRepository memberRepository;
     private final S3Service s3Service;
+
+    /**
+     * 회원가입
+     */
+    public void handleKakaoSignup(HttpServletRequest httpServletRequest) {
+
+        // 토큰 추출, 사용자 정보 API 호출
+        String accessToken = tokenProvider.extractToken(httpServletRequest);
+
+        // 토큰을 통해 사용자 정보 조회
+        KakaoUserInfoResponse userInfoResponse = kakaoAuthService.getUserInfo(accessToken).block();
+
+        // 회원가입 유무 확인 및 회원가입 진행
+        memberRepository.findByKakaoId(userInfoResponse.getId())
+                .orElseGet(() -> memberRepository.save(createKakaoUser(userInfoResponse)));
+    }
 
     /**
      * 카카오 로그인 & 회원가입 처리
@@ -148,4 +164,5 @@ public class MemberService {
                 .kakaoId(userInfoResponse.getId())
                 .build();
     }
+
 }

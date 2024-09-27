@@ -13,6 +13,8 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+        jdbc:
+          batch_size: 50
 
   data:
     redis:
@@ -47,6 +49,21 @@ server:
       force: true
       charset: UTF-8
 
+
+# promethus 설정
+management:
+  endpoint:
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+
+  # Actuator 설정
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
 # Multipart 파일 업로드 설정
     multipart:
       max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:8MB}
@@ -68,4 +85,5 @@ app:
   default:
     image:
       url: ${APP_DEFAULT_IMAGE_URL:https://serviceimagefolder.s3.ap-northeast-2.amazonaws.com/LogdoImg.png}
+
 

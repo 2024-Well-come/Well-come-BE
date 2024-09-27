@@ -26,6 +26,12 @@ public class TripPlanPlace extends BaseTimeEntity {
     @JoinColumn(name = "wellness_info_id", nullable = false)
     private WellnessInfo wellnessInfo;
 
+    private Integer rating;
     private String review;
+
+    public void updatePlaceReview(Integer rating, String review) {
+        this.rating = rating;
+        this.review = review;
+    }
 
 }

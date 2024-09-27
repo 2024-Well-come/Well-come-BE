@@ -2,6 +2,7 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
+import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.Builder;
@@ -78,11 +79,21 @@ public class WellnessInfoResponse {
             private Double mapY;
 
             public static WellnessInfoItem from (
-                    WellnessInfo wellnessInfo, boolean isLiked
+                    WellnessInfo wellnessInfo, boolean isLiked, ImgSavedType savedType
             ){
+                // TODO 이미지 저장 방식 선택 후 수정 필요
+                String thumbnailUrl = null;
+                if(savedType == ImgSavedType.ORIGINAL){
+                    //thumbnailUrl = wellnessInfo.getOriginalThumbnailUrl();
+                    thumbnailUrl = wellnessInfo.getThumbnailUrl();
+                }else if(savedType == ImgSavedType.S3){
+                    //thumbnailUrl = wellnessInfo.getThumbnailUrl();
+                    thumbnailUrl = wellnessInfo.getS3ThumbnailUrl();
+                }
+
                 return WellnessInfoItem.builder()
                         .wellnessInfoId(wellnessInfo.getId())
-                        .thumbnailUrl(wellnessInfo.getThumbnailUrl())
+                        .thumbnailUrl(thumbnailUrl)
                         .isLiked(isLiked)
                         .thema(wellnessInfo.getThema().getName())
                         .title(wellnessInfo.getTitle())
