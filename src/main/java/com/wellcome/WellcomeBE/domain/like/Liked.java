@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.domain.like;
 
+import com.wellcome.WellcomeBE.domain.BaseTimeEntity;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import jakarta.persistence.*;
@@ -10,7 +11,7 @@ import lombok.*;
 //@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 //@AllArgsConstructor
-public class Liked {
+public class Liked extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

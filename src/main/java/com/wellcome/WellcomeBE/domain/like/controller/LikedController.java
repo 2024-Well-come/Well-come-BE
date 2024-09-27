@@ -29,8 +29,8 @@ public class LikedController {
 
     // 좋아요 목록 조회
     @GetMapping("/api/my-trips/likes")
-    public ResponseEntity<LikedResponse.LikedList> getLikedList(@RequestParam(required = false) Thema thema){
-        return ResponseEntity.ok(likedService.LikedList(thema));
+    public ResponseEntity<LikedResponse.LikedList> getLikedList(@RequestParam(required = false) Thema thema, @RequestParam(required = false, defaultValue = "0") int page){
+        return ResponseEntity.ok(likedService.LikedList(thema,page));
     }
 
 }

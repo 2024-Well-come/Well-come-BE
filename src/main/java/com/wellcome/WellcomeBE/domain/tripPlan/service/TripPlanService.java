@@ -5,7 +5,7 @@ import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
-import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanRequest;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
@@ -40,7 +40,7 @@ public class TripPlanService {
     private final TokenProvider tokenProvider;
     private final GoogleMapInfoService googleMapInfoService;
 
-    public void createTripPlan(TripPlanRequest request){
+    public void createTripPlan(TripPlanCreateRequest request){
 
         TripPlan tripPlan = TripPlan.builder()
                 .title(request.getName())
@@ -167,7 +167,7 @@ public class TripPlanService {
 
 
     @Transactional
-    public void updateTripPlan(Long planId, TripPlanRequest request) {
+    public void updateTripPlan(Long planId, TripPlanCreateRequest request) {
         TripPlan existingPlan = tripPlanRepository.findById(planId).orElseThrow(() -> new CustomException(CustomErrorCode.TRIP_PLAN_NOT_FOUND));
 
         if (request.getName() != null) {
