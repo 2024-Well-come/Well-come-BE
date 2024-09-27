@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.Article.repository;
 
 import com.wellcome.WellcomeBE.domain.Article.Article;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,5 +18,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     // 랜덤으로 5개 아티클 가져오는 쿼리
     @Query(value = "SELECT * FROM Article ORDER BY RANDOM() LIMIT 5", nativeQuery = true)
     List<Article> findRandomArticles();
+
+    @Query("SELECT a FROM Article a ORDER BY a.createdAt DESC")
+    Page<Article> findAllArticleByCreatedAt(Pageable pageable);
 
 }
