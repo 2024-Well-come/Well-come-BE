@@ -136,13 +136,16 @@ public class WellnessInfoApiService {
 
         if(wellnessInfo.getParentId() != null){
             PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellnessInfo.getParentId()).block().getResult();
-            rating = placeResult.getRating();
-            reviewList = Optional.ofNullable(placeResult.getReviews())
-                    .filter(reviews -> !reviews.isEmpty())
-                    .map(reviews -> reviews.stream()
-                            .map(WellnessInfoGoogleReviewResponse.GoogleReview::from)
-                            .collect(Collectors.toList()))
-                    .orElseGet(ArrayList::new);
+
+            if(placeResult != null){
+                rating = placeResult.getRating();
+                reviewList = Optional.ofNullable(placeResult.getReviews())
+                        .filter(reviews -> !reviews.isEmpty())
+                        .map(reviews -> reviews.stream()
+                                .map(WellnessInfoGoogleReviewResponse.GoogleReview::from)
+                                .collect(Collectors.toList()))
+                        .orElseGet(ArrayList::new);
+            }
         }
 
         return WellnessInfoGoogleReviewResponse.from(rating, reviewList);
