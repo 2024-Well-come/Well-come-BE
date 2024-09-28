@@ -44,6 +44,7 @@ public class SecurityConfig {
                             .requestMatchers("/{place}/details").permitAll()
                             .requestMatchers("/place/id").permitAll()
                             .requestMatchers("/api/home").permitAll()
+                            .requestMatchers("/api/weather-info").permitAll()
                             .anyRequest().authenticated();
                 })
 

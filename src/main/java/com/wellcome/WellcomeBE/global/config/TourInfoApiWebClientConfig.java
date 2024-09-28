@@ -1,6 +1,5 @@
 package com.wellcome.WellcomeBE.global.config;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,8 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 @Configuration
 @Slf4j
@@ -19,6 +16,7 @@ public class TourInfoApiWebClientConfig {
     private String apiKey;
 
     private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService1/";
+    private static final String WEATHER_API_BASE_URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst";
 
     // WebClient 생성
     @Bean
@@ -65,4 +63,16 @@ public class TourInfoApiWebClientConfig {
     public String getServiceKey() {
         return apiKey;
     }
+
+    /**
+     * 기상청_단기예보 API (초단기예보 조회)
+     */
+    public String getWeatherApiUrl(Map<String, String> additionalParams){
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(WEATHER_API_BASE_URL)
+                .queryParam("serviceKey", apiKey)
+                .queryParam("dataType", "JSON");
+        additionalParams.forEach(uriBuilder::queryParam);
+        return uriBuilder.build(true).toUriString();
+    }
+
 }

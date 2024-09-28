@@ -5,7 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.TourBasicApiResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WeatherApiResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WeatherResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.global.WeatherUtils;
 import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
@@ -29,9 +32,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_JSON_PARSING_ERROR;
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_RESPONSE_ERROR;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
 import static com.wellcome.WellcomeBE.global.type.Keyword.KEYWORDS;
 
 @Service
@@ -272,4 +275,63 @@ public class WellnessInfoService {
         wellnessInfoRepository.saveAll(hasThumbnailUrlWellnessInfoList);
     }
 
+    /**
+     * 웰니스 장소별 날씨 정보 제공 - 기상청 초단기예보 API 조회
+     */
+     public WeatherResponse fetchWeatherInfo() {
+
+         // 발표 날짜, 발표 시각 설정
+         String releaseDate = WeatherUtils.getReleaseDate();
+         String releaseTime = WeatherUtils.getReleaseTime();
+         //log.info("### releaseDate: {}", releaseDate);
+         //log.info("### releaseTime: {}", releaseTime);
+
+         // 추가 파라미터 설정
+         Map<String, String> params = new HashMap<>();
+         params.put("numOfRows", String.valueOf(60));
+         params.put("pageNo", String.valueOf(1));
+         params.put("base_date", releaseDate);
+         params.put("base_time", releaseTime);
+         params.put("nx", String.valueOf(73)); //강원도 설정
+         params.put("ny", String.valueOf(134));
+
+         String uriString = webClientConfig.getWeatherApiUrl(params);
+         Mono<WeatherApiResponse> weatherApiResponse;
+
+         // API 호출
+         try {
+             URI uri = new URI(uriString);
+             weatherApiResponse = webClient.get()
+                     .uri(uri)
+                     .retrieve()
+                     .bodyToMono(WeatherApiResponse.class);
+         } catch (URISyntaxException e) {
+             log.error("Invalid URI syntax: {}", e.getMessage());
+             throw new CustomException(WEATHER_API_RESPONSE_ERROR, "Invalid URI syntax");
+         }
+
+         // API 응답 -> 필요한 데이터 DTO 매핑
+         return weatherApiResponse.flatMap(response -> {
+             WeatherApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
+
+             if (items != null && items.getItem() != null && !items.getItem().isEmpty()) {
+                 Map<String, String> values = items.getItem().stream()
+                         .filter(item -> {
+                             if (item.getFcstTime() != null && releaseTime != null) {
+                                 String checkedTime = String.format("%02d", (Integer.parseInt(releaseTime.substring(0, 2)) + 1) % 24);
+                                 return item.getFcstTime().substring(0, 2).equals(checkedTime);
+                             } else {
+                                 return false;
+                             }
+                         })
+                         .collect(Collectors.toMap(
+                                 WeatherApiResponse.Response.Body.Items.Item::getCategory,
+                                 WeatherApiResponse.Response.Body.Items.Item::getFcstValue
+                         ));
+                 return Mono.just(WeatherResponse.from(values));
+             } else {
+                 return Mono.error(new CustomException(WEATHER_API_RESPONSE_ERROR, "API 데이터 값이 없습니다."));
+             }
+         }).block();
+     }
 }
