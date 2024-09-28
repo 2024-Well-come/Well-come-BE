@@ -45,13 +45,21 @@ public enum CustomErrorCode {
     COMMUNITY_ALREADY_EXISTS(HttpStatus.CONFLICT, 8001, "해당 여행 폴더에 대한 후기 게시글이 이미 존재합니다."),
     IMG_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, 8002, "이미지 업로드 제한 개수를 초과했습니다."),
     IMG_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 8003, "이미지 업로드 중 오류가 발생했습니다."),
+    COMMUNITY_NOT_FOUND(NOT_FOUND,8004,"커뮤니티 게시글을 찾을 수 없습니다."),
 
 
     // Auth (9xxx)
     TOKEN_MISSING(UNAUTHORIZED, 9001, "토큰이 누락되었습니다."),
     REFRESH_TOKEN_EXPIRED(UNAUTHORIZED, 9002, "인증이 만료되었습니다. 다시 로그인하세요."),
     AUTHENTICATION_NOT_FOUND(UNAUTHORIZED, 9003, "인증 정보를 찾을 수 없습니다."),
-    KAKAO_LOGIN_CLIENT_ERROR(UNAUTHORIZED, 9004, "카카오 로그인 API 호출 오류 (Client Error)")
+    KAKAO_LOGIN_CLIENT_ERROR(UNAUTHORIZED, 9004, "카카오 로그인 API 호출 오류 (Client Error)"),
+
+    // Support (10xxx)
+    SUPPORT_COMMUNITY_CNT(BAD_REQUEST,100001, "COMMUNITY 타입은 커뮤니티 값이 필요합니다."),
+    SUPPORT_TRIP_PLAN_PLACE(BAD_REQUEST,100002,"TRIP_PLAN_PLACE 타입은 ID 리스트가 필요합니다." ),
+    SUPPORT_TYPE_MISMATCH(BAD_REQUEST,100003, "유효하지 않은 타입입니다."),
+    SUPPORT_NOT_FOUND(NOT_FOUND,100004,"추천 내용을 찾을 수 없습니다."),
+
     ;
 
     private final HttpStatus httpStatus;

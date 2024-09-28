@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CommunityRepository extends JpaRepository<Community, Long> {
@@ -23,5 +24,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             "GROUP BY c.id " +
             "ORDER BY COUNT(s.id) DESC, c.createdAt DESC")
     Page<Community> findByPostTypeOrderBySupportCount(Pageable pageable, @Param("postType") Community.PostType type);
+
+    List<Community> findByTripPlanInOrderByCreatedAtDesc(Pageable pageable, List<TripPlan> tripPlanList);
 
 }

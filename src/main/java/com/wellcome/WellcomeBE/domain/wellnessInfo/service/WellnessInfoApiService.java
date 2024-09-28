@@ -1,15 +1,17 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
 
+import com.wellcome.WellcomeBE.domain.community.Community;
+import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
+import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNearbyList;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_NOT_FOUND;
 
@@ -42,6 +45,9 @@ public class WellnessInfoApiService {
     private final GoogleMapInfoService googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
+    private final TripPlanPlaceRepository tripPlanPlaceRepository;
+    private final CommunityRepository communityRepository;
+    private static final int REVIEW_POST_BRIEF_LIST_SIZE = 3;
 
 
     /**
@@ -188,6 +194,29 @@ public class WellnessInfoApiService {
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c; // km 단위로 변환
+    }
+
+    /**
+     * 웰니스 장소 상세 조회(4) - 후기 게시글 조회
+     */
+    public WellnessInfoReviewPostResponse getWellnessInfoReviewPosts(Long wellnessInfoId){
+
+        // 유효한 웰니스 정보인지 확인
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+                .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
+
+        // 해당 웰니스 장소에 대해 개별 리뷰가 작성된 여행 폴더 조회
+        List<TripPlan> reviewedPlan = tripPlanPlaceRepository.findByWellnessInfoAndReviewConditionsExist(wellnessInfo);
+
+        // 후기 게시글 조회
+        PageRequest pageRequest = PageRequest.of(0, REVIEW_POST_BRIEF_LIST_SIZE);
+        List<ReviewPostResponse.ReviewPostBrief> reviewList =
+                communityRepository.findByTripPlanInOrderByCreatedAtDesc(pageRequest, reviewedPlan)
+                        .stream()
+                        .map(ReviewPostResponse.ReviewPostBrief::from)
+                        .collect(Collectors.toList());
+
+        return new WellnessInfoReviewPostResponse(reviewList);
     }
 
 }
