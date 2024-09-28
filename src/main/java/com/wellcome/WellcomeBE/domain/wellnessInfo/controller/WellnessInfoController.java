@@ -75,7 +75,7 @@ public class WellnessInfoController {
     }
 
     // 웰니스 장소 상세 조회(5) - 아티클 조회
-    @GetMapping("/api/wellneww-info/{wellnessInfoId}/articles")
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/articles")
     public ResponseEntity<WellnessInfoArticleResponse> getWellnessIngoArticles(
             @PathVariable("wellnessInfoId") Long wellnessInfoId
     ){
