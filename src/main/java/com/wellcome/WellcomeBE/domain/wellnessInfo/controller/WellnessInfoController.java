@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -73,6 +72,14 @@ public class WellnessInfoController {
             @PathVariable("wellnessInfoId") Long wellnessInfoId
     ){
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoReviewPosts(wellnessInfoId));
+    }
+
+    // 웰니스 장소 상세 조회(5) - 아티클 조회
+    @GetMapping("/api/wellneww-info/{wellnessInfoId}/articles")
+    public ResponseEntity<WellnessInfoArticleResponse> getWellnessIngoArticles(
+            @PathVariable("wellnessInfoId") Long wellnessInfoId
+    ){
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoArticle(wellnessInfoId));
     }
 
 }

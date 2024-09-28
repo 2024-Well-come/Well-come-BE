@@ -1,10 +1,12 @@
 package com.wellcome.WellcomeBE.domain.Article.repository;
 
 import com.wellcome.WellcomeBE.domain.Article.Article;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,5 +23,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     @Query("SELECT a FROM Article a ORDER BY a.createdAt DESC")
     Page<Article> findAllArticleByCreatedAt(Pageable pageable);
+
+    // 최신 5개의 웰니스 정보를 담은 아티클을 조회
+    List<Article> findTop5ByWellnessInfoOrderByCreatedAt(@Param("wellnessInfo") WellnessInfo wellnessInfo);
 
 }
