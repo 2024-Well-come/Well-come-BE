@@ -18,9 +18,6 @@ public class WeatherResponse {
 
     private String temperature; // 기온
     private String state; // 날씨 상태값
-    //private String skyState; // 하늘 상태
-    //private String precipitation; // 강수 형태
-    //private String hourlyPrecipitation; // 1시간 강수량
 
     public static WeatherResponse from (
             Map<String, String> values
@@ -31,9 +28,6 @@ public class WeatherResponse {
         return WeatherResponse.builder()
                 .temperature(values.get("T1H"))
                 .state(getWeatherState(sky, pty))
-                //.skyState(SkyStateType.getNameByCode(values.get("SKY")))
-                //.precipitation(PrecipitationType.getNameByCode(values.get("PTY")))
-                //.hourlyPrecipitation(values.get("RN1"))
                 .build();
     }
 
