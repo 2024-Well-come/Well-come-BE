@@ -6,10 +6,7 @@ import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoBasicResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNearbyList;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
@@ -42,6 +39,7 @@ public class WellnessInfoApiService {
     private final GoogleMapInfoService googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
+    private final WellnessInfoService wellnessInfoService;
 
 
     /**
@@ -102,8 +100,7 @@ public class WellnessInfoApiService {
      */
     @Transactional
     public WellnessInfoBasicResponse getWellnessInfoBasic(Long wellnessInfoId){
-
-
+        
         // 1. 웰니스 정보 가져오기
         WellnessInfo wellness = wellnessInfoRepository.findById(wellnessInfoId)
                  .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
@@ -117,10 +114,14 @@ public class WellnessInfoApiService {
         List<String> wellnessInfoImg = wellnessInfoImgRepository.findByWellnessInfo(wellness);
         boolean liked = likedRepository.existsByWellnessInfoAndMember(wellness, tokenProvider.getMember());
 
+        // 4. 시군구 날씨 정보 가져오기
+        Sigungu sigungu = wellness.getSigungu();
+        WeatherResponse weatherInfo = wellnessInfoService.fetchWeatherInfo(sigungu.getNx(), sigungu.getNy());
+
         // 조회 수 추가
         wellness.updateViewNum();
 
-        return WellnessInfoBasicResponse.from(wellness,wellnessInfoImg,placeResult,liked);
+        return WellnessInfoBasicResponse.from(wellness,wellnessInfoImg,placeResult,liked, weatherInfo);
     }
 
     /**

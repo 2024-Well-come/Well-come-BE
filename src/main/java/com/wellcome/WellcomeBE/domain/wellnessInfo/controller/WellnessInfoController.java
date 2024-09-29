@@ -69,10 +69,10 @@ public class WellnessInfoController {
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoGoogleReviews(wellnessInfoId));
     }
 
-    // 현재 날씨 정보 조회
+    // 현재 날씨 정보 조회 (강원도 날씨 테스트용)
     @GetMapping("/api/weather-info")
     public ResponseEntity<WeatherResponse> getWeatherInfo() {
-        return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo());
+        return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo(73, 134)); //강원도
     }
 
 }

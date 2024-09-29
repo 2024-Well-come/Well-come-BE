@@ -26,6 +26,7 @@ public class WellnessInfoBasicResponse {
     private String openDetail;
     private String tel;
     private String website;
+    private WeatherResponse weather;
 
     public static final String NO_INFO = "정보 없음";
 
@@ -33,7 +34,8 @@ public class WellnessInfoBasicResponse {
             WellnessInfo wellness,
             List<String> wellnessInfoImg,
             PlaceReviewResponse.PlaceResult placeResult,
-            boolean isLiked
+            boolean isLiked,
+            WeatherResponse weather
     ) {
         // 영업시간 정보
         String openDetail = placeResult != null ? OpeningHoursUtils.getOpenStatus(placeResult).getOpenDetail() : NO_INFO;
@@ -53,6 +55,7 @@ public class WellnessInfoBasicResponse {
                 .openDetail(openDetail)
                 .tel(wellness.getTel())
                 .website(placeResult != null ? placeResult.getWebsite() : "")
+                .weather(weather)
                 .build();
     }
 

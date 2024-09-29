@@ -278,7 +278,7 @@ public class WellnessInfoService {
     /**
      * 웰니스 장소별 날씨 정보 제공 - 기상청 초단기예보 API 조회
      */
-     public WeatherResponse fetchWeatherInfo() {
+     public WeatherResponse fetchWeatherInfo(int nx, int ny) {
 
          // 발표 날짜, 발표 시각 설정
          String releaseDate = WeatherUtils.getReleaseDate();
@@ -292,8 +292,8 @@ public class WellnessInfoService {
          params.put("pageNo", String.valueOf(1));
          params.put("base_date", releaseDate);
          params.put("base_time", releaseTime);
-         params.put("nx", String.valueOf(73)); //강원도 설정
-         params.put("ny", String.valueOf(134));
+         params.put("nx", String.valueOf(nx));
+         params.put("ny", String.valueOf(ny));
 
          String uriString = webClientConfig.getWeatherApiUrl(params);
          Mono<WeatherApiResponse> weatherApiResponse;
