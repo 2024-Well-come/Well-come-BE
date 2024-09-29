@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
 
-/*
+
 
 @Slf4j
 @Configuration
@@ -34,4 +34,3 @@ public class DataSourceConfig {
     }
 }
 
-*/
