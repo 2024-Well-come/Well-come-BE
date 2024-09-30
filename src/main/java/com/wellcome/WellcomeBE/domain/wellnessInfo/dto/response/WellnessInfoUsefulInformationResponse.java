@@ -1,8 +1,8 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
+import com.wellcome.WellcomeBE.domain.Article.dto.ArticleResponse;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
-import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,12 +10,15 @@ import java.util.List;
 
 @Getter
 @Builder
-public class WellnessInfoNearbyList {
+public class WellnessInfoUsefulInformationResponse {
     private List<WellnessNearbyDto> nearbyList;
+    private List<ArticleResponse.ArticleItem> articleList;
 
-    public static WellnessInfoNearbyList from(List<WellnessNearbyDto> nearbyList){
-        return WellnessInfoNearbyList.builder()
+
+    public static WellnessInfoUsefulInformationResponse from(List<WellnessNearbyDto> nearbyList, List<ArticleResponse.ArticleItem> articleList){
+        return WellnessInfoUsefulInformationResponse.builder()
                 .nearbyList(nearbyList)
+                .articleList(articleList)
                 .build();
     }
 

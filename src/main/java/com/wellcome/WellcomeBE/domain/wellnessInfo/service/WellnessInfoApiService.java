@@ -162,9 +162,9 @@ public class WellnessInfoApiService {
     }
 
     /**
-     * [FEAT] 웰니스 장소 상세 조회(2) - 주변 장소 추천
+     * [FEAT] 웰니스 장소 상세 조회(2) - 유용한 정보 제공(장소 추천, 아티클 조회)
      */
-    public WellnessInfoNearbyList getSurroundingWellnessInfo(Long wellnessInfoId) {
+    public WellnessInfoUsefulInformationResponse getWellnessInfoUsefulInformation(Long wellnessInfoId) {
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
@@ -175,7 +175,7 @@ public class WellnessInfoApiService {
         List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
 
 
-        List<WellnessInfoNearbyList.WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
+        List<WellnessInfoUsefulInformationResponse.WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
                 .map(place -> {
                     PlaceReviewResponse.PlaceResult placeResult = null;
                     if (place.getParentId() != null) {
@@ -183,10 +183,13 @@ public class WellnessInfoApiService {
                     }
                     double distance = calculateDistance(mapY, mapX, place.getMapY(), place.getMapX());
 
-                    return WellnessInfoNearbyList.WellnessNearbyDto.form(place, placeResult, distance);
+                    return WellnessInfoUsefulInformationResponse.WellnessNearbyDto.form(place, placeResult, distance);
                 })
                 .collect(Collectors.toList());
-        return WellnessInfoNearbyList.from(wellnessNearbyDtoList);
+
+        // 해당 웰니스 장소에 대한 아티클 목록 조회
+        List<ArticleResponse.ArticleItem> top5Article = articleRepository.findTop5ByWellnessInfoOrderByCreatedAt(wellnessInfo).stream().map(ArticleResponse.ArticleItem::from).toList();
+        return WellnessInfoUsefulInformationResponse.from(wellnessNearbyDtoList,top5Article);
     }
 
     private static double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
@@ -221,20 +224,6 @@ public class WellnessInfoApiService {
                         .collect(Collectors.toList());
 
         return new WellnessInfoReviewPostResponse(reviewList);
-    }
-
-    /**
-     * 웰니스 장소 상세 조회(5) - 아티클 조회
-     */
-
-    public WellnessInfoArticleResponse getWellnessInfoArticle(Long wellnessInfoId){
-        // 유효한 웰니스 정보인지 확인
-        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
-                .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
-
-        // 해당 웰니스 장소에 대한 아티클 목록 조회
-        List<ArticleResponse.ArticleItem> top5Article = articleRepository.findTop5ByWellnessInfoOrderByCreatedAt(wellnessInfo).stream().map(ArticleResponse.ArticleItem::from).toList();
-        return new WellnessInfoArticleResponse(top5Article);
     }
 
 
