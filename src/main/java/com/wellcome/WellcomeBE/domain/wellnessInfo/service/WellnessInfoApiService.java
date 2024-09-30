@@ -45,6 +45,7 @@ public class WellnessInfoApiService {
     private final GoogleMapInfoService googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
+    private final WellnessInfoService wellnessInfoService;
     private final TripPlanPlaceRepository tripPlanPlaceRepository;
     private final CommunityRepository communityRepository;
     private final ArticleRepository articleRepository;
@@ -107,8 +108,7 @@ public class WellnessInfoApiService {
      * [FEAT] 웰니스 장소 상세 조회(1) - 기본 정보 조회
      */
     @Transactional
-    public WellnessInfoBasicResponse getWellnessInfoBasic(Long wellnessInfoId) {
-
+    public WellnessInfoBasicResponse getWellnessInfoBasic(Long wellnessInfoId){
 
         // 1. 웰니스 정보 가져오기
         WellnessInfo wellness = wellnessInfoRepository.findById(wellnessInfoId)
@@ -123,10 +123,14 @@ public class WellnessInfoApiService {
         List<String> wellnessInfoImg = wellnessInfoImgRepository.findByWellnessInfo(wellness);
         boolean liked = likedRepository.existsByWellnessInfoAndMember(wellness, tokenProvider.getMember());
 
+        // 4. 시군구 날씨 정보 가져오기
+        Sigungu sigungu = wellness.getSigungu();
+        WeatherResponse weatherInfo = wellnessInfoService.fetchWeatherInfo(sigungu.getNx(), sigungu.getNy());
+
         // 조회 수 추가
         wellness.updateViewNum();
 
-        return WellnessInfoBasicResponse.from(wellness, wellnessInfoImg, placeResult, liked);
+        return WellnessInfoBasicResponse.from(wellness,wellnessInfoImg,placeResult,liked, weatherInfo);
     }
 
     /**

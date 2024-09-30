@@ -8,7 +8,10 @@ import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
+import java.net.URISyntaxException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -81,5 +84,11 @@ public class WellnessInfoController {
     ){
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoArticle(wellnessInfoId));
     }
+    
+    // 현재 날씨 정보 조회 (강원도 날씨 테스트용)
+    @GetMapping("/api/weather-info")
+    public ResponseEntity<WeatherResponse> getWeatherInfo() {
+        return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo(73, 134)); //강원도
+    }    
 
 }
