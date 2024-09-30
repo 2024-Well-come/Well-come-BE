@@ -4,10 +4,7 @@ import com.wellcome.WellcomeBE.domain.Article.dto.ArticleResponse;
 import com.wellcome.WellcomeBE.domain.Article.service.ArticleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,5 +21,10 @@ public class ArticleController {
     @GetMapping("/brief")
     public ResponseEntity<ArticleResponse.ArticleBrief> getArticles(@RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok(articleService.getArticles(page));
+    }
+
+    @GetMapping("{articleId}")
+    public ResponseEntity<ArticleResponse.ArticleDetail> getArticleDetails(@PathVariable Long articleId){
+        return ResponseEntity.ok(articleService.getArticleDetail(articleId));
     }
 }
