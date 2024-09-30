@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.community.controller;
 
 import com.wellcome.WellcomeBE.domain.community.dto.request.ReviewPostRequest;
+import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostDetailResponse;
 import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.community.service.CommunityService;
 import jakarta.validation.Valid;
@@ -37,4 +38,9 @@ public class CommunityController {
         return ResponseEntity.ok(communityService.getReviewPostList(sort, page));
     }
 
+    // 후기 게시글 상세 조회
+    @GetMapping("/api/communities/{communityId}")
+    public ResponseEntity<ReviewPostDetailResponse> getReviewPostDetail(@PathVariable Long communityId){
+        return ResponseEntity.ok(communityService.getReviewPostDetail(communityId));
+    }
 }
