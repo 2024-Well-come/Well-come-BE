@@ -28,6 +28,11 @@ public class WeatherUtils {
             currentHour -= 1;
         }
 
+        // currentHour 0 -> -1로 감소할 경우 (00:00~00:44)
+        if (currentHour < 0) {
+            currentHour = 23;
+        }
+
         return String.format("%02d30", currentHour); //HH30 형태로 반환
     }
 }
