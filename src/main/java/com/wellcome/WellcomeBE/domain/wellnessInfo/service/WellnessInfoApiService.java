@@ -1,9 +1,15 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
 
+import com.wellcome.WellcomeBE.domain.Article.dto.ArticleResponse;
+import com.wellcome.WellcomeBE.domain.Article.repository.ArticleRepository;
+import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
+import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
@@ -40,6 +46,10 @@ public class WellnessInfoApiService {
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
     private final WellnessInfoService wellnessInfoService;
+    private final TripPlanPlaceRepository tripPlanPlaceRepository;
+    private final CommunityRepository communityRepository;
+    private final ArticleRepository articleRepository;
+    private static final int REVIEW_POST_BRIEF_LIST_SIZE = 3;
 
 
     /**
@@ -62,7 +72,7 @@ public class WellnessInfoApiService {
         Pageable pageable = PageRequest.of(page, 10);
         List<Object[]> types;
 
-        if(isThemaListEmpty && isSigunguListEmpty){
+        if (isThemaListEmpty && isSigunguListEmpty) {
             data = wellnessInfoRepository.findAllByOrderByViewDesc(pageable, member);
             types = wellnessInfoRepository.findDistinctAllThemaAndSigungu();
         } else if (isThemaListEmpty) { //SigunguList로 필터링
@@ -95,15 +105,14 @@ public class WellnessInfoApiService {
     }
 
     /**
-     *  [FEAT] 웰니스 장소 상세 조회(1) - 기본 정보 조회
-     *
+     * [FEAT] 웰니스 장소 상세 조회(1) - 기본 정보 조회
      */
     @Transactional
     public WellnessInfoBasicResponse getWellnessInfoBasic(Long wellnessInfoId){
-        
+
         // 1. 웰니스 정보 가져오기
         WellnessInfo wellness = wellnessInfoRepository.findById(wellnessInfoId)
-                 .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
         // 2. Google Place API를 통해 장소 세부 정보 가져오기
         String parentId = wellness.getParentId();
@@ -128,29 +137,32 @@ public class WellnessInfoApiService {
      * 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
      */
     public WellnessInfoGoogleReviewResponse getWellnessInfoGoogleReviews(Long wellnessInfoId) {
-        
+
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
-                        .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
 
         Double rating = null;
         List<WellnessInfoGoogleReviewResponse.GoogleReview> reviewList = new ArrayList<>();
 
-        if(wellnessInfo.getParentId() != null){
+        if (wellnessInfo.getParentId() != null) {
             PlaceReviewResponse.PlaceResult placeResult = googleMapInfoService.getPlaceDetails(wellnessInfo.getParentId()).block().getResult();
-            rating = placeResult.getRating();
-            reviewList = Optional.ofNullable(placeResult.getReviews())
-                    .filter(reviews -> !reviews.isEmpty())
-                    .map(reviews -> reviews.stream()
-                            .map(WellnessInfoGoogleReviewResponse.GoogleReview::from)
-                            .collect(Collectors.toList()))
-                    .orElseGet(ArrayList::new);
+
+            if(placeResult != null){
+                rating = placeResult.getRating();
+                reviewList = Optional.ofNullable(placeResult.getReviews())
+                        .filter(reviews -> !reviews.isEmpty())
+                        .map(reviews -> reviews.stream()
+                                .map(WellnessInfoGoogleReviewResponse.GoogleReview::from)
+                                .collect(Collectors.toList()))
+                        .orElseGet(ArrayList::new);
+            }
         }
 
         return WellnessInfoGoogleReviewResponse.from(rating, reviewList);
     }
 
     /**
-     *  [FEAT] 웰니스 장소 상세 조회(2) - 주변 장소 추천
+     * [FEAT] 웰니스 장소 상세 조회(2) - 주변 장소 추천
      */
     public WellnessInfoNearbyList getSurroundingWellnessInfo(Long wellnessInfoId) {
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
@@ -166,7 +178,7 @@ public class WellnessInfoApiService {
         List<WellnessInfoNearbyList.WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
                 .map(place -> {
                     PlaceReviewResponse.PlaceResult placeResult = null;
-                    if(place.getParentId() != null) {
+                    if (place.getParentId() != null) {
                         placeResult = googleMapInfoService.getPlaceDetails(place.getParentId()).block().getResult();
                     }
                     double distance = calculateDistance(mapY, mapX, place.getMapY(), place.getMapX());
@@ -187,5 +199,44 @@ public class WellnessInfoApiService {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c; // km 단위로 변환
     }
+
+    /**
+     * 웰니스 장소 상세 조회(4) - 후기 게시글 조회
+     */
+    public WellnessInfoReviewPostResponse getWellnessInfoReviewPosts(Long wellnessInfoId) {
+
+        // 유효한 웰니스 정보인지 확인
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+                .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
+
+        // 해당 웰니스 장소에 대해 개별 리뷰가 작성된 여행 폴더 조회
+        List<TripPlan> reviewedPlan = tripPlanPlaceRepository.findByWellnessInfoAndReviewConditionsExist(wellnessInfo);
+
+        // 후기 게시글 조회
+        PageRequest pageRequest = PageRequest.of(0, REVIEW_POST_BRIEF_LIST_SIZE);
+        List<ReviewPostResponse.ReviewPostBrief> reviewList =
+                communityRepository.findByTripPlanInOrderByCreatedAtDesc(pageRequest, reviewedPlan)
+                        .stream()
+                        .map(ReviewPostResponse.ReviewPostBrief::from)
+                        .collect(Collectors.toList());
+
+        return new WellnessInfoReviewPostResponse(reviewList);
+    }
+
+    /**
+     * 웰니스 장소 상세 조회(5) - 아티클 조회
+     */
+
+    public WellnessInfoArticleResponse getWellnessInfoArticle(Long wellnessInfoId){
+        // 유효한 웰니스 정보인지 확인
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+                .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
+
+        // 해당 웰니스 장소에 대한 아티클 목록 조회
+        List<ArticleResponse.ArticleItem> top5Article = articleRepository.findTop5ByWellnessInfoOrderByCreatedAt(wellnessInfo).stream().map(ArticleResponse.ArticleItem::from).toList();
+        return new WellnessInfoArticleResponse(top5Article);
+    }
+
+
 
 }

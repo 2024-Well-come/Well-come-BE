@@ -22,12 +22,12 @@ public class Support {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-//    @OneToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "trip_plan_place_id", nullable = false)
-//    private TripPlanPlace tripPlanPlace;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "trip_plan_place_id")
+    private TripPlanPlace tripPlanPlace;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "community_id", nullable = false)
+    @JoinColumn(name = "community_id")
     private Community community;
 
 }

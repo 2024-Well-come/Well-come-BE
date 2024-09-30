@@ -45,6 +45,7 @@ public enum CustomErrorCode {
     COMMUNITY_ALREADY_EXISTS(HttpStatus.CONFLICT, 8001, "해당 여행 폴더에 대한 후기 게시글이 이미 존재합니다."),
     IMG_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, 8002, "이미지 업로드 제한 개수를 초과했습니다."),
     IMG_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 8003, "이미지 업로드 중 오류가 발생했습니다."),
+    COMMUNITY_NOT_FOUND(NOT_FOUND,8004,"커뮤니티 게시글을 찾을 수 없습니다."),
 
 
     // Auth (9xxx)
@@ -53,8 +54,17 @@ public enum CustomErrorCode {
     AUTHENTICATION_NOT_FOUND(UNAUTHORIZED, 9003, "인증 정보를 찾을 수 없습니다."),
     KAKAO_LOGIN_CLIENT_ERROR(UNAUTHORIZED, 9004, "카카오 로그인 API 호출 오류 (Client Error)"),
 
-    // 기상청 단기예보 API (10xxx)
-    WEATHER_API_RESPONSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,10001, "기상청 단기예보 API 응답값이 없습니다."),
+  
+    // Support (10xxx)
+    SUPPORT_COMMUNITY_CNT(BAD_REQUEST,10001, "COMMUNITY 타입은 커뮤니티 값이 필요합니다."),
+    SUPPORT_TRIP_PLAN_PLACE(BAD_REQUEST,10002,"TRIP_PLAN_PLACE 타입은 ID 리스트가 필요합니다." ),
+    SUPPORT_TYPE_MISMATCH(BAD_REQUEST,10003, "유효하지 않은 타입입니다."),
+    SUPPORT_NOT_FOUND(NOT_FOUND,10004,"추천 내용을 찾을 수 없습니다."),
+  
+
+    // 기상청 단기예보 API (11xxx)
+    WEATHER_API_RESPONSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 11001, "기상청 단기예보 API 응답값이 없습니다."),
+  
     ;
 
     private final HttpStatus httpStatus;

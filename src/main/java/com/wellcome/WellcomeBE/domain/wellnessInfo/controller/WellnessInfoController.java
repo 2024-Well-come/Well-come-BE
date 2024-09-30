@@ -69,10 +69,26 @@ public class WellnessInfoController {
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoGoogleReviews(wellnessInfoId));
     }
 
+    // 웰니스 장소 상세 조회(4) - 후기 게시글 조회
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/reviews")
+    public ResponseEntity<WellnessInfoReviewPostResponse> getWellnessInfoReviewPosts(
+            @PathVariable("wellnessInfoId") Long wellnessInfoId
+    ){
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoReviewPosts(wellnessInfoId));
+    }
+
+    // 웰니스 장소 상세 조회(5) - 아티클 조회
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/articles")
+    public ResponseEntity<WellnessInfoArticleResponse> getWellnessIngoArticles(
+            @PathVariable("wellnessInfoId") Long wellnessInfoId
+    ){
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoArticle(wellnessInfoId));
+    }
+    
     // 현재 날씨 정보 조회 (강원도 날씨 테스트용)
     @GetMapping("/api/weather-info")
     public ResponseEntity<WeatherResponse> getWeatherInfo() {
         return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo(73, 134)); //강원도
-    }
+    }    
 
 }
