@@ -18,7 +18,7 @@ public class ReviewPostDetailResponse {
     private String title;
     private List<String> postImgs;
     private String content;
-    private boolean isSupport;
+    private Boolean isSupport;
     private List<ReviewWellnessInfoItem> wellnessInfoHistory;
 
     public static ReviewPostDetailResponse from(Community community, boolean isSupport ,List<String> postImgs, List<ReviewWellnessInfoItem> reviewWellnessInfoItem){
@@ -44,8 +44,8 @@ public class ReviewPostDetailResponse {
         private String address;
         private String review;
         private Integer rating;
-        private boolean isSupport;
-        private boolean isLiked;
+        private Boolean isSupport;
+        private Boolean isLiked;
 
 
         public static ReviewWellnessInfoItem from(Object[] objects) {
