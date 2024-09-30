@@ -1,51 +1,40 @@
 package com.wellcome.WellcomeBE.global;
 
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.global.type.DayOfWeekType;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 public class OpeningHoursUtils {
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmm");
-    private static final Map<String, String> WEEKDAY_MAP = new HashMap<>() {{
-        put("MONDAY", "월요일");
-        put("TUESDAY", "화요일");
-        put("WEDNESDAY", "수요일");
-        put("THURSDAY", "목요일");
-        put("FRIDAY", "금요일");
-        put("SATURDAY", "토요일");
-        put("SUNDAY", "일요일");
-    }};
 
     // 요일 및 운영 시간 정보 가져오기
     public static OpenStatus getOpenStatus(PlaceReviewResponse.PlaceResult placeResult) {
-        DayOfWeek today = LocalDate.now().getDayOfWeek();
+        DayOfWeekType today = DayOfWeekType.fromIndex(LocalDate.now().getDayOfWeek().getValue() % 7); // 요일 인덱스 조정
         LocalTime now = LocalTime.now(ZoneId.of("Asia/Seoul")).withSecond(0).withNano(0); // 한국 표준시(KST)를 기준으로 현재 시간 가져오기
         String openDetail = "정보 없음";
         Boolean isOpen = false;
+//        log.info("한국시간: {}", now);
 
         if (placeResult.getOpening_hours() != null) {
             openDetail = getOpenDetail(placeResult.getOpening_hours().getWeekday_text(), today);
-            isOpen = isCurrentlyOpen(placeResult.getOpening_hours().getPeriods(), today, now);
+            isOpen = isCurrentlyOpen(placeResult.getOpening_hours().getPeriods(), today, now,openDetail);
         }
 
         return new OpenStatus(openDetail, isOpen);
     }
 
     // 운영 시간 상세 정보 가져오기
-    public static String getOpenDetail(List<String> weekdayText, DayOfWeek today) {
-        String todayString = today.name();
+    public static String getOpenDetail(List<String> weekdayText, DayOfWeekType today) {
         for (String text : weekdayText) {
-            if (text.startsWith(WEEKDAY_MAP.get(todayString))) {
+            if (text.startsWith(today.getKoreanName())) {
                 return text;
             }
         }
@@ -53,8 +42,8 @@ public class OpeningHoursUtils {
     }
 
     // 현재 운영 중인지 확인하기
-    public static Boolean isCurrentlyOpen(List<PlaceReviewResponse.PlaceResult.OpeningHours.Period> periods, DayOfWeek today, LocalTime now) {
-        int todayIndex = today.getValue(); // DayOfWeek는 월요일이 1, 일요일이 7
+    public static Boolean isCurrentlyOpen(List<PlaceReviewResponse.PlaceResult.OpeningHours.Period> periods, DayOfWeekType today, LocalTime now,String openDetail) {
+        int todayIndex = today.getIndex(); // 요일 인덱스
 
         if (periods == null || periods.isEmpty()) {
             return false; // 운영 시간이 없는 경우 닫혀 있는 것으로 간주
@@ -62,20 +51,31 @@ public class OpeningHoursUtils {
 
 
         for (PlaceReviewResponse.PlaceResult.OpeningHours.Period period : periods) {
-            // 구글의 day는 0(일요일)부터 시작하므로 DayOfWeek의 index와 맞추기 위해 수정
-            int periodDayIndex = period.getOpen().getDay() + 1; // open의 day 값은 0부터 시작함
+            int periodDayIndex = period.getOpen().getDay();
+
+            // 24시간 운영 여부 확인
+            if (period.getClose() == null && period.getOpen().getTime().equals("0000")) {
+                // openDetail에 "24시간 영업"이라는 문구가 포함되어 있는지 확인
+                if (openDetail != null && openDetail.contains("24시간 영업")) {
+                    // 요일별 24시간 운영 여부 확인
+                    String[] weekdayTexts = openDetail.split("\n"); // openDetail에서 줄 바꿈으로 요일 텍스트 분리
+                    for (String text : weekdayTexts) {
+                        if (text.startsWith(DayOfWeekType.fromIndex(todayIndex).getKoreanName())) {
+                            return true; // 오늘이 24시간 영업인 경우
+                        }
+                    }
+                }
+            }
 
             // todayIndex와 period의 day가 같은지 비교
             if (periodDayIndex == todayIndex) {
                 LocalTime openTime = LocalTime.parse(period.getOpen().getTime(), TIME_FORMATTER);
-
-                // period.getClose()가 null인 경우 24시간 영업으로 간주
                 LocalTime closeTime = (period.getClose() != null)
                         ? LocalTime.parse(period.getClose().getTime(), TIME_FORMATTER)
                         : LocalTime.MAX; // 23:59로 설정하여 당일 자정까지로 간주
 
-                log.info("시작: {}",openTime);
-                log.info("끝: {}",closeTime);
+//                log.info("시작: {}", openTime);
+//                log.info("끝: {}", closeTime);
 
                 // 현재 시간이 openTime과 closeTime 사이에 있는지 확인
                 if (!now.isBefore(openTime) && !now.isAfter(closeTime)) {
@@ -83,7 +83,6 @@ public class OpeningHoursUtils {
                 }
             }
         }
-        log.info("한국시간: {}",now);
         return false;
     }
 
