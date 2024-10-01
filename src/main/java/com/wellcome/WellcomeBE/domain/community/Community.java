@@ -31,8 +31,7 @@ public class Community extends BaseTimeEntity {
     @Column(nullable = false)
     private String title;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(name = "content", columnDefinition = "TEXT",nullable = false)
     private String content;
 
     //@Builder.Default
