@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
+// v1
 import com.wellcome.WellcomeBE.domain.Article.dto.ArticleResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
