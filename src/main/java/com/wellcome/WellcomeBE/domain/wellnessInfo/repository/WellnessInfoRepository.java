@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long> {
-    List<WellnessInfo> findTop10ByOrderByIdAsc();
+    List<WellnessInfo> findTop200ByOrderByIdAsc();
 
     /**
      * 목록 조회
@@ -123,4 +123,5 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
     List<WellnessInfo> findByIdIn(List<Long> wellnessInfoIdList);
 
     List<WellnessInfo> findByThumbnailUrlNotNull();
+    Page<WellnessInfo> findAll(Pageable pageable);
 }
