@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.wellcome.WellcomeBE.domain.Article.Article;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
-import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -62,22 +61,33 @@ public class ArticleResponse {
             return ArticleItem.builder()
                     .articleId(article.getId())
                     .title(article.getTitle())
-                    .subtitle(article.getSubtitle())
+                    .subtitle(generateSubtitle(article.getSubtitle(), article.getContent()))
                     .thumbnailUrl(article.getThumbnailUrl())
                     .build();
+        }
+
+        /**
+         * subtitle이 없는 경우 content에서 일정 글자 수를 잘라 subtitle로 생성합니다.
+         */
+        private static String generateSubtitle(String subtitle, String content) {
+            if (subtitle != null && !subtitle.isEmpty()) {
+                return subtitle;
+            }
+
+            // content가 존재할 경우 최대 20자까지 추출하고, 길이를 초과하면 "..." 추가
+            if (content != null && !content.isEmpty()) {
+                int maxLength = 20;
+                return content.length() > maxLength ? content.substring(0, maxLength) + "..." : content;
+            }
+
+            return null; // subtitle도 content도 없을 경우 null 반환
         }
     }
 
     @Getter
     @Builder
     public static class ArticleDetail {
-        // 관리자 고정값 상수 정의
-        private static final String DEFAULT_NICKNAME = "웰컴";
-        private static final String DEFAULT_IMAGE_URL = "https://default-image-url.com/admin.png";
-
         private Long articleId;
-        private String nickname;
-        private String imageUrl;
         private String createdAt;
         private String title;
         private String thumbnailUrl;
@@ -87,8 +97,6 @@ public class ArticleResponse {
         public static ArticleDetail from(Article article, List<IncludeWellnessInfoItem> items) {
             return ArticleDetail.builder()
                     .articleId(article.getId())
-                    .nickname(DEFAULT_NICKNAME) // 고정 닉네임 사용
-                    .imageUrl(DEFAULT_IMAGE_URL) // 고정 이미지 URL 사용
                     .createdAt(article.getCreatedAt().toString())
                     .title(article.getTitle())
                     .thumbnailUrl(article.getThumbnailUrl())
@@ -102,17 +110,19 @@ public class ArticleResponse {
         @Getter
         @Builder
         public static class IncludeWellnessInfoItem{
+            private Long wellnessInfoId;
             private String title;
             private String category;
             private double rating;
-            private Boolean isOpen;
+            private int reviewNum;
             private String thema;
             public static IncludeWellnessInfoItem from(WellnessInfo wellnessInfo , PlaceReviewResponse.PlaceResult placeResult) {
                 return IncludeWellnessInfoItem.builder()
+                        .wellnessInfoId(wellnessInfo.getId())
                         .title(wellnessInfo.getTitle())
                         .category(wellnessInfo.getCategory().getName())
-                        .rating(placeResult.getRating()) // use corrected field name
-                        .isOpen(OpeningHoursUtils.getOpenStatus(placeResult).getIsOpen())
+                        .rating(placeResult.getRating())
+                        .reviewNum(placeResult != null ? placeResult.getUser_ratings_total() : 0)
                         .thema(wellnessInfo.getThema().getName())
                         .build();
 
