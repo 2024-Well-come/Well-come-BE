@@ -227,5 +227,50 @@ public class WellnessInfoApiService {
     }
 
 
+    /**
+     * v1
+     * [FEAT] 웰니스 장소 상세 조회(2) - 주변 장소 추천
+     */
+    public WellnessInfoNearResponse getSurroundingWellnessInfo(Long wellnessInfoId) {
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+                .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
+
+        Double mapX = wellnessInfo.getMapX();
+        Double mapY = wellnessInfo.getMapY();
+        Double radius = 10.0; // 예시로 10km 설정
+
+        List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
+
+
+        List<WellnessInfoNearResponse.WellnessNearItem> wellnessNearbyDtoList = nearbyWellness.stream()
+                .map(place -> {
+                    PlaceReviewResponse.PlaceResult placeResult = null;
+                    if (place.getParentId() != null) {
+                        placeResult = googleMapInfoService.getPlaceDetails(place.getParentId()).block().getResult();
+                    }
+                    double distance = calculateDistance(mapY, mapX, place.getMapY(), place.getMapX());
+
+                    return WellnessInfoNearResponse.WellnessNearItem.form(place, placeResult, distance);
+                })
+                .collect(Collectors.toList());
+        return WellnessInfoNearResponse.from(wellnessNearbyDtoList);
+    }
+
+    /**
+     * v2
+     * 웰니스 장소 상세 조회(5) - 아티클 조회
+     */
+
+    public WellnessInfoArticleResponse getWellnessInfoArticle(Long wellnessInfoId){
+        // 유효한 웰니스 정보인지 확인
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+                .orElseThrow(() -> new CustomException(WELLNESS_INFO_NOT_FOUND));
+
+        // 해당 웰니스 장소에 대한 아티클 목록 조회
+        List<ArticleResponse.ArticleItem> top5Article = articleRepository.findTop5ByWellnessInfoOrderByCreatedAt(wellnessInfo).stream().map(ArticleResponse.ArticleItem::from).toList();
+        return new WellnessInfoArticleResponse(top5Article);
+    }
+
+
 
 }
