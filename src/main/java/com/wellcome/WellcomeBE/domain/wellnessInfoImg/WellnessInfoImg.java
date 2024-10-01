@@ -22,7 +22,7 @@ public class WellnessInfoImg extends BaseTimeEntity {
     private WellnessInfo wellnessInfo;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String imgUrl;
 
 }

@@ -12,8 +12,11 @@ import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -21,8 +24,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_RESPONSE_ERROR;
 
@@ -37,44 +40,55 @@ public class WellnessInfoImgService {
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
 
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final int BATCH_SIZE = 50;
-    private static final int CONCURRENT_REQUESTS = 10;
-    private static final Duration REQUEST_DELAY = Duration.ofMillis(200);
+    private static final int CONCURRENT_REQUESTS = 500;
 
 
     // DB WellnessInfo에 해당하는 데이터를 조회
-    public void fetchAndSaveTourImg() {
-        List<WellnessInfo> wellnessInfoList = wellnessInfoRepository.findTop10ByOrderByIdAsc();
-        Flux.fromIterable(wellnessInfoList) // DB 조회 결과에 대해 Iterable 사용
-                .flatMap(this::fetchAndSaveImage, CONCURRENT_REQUESTS) // 이미지 API 호출 및 저장
-                .buffer(BATCH_SIZE)
-                .delayElements(REQUEST_DELAY)
-                .collectList()
-                .block();
+    @Transactional
+    public void fetchAndSaveTourImg (int page) {
+
+        Pageable pageable = PageRequest.of(page, CONCURRENT_REQUESTS);
+        List<WellnessInfo> wellnessInfoList = wellnessInfoRepository.findAll(pageable).toList();
+
+        Flux.fromIterable(wellnessInfoList)
+                .flatMap(wellnessInfo -> fetchImage(wellnessInfo.getContentId())
+                        .flatMap(response -> {
+                            if (response != null && response.getResponse() != null
+                                    && response.getResponse().getBody() != null
+                                    && response.getResponse().getBody().getItems() != null
+                                    && response.getResponse().getBody().getItems().getItem() != null) {
+
+                                List<TourImageApiResponse.Response.Body.Items.Item> itemList = response.getResponse().getBody().getItems().getItem();
+
+                                if (itemList.isEmpty()) {
+                                    log.info("{}에 상세 이미지에 대한 검색 결과 없음", wellnessInfo.getContentId());
+                                    return Mono.empty(); // 이미지가 없는 경우
+                                }
+
+                                // WellnessInfoImg 엔티티 리스트 생성
+                                List<WellnessInfoImg> images = itemList.stream()
+                                        .map(imgItem -> WellnessInfoImg.builder()
+                                                .wellnessInfo(wellnessInfo)
+                                                .imgUrl(imgItem.getOriginimgurl())
+                                                .build())
+                                        .collect(Collectors.toList());
+
+                                // DB에 이미지 엔티티 리스트 저장
+                                wellnessInfoImgRepository.saveAll(images); // 즉시 저장
+                                log.info("Successfully saved {} images for wellnessInfo {}", images.size(), wellnessInfo.getContentId());
+
+                                return Mono.just(images); // 저장한 이미지 리스트 반환
+                            } else {
+                                log.info("{}에 대한 이미지 정보를 가져오는 데 실패했습니다.", wellnessInfo.getContentId());
+                                return Mono.empty();
+                            }
+                        }))
+                .collectList() // 모든 결과를 리스트로 수집
+                .block(); // 블록하여 작업이 완료될 때까지 대기
     }
 
-    // 이미지 API 호출 및 DB에 저장하는 메서드
-    private Mono<Void> fetchAndSaveImage(WellnessInfo wellnessInfo) {
-        return fetchImage(wellnessInfo.getContentId()) // 이미지 API 호출
-                .flatMapMany(response -> {
-                    TourImageApiResponse.Response response1 = response.getResponse();
-                    if (response1 == null || response1.getBody().getItems() == null || response1.getBody().getItems().getItem() == null || response1.getBody().getItems().getItem().isEmpty()) {
-                        log.info("{}에 상세 이미지에 대한 검색 결과 없음", wellnessInfo.getContentId());
-                        return Flux.empty();
-                    }
-                    TourImageApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
-                    return Flux.fromIterable(items.getItem()); // API 응답에서 이미지 리스트 추출
-                })
-                .map(imgItem -> WellnessInfoImg.builder() // WellnessInfoImg 엔티티 생성
-                        .wellnessInfo(wellnessInfo)
-                        .imgUrl(imgItem.getOriginimgurl()) // API에서 반환된 이미지 URL 사용
-                        .build())
-                .collectList()
-                .flatMap(images -> Mono.fromRunnable(() -> wellnessInfoImgRepository.saveAll(images))) // 생성된 엔티티 리스트 저장
-                .then(); // Mono<Void> 반환
-    }
+
 
 
     // tour4.0 Image API 요청
@@ -118,7 +132,4 @@ public class WellnessInfoImgService {
                     }
                 });
     }
-
-
-
 }

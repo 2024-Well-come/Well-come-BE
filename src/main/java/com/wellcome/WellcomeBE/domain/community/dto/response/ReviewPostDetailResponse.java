@@ -13,6 +13,7 @@ import java.util.List;
 @Getter
 @Builder
 public class ReviewPostDetailResponse {
+    private Long communityId;
     private String nickname;
     private String createdAt;
     private String title;
@@ -24,6 +25,7 @@ public class ReviewPostDetailResponse {
     public static ReviewPostDetailResponse from(Community community, boolean isSupport ,List<String> postImgs, List<ReviewWellnessInfoItem> reviewWellnessInfoItem){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일");
         return ReviewPostDetailResponse.builder()
+                .communityId(community.getId())
                 .nickname(community.getMember().getNickname())
                 .createdAt(formatter.format(community.getCreatedAt()))
                 .title(community.getTitle())
@@ -38,7 +40,9 @@ public class ReviewPostDetailResponse {
     @Getter
     @Builder
     public static class ReviewWellnessInfoItem{
-        private String originalThumbnailUrl;
+
+        private Long wellnessInfoId;
+        private String thumbnailUrl;
         private String title;
         private String thema;
         private String address;
@@ -56,7 +60,8 @@ public class ReviewPostDetailResponse {
             boolean isSupport = (boolean) objects[3];
 
             return ReviewWellnessInfoItem.builder()
-                    .originalThumbnailUrl(wellnessInfo.getThumbnailUrl())
+                    .wellnessInfoId(wellnessInfo.getId())
+                    .thumbnailUrl(wellnessInfo.getThumbnailUrl())
                     .title(wellnessInfo.getTitle())
                     .thema(wellnessInfo.getThema().getName())
                     .address(wellnessInfo.getAddress())
