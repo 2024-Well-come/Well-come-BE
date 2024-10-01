@@ -13,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long> {
-    List<WellnessInfo> findTop200ByOrderByIdAsc();
 
     /**
      * 목록 조회
@@ -120,8 +119,29 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
                                                   @Param("radius") Double radius);
 
 
-    List<WellnessInfo> findByIdIn(List<Long> wellnessInfoIdList);
 
     List<WellnessInfo> findByThumbnailUrlNotNull();
+
+    // 후기 게시글 내부 웰니스 장소 정보
+    @Query(
+            "SELECT w, tpp, " +
+                    "CASE WHEN l.id IS NOT NULL THEN TRUE ELSE FALSE END, " +
+                    "CASE WHEN s.id IS NOT NULL THEN TRUE ELSE FALSE END " +
+                    "FROM WellnessInfo w " +
+                    "LEFT JOIN TripPlanPlace tpp ON tpp.wellnessInfo = w " +
+                    "LEFT JOIN TripPlan tp ON tp.id = tpp.tripPlan.id " +
+                    "LEFT JOIN Community c ON c.tripPlan.id = tp.id " +
+                    "LEFT JOIN Liked l ON l.wellnessInfo = w AND l.member = :member " +
+                    "LEFT JOIN Support s ON s.tripPlanPlace = tpp AND s.member = :member " +
+                    "WHERE c.id = :communityId " +
+                    "AND tpp.review IS NOT NULL " +
+                    "AND tpp.rating IS NOT NULL"
+    )
+    List<Object[]> findWellnessInfoWithSupportAndLikedByCommunityId(
+            @Param("communityId") Long communityId,
+            @Param("member") Member member
+    );
+
+
     Page<WellnessInfo> findAll(Pageable pageable);
 }
