@@ -56,7 +56,7 @@ public class ReviewPostDetailResponse {
             boolean isSupport = (boolean) objects[3];
 
             return ReviewWellnessInfoItem.builder()
-                    .originalThumbnailUrl(wellnessInfo.getOriginalThumbnailUrl())
+                    .originalThumbnailUrl(wellnessInfo.getThumbnailUrl())
                     .title(wellnessInfo.getTitle())
                     .thema(wellnessInfo.getThema().getName())
                     .address(wellnessInfo.getAddress())
