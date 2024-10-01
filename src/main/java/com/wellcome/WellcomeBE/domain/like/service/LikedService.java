@@ -39,6 +39,8 @@ public class LikedService {
     private final WellnessInfoRepository wellnessInfoRepository;
     private final GoogleMapInfoService googleMapInfoService;
 
+    private static final int LIKE_LIST_PAGE_SIZE = 10;
+
     /**
      * 좋아요 등록
      */
@@ -92,7 +94,7 @@ public class LikedService {
         }
 
         // 페이징 및 정렬 설정 (6개씩, 최신순 정렬)
-        Pageable pageable = PageRequest.of(page, 6, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, LIKE_LIST_PAGE_SIZE, Sort.by("createdAt").descending());
 
         // 페이징을 지원하는 쿼리 메서드를 활용해 데이터 조회
         Page<LikeWellnessInfoVo> likeWellnessInfoPage = likedRepository.findByMemberIdAndThemaIn(member, themaList, pageable);
