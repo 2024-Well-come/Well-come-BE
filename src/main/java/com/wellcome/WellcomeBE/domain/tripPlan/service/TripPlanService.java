@@ -50,16 +50,21 @@ public class TripPlanService {
                 .startDate(request.getTripStartDate())
                 .endDate(request.getTripEndDate())
                 .member(tokenProvider.getMember())
+                .isActive(true)
+                .status(TripPlan.Status.ACTIVE)
                 .build();
         tripPlanRepository.save(tripPlan);
     }
 
+    @Transactional(readOnly = true)
     public TripPlanResponse.TripPlanBriefResponse getTripPlanList(){
-        List<TripPlan> result = tripPlanRepository.findByMember(tokenProvider.getMember());
+        //List<TripPlan> result = tripPlanRepository.findByMember(tokenProvider.getMember());
+        List<TripPlan> result =tripPlanRepository.findByMemberAndStatus(tokenProvider.getMember(), TripPlan.Status.ACTIVE);
         List<TripPlanResponse.TripPlanPlaceItem> planPlaceItems = result.stream().map(TripPlanResponse.TripPlanPlaceItem::from).collect(Collectors.toList());
         return TripPlanResponse.TripPlanBriefResponse.builder().tripPlanList(planPlaceItems).build();
     }
 
+    @Transactional(readOnly = true)
     public TripPlanResponse.TripPlanListResponse getTripPlans(String sort, int page){
         PageRequest pageRequest = PageRequest.of(page,10);
         Page<TripPlan> tripPlans;
@@ -114,12 +119,21 @@ public class TripPlanService {
             throw new CustomException(ACCESS_DENIED);
         }
 
+        /*
         // 여행 폴더 내 여행지 삭제
-        List<TripPlanPlace> tripPlanPlaceList = tripPlanPlaceRepository.findByTripPlanIdIn(tripPlanIdList);
-        tripPlanPlaceRepository.deleteAllInBatch(tripPlanPlaceList);
+        //List<TripPlanPlace> tripPlanPlaceList = tripPlanPlaceRepository.findByTripPlanIdIn(tripPlanIdList);
+        //tripPlanPlaceRepository.deleteAllInBatch(tripPlanPlaceList);
 
         // 여행 폴더 일괄 삭제 처리
-        tripPlanRepository.deleteAllByIdInBatch(tripPlanIdList);
+        //tripPlanRepository.deleteAllByIdInBatch(tripPlanIdList);
+        */
+
+        // 여행 폴더 내 여행지 상태 업데이트
+        List<TripPlan> tripPlans = tripPlanRepository.findByIdIn(tripPlanIdList);
+        tripPlans.forEach(TripPlan::markAsInactive);
+
+        tripPlanRepository.saveAll(tripPlans);
+
     }
 
     public TripPlanDetailResponse getTripPlan(Long planId, Thema thema, int page) {

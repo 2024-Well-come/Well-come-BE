@@ -34,7 +34,15 @@ public class TripPlan extends BaseTimeEntity {
     @OneToMany(mappedBy = "tripPlan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TripPlanPlace> tripPlanPlaces;
 
-    private Boolean isActive = true;
+    private Boolean isActive = true; // 후기 작성 활성화 여부
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 10)
+    protected Status status = Status.ACTIVE; // 폴더 삭제 여부
+
+    public enum Status {
+        ACTIVE, INACTIVE;
+    }
 
     public void updateTitle(String title) {
         this.title = title;
@@ -49,6 +57,9 @@ public class TripPlan extends BaseTimeEntity {
     }
 
     public void updateIsActive(){this.isActive = false;}
+
+    // 상태 업데이트 메서드 추가
+    public void markAsInactive() { this.status = Status.INACTIVE;}
 
 
 }
