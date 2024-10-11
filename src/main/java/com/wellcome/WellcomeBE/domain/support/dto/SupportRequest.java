@@ -19,8 +19,7 @@ public class SupportRequest {
         private Long communityId;
 
         @NotNull(message = message)
-        @Size(min = 1, message = message)
-        private List<Long> wellnessInfoIds;  // wellnessInfo ID 리스트
+        private Long wellnessInfoId;  // wellnessInfo ID 리스트
     }
 
 
