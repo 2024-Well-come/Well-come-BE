@@ -134,8 +134,7 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
                     "LEFT JOIN Liked l ON l.wellnessInfo = w AND l.member = :member " +
                     "LEFT JOIN Support s ON s.wellnessInfo = w AND s.member = :member " +
                     "WHERE c.id = :communityId " +
-                    "AND tpp.review IS NOT NULL " +
-                    "AND tpp.rating IS NOT NULL"
+                    "AND (tpp.review IS NOT NULL OR tpp.rating IS NOT NULL)"
     )
     List<Object[]> findWellnessInfoWithSupportAndLikedByCommunityId(
             @Param("communityId") Long communityId,

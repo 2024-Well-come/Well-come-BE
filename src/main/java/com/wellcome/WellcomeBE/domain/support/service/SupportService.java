@@ -58,17 +58,16 @@ public class SupportService {
                 .orElseThrow(() -> new CustomException(CustomErrorCode.COMMUNITY_NOT_FOUND));
         Member member = tokenProvider.getMember();
 
-        req.getWellnessInfoIds().forEach(wellness -> {
-            // 웰니스 정보 존재 확인
-            WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellness).orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
+        // 웰니스 정보 존재 확인
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(req.getWellnessInfoId()).orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
             // Support 조회 및 생성
-            supportRepository.findByMemberAndCommunityIdAndWellnessInfoId(member, req.getCommunityId() , wellness)
+            supportRepository.findByMemberAndCommunityIdAndWellnessInfoId(member, req.getCommunityId() , wellnessInfo.getId())
                     .orElseGet(() -> {
                         Support newSupport = Support.createWellnessInfoSupport(community, wellnessInfo, member);
                         return supportRepository.save(newSupport); // Support 생성 및 저장
                     });
-        });
+
     }
 
     @Transactional
