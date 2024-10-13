@@ -14,6 +14,9 @@ import java.util.Optional;
 public interface CommunityRepository extends JpaRepository<Community, Long> {
 
     Optional<Community> findByTripPlan(TripPlan tripPlan);
+    @Query("SELECT c.tripPlan.id FROM Community c WHERE c.tripPlan.id IN :tripPlanIdList")
+    List<Long> findReferencedTripPlanIds(@Param("tripPlanIdList") List<Long> tripPlanIdList);
+
 
     Page<Community> findByPostTypeOrderByCreatedAtDesc(Pageable pageable, Community.PostType tripPlan);
 

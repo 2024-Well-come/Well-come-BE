@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.domain.tripPlan.service;
 
+import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
@@ -40,6 +41,7 @@ import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN
 public class TripPlanService {
     private final TripPlanRepository tripPlanRepository;
     private final TripPlanPlaceRepository tripPlanPlaceRepository;
+    private final CommunityRepository communityRepository;
     private final TokenProvider tokenProvider;
     private final GoogleMapInfoService googleMapInfoService;
 
@@ -119,20 +121,28 @@ public class TripPlanService {
             throw new CustomException(ACCESS_DENIED);
         }
 
-        /*
-        // 여행 폴더 내 여행지 삭제
-        //List<TripPlanPlace> tripPlanPlaceList = tripPlanPlaceRepository.findByTripPlanIdIn(tripPlanIdList);
-        //tripPlanPlaceRepository.deleteAllInBatch(tripPlanPlaceList);
 
-        // 여행 폴더 일괄 삭제 처리
-        //tripPlanRepository.deleteAllByIdInBatch(tripPlanIdList);
-        */
+        // 2. 커뮤니티에서 참조 중인 TripPlan ID 목록을 가져옴
+        List<Long> referencedTripPlanIds = communityRepository.findReferencedTripPlanIds(tripPlanIdList);
 
-        // 여행 폴더 내 여행지 상태 업데이트
-        List<TripPlan> tripPlans = tripPlanRepository.findByIdIn(tripPlanIdList);
-        tripPlans.forEach(TripPlan::markAsInactive);
+        // 3. 참조 중인 TripPlan과 참조되지 않은 TripPlan을 분리
+        List<Long> notReferencedTripPlanIds = tripPlanIdList.stream()
+                .filter(id -> !referencedTripPlanIds.contains(id))
+                .collect(Collectors.toList());
 
-        tripPlanRepository.saveAll(tripPlans);
+        // 참조 중인 여행 폴더는 비활성화 처리
+        if (!referencedTripPlanIds.isEmpty()) {
+            List<TripPlan> referencedTripPlans = tripPlanRepository.findByIdIn(referencedTripPlanIds);
+            referencedTripPlans.forEach(TripPlan::markAsInactive);
+            tripPlanRepository.saveAll(referencedTripPlans);
+        }
+
+        // 참조되지 않은 여행 폴더는 여행지 삭제 후 폴더 삭제
+        if (!notReferencedTripPlanIds.isEmpty()) {
+            List<TripPlanPlace> tripPlanPlaceList = tripPlanPlaceRepository.findByTripPlanIdIn(notReferencedTripPlanIds);
+            tripPlanPlaceRepository.deleteAllInBatch(tripPlanPlaceList);
+            tripPlanRepository.deleteAllByIdInBatch(notReferencedTripPlanIds);
+        }
 
     }
 
