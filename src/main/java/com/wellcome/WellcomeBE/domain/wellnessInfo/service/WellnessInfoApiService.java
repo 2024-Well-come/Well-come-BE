@@ -65,33 +65,31 @@ public class WellnessInfoApiService {
         List<Thema> themaList = request.getThemaList();
         List<Sigungu> sigunguList = request.getSigunguList();
 
-        boolean isThemaListEmpty = themaList == null || themaList.isEmpty();
-        boolean isSigunguListEmpty = sigunguList == null || sigunguList.isEmpty();
+        if (themaList.isEmpty()) themaList = null;
+        if (sigunguList.isEmpty()) sigunguList = null;
 
-        Page<Object[]> data;
+        // 사용자가 좋아요 누른 테마 리스트 (좋아요가 많은 순으로 정렬)
+        List<Thema> likedThemaList = likedRepository.findThemaByMemberOrderByLikedCount(member);
+
+        // themaList를 likedThemaList의 순서대로 정렬
+        List<Thema> sortedThemaList = sortThemaListByLikedOrder(themaList, likedThemaList);
+
+        // 정렬된 themaList에서 테마 추출
+        Thema thema1 = sortedThemaList.size() > 0 ? sortedThemaList.get(0) : null;
+        Thema thema2 = sortedThemaList.size() > 1 ? sortedThemaList.get(1) : null;
+        Thema thema3 = sortedThemaList.size() > 2 ? sortedThemaList.get(2) : null;
+
+        // 웰니스 정보 목록 조회
         Pageable pageable = PageRequest.of(page, 10);
-        List<Object[]> types;
+        Page<Object[]> data = wellnessInfoRepository.findWellnessInfoByThemaAndSigunguWithWeight(
+                pageable,
+                member,
+                sortedThemaList.isEmpty() ? null : sortedThemaList, sigunguList,
+                thema1, thema2, thema3
+        );
 
-        if (isThemaListEmpty && isSigunguListEmpty) {
-            data = wellnessInfoRepository.findAllByOrderByViewDesc(pageable, member);
-            types = wellnessInfoRepository.findDistinctAllThemaAndSigungu();
-        } else if (isThemaListEmpty) { //SigunguList로 필터링
-            data = wellnessInfoRepository.findBySigungu(pageable, member, sigunguList);
-            types = wellnessInfoRepository.findDistinctThemaAndSigunguBySigungu(sigunguList);
-        } else if (isSigunguListEmpty) { //ThemaList로 필터링
-            data = wellnessInfoRepository.findByThema(pageable, member, themaList);
-            types = wellnessInfoRepository.findDistinctThemaAndSigunguByThema(themaList);
-        } else {
-            data = wellnessInfoRepository.findByThemaAndSigungu(pageable, member, themaList, sigunguList);
-            types = wellnessInfoRepository.findDistinctThemaAndSigungu(themaList, sigunguList);
-        }
-
-        Set<Thema> searchedThemaSet = new HashSet<>();
-        Set<Sigungu> searchedSigunguSet = new HashSet<>();
-        for (Object[] type : types) {
-            searchedThemaSet.add((Thema) type[0]);
-            searchedSigunguSet.add((Sigungu) type[1]);
-        }
+        List<Thema> searchedThemaList = wellnessInfoRepository.findDistinctThema(themaList);
+        List<Sigungu> searchedSigunguList = wellnessInfoRepository.findDistinctSigungu(sigunguList);
 
         List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = data.stream()
                 .map(objects -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from((WellnessInfo) objects[0], (Boolean) objects[1], savedType))
@@ -101,7 +99,17 @@ public class WellnessInfoApiService {
                 data.hasPrevious(), data.hasNext(),
                 wellnessInfoItemList);
 
-        return WellnessInfoResponse.from(new ArrayList<>(searchedThemaSet), new ArrayList<>(searchedSigunguSet), request, WellnessInfoList);
+        return WellnessInfoResponse.from(searchedThemaList, searchedSigunguList, request, WellnessInfoList);
+    }
+
+    // themaList를 likedThemaList의 순서를 반영하여 정렬
+    private List<Thema> sortThemaListByLikedOrder(List<Thema> themaList, List<Thema> likedThemaList) {
+        if (themaList == null || themaList.isEmpty()) {
+            return likedThemaList;
+        }
+
+        themaList.sort(Comparator.comparingInt(likedThemaList::indexOf));
+        return themaList;
     }
 
     /**
