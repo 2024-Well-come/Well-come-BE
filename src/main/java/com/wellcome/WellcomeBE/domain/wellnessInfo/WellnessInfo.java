@@ -32,13 +32,13 @@ public class WellnessInfo extends BaseTimeEntity {
 
     private String tel;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String originalThumbnailUrl; // Tour API 제공 이미지를 S3에 업로드 후 생성되는 객체 URL
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String thumbnailUrl; // Tour API 제공 이미지 URL
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String s3ThumbnailUrl; // Tour API 제공 이미지를 S3에 업로드 후 생성되는 객체 URL(업데이트용)
 
     // 분류

@@ -15,6 +15,7 @@ import java.util.Optional;
 
 public interface TripPlanRepository extends JpaRepository<TripPlan,Long> {
     List<TripPlan> findByMember(Member member);
+    List<TripPlan> findByMemberAndStatus(Member member, TripPlan.Status status);
 
     @Query("SELECT tp FROM TripPlan tp " +
             "JOIN FETCH tp.member " +
@@ -25,7 +26,7 @@ public interface TripPlanRepository extends JpaRepository<TripPlan,Long> {
     @Query("SELECT t FROM TripPlan t " +
             "LEFT JOIN FETCH t.tripPlanPlaces tp " +
             "LEFT JOIN FETCH tp.wellnessInfo wi " +
-            "WHERE t.member = :member " +
+            "WHERE t.member = :member AND t.status = 'ACTIVE' " +
             "ORDER BY " +
             "CASE WHEN t.startDate >= CURRENT_DATE THEN 0 ELSE 1 END, " +
             "CASE WHEN t.startDate IS NULL THEN t.createdAt END DESC, " +
@@ -38,14 +39,14 @@ public interface TripPlanRepository extends JpaRepository<TripPlan,Long> {
     @Query("SELECT t FROM TripPlan t " +
             "LEFT JOIN FETCH t.tripPlanPlaces tp " +
             "LEFT JOIN FETCH tp.wellnessInfo wi " +
-            "WHERE t.member = :member " +
+            "WHERE t.member = :member AND t.status = 'ACTIVE' " +
             "ORDER BY t.createdAt DESC")
     Page<TripPlan> findCreateLatestPlansByMember(@Param("member") Member member, PageRequest pageRequest);
 
     @Query("SELECT t FROM TripPlan t " +
             "LEFT JOIN FETCH t.tripPlanPlaces tp " +
             "LEFT JOIN FETCH tp.wellnessInfo wi " +
-            "WHERE t.startDate >= CURRENT_DATE AND t.member = :member " +
+            "WHERE t.startDate >= CURRENT_DATE AND t.member = :member AND t.status = 'ACTIVE' " +
             "ORDER BY t.startDate ASC")
     List<TripPlan> findAllByTripStartDateAfterByMember(@Param("member") Member member);
 

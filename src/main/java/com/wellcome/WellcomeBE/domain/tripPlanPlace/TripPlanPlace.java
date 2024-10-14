@@ -28,10 +28,20 @@ public class TripPlanPlace extends BaseTimeEntity {
 
     private Integer rating;
     private String review;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 10)
+    protected TripPlan.Status status = TripPlan.Status.ACTIVE; // 여행지 삭제 여부
+
+    public enum Status {
+        ACTIVE, INACTIVE;
+    }
 
     public void updatePlaceReview(Integer rating, String review) {
         this.rating = rating;
         this.review = review;
     }
+
+    // 상태 업데이트 메서드 추가
+    public void markAsInactive() { this.status = TripPlan.Status.INACTIVE;}
 
 }
