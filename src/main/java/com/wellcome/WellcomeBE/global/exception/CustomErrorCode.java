@@ -54,12 +54,20 @@ public enum CustomErrorCode {
     AUTHENTICATION_NOT_FOUND(UNAUTHORIZED, 9003, "인증 정보를 찾을 수 없습니다."),
     KAKAO_LOGIN_CLIENT_ERROR(UNAUTHORIZED, 9004, "카카오 로그인 API 호출 오류 (Client Error)"),
 
+  
     // Support (10xxx)
-    SUPPORT_COMMUNITY_CNT(BAD_REQUEST,100001, "COMMUNITY 타입은 커뮤니티 값이 필요합니다."),
-    SUPPORT_TRIP_PLAN_PLACE(BAD_REQUEST,100002,"TRIP_PLAN_PLACE 타입은 ID 리스트가 필요합니다." ),
-    SUPPORT_TYPE_MISMATCH(BAD_REQUEST,100003, "유효하지 않은 타입입니다."),
-    SUPPORT_NOT_FOUND(NOT_FOUND,100004,"추천 내용을 찾을 수 없습니다."),
+    SUPPORT_COMMUNITY_CNT(BAD_REQUEST,10001, "COMMUNITY 타입은 커뮤니티 값이 필요합니다."),
+    SUPPORT_TRIP_PLAN_PLACE(BAD_REQUEST,10002,"TRIP_PLAN_PLACE 타입은 ID 리스트가 필요합니다." ),
+    SUPPORT_TYPE_MISMATCH(BAD_REQUEST,10003, "유효하지 않은 타입입니다."),
+    SUPPORT_NOT_FOUND(NOT_FOUND,10004,"추천 내용을 찾을 수 없습니다."),
 
+    // Article (11xxx)
+    ARTICLE_NOT_FOUND(NOT_FOUND,110001,"해당하는 아티클이 존재하지 않습니다."),
+  
+
+    // 기상청 단기예보 API (11xxx)
+    WEATHER_API_RESPONSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 11001, "기상청 단기예보 API 응답값이 없습니다."),
+  
     ;
 
     private final HttpStatus httpStatus;

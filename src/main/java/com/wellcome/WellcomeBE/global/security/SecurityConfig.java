@@ -40,10 +40,11 @@ public class SecurityConfig {
                             .requestMatchers("/actuator/**").permitAll()
                             .requestMatchers("/api/oauth2/kakao/**").permitAll()
                             .requestMatchers("/getTourBasicApiData").permitAll()
-                            .requestMatchers("/getTourImgApiData").permitAll()
+                            .requestMatchers("/getTourImgApiData/**").permitAll()
                             .requestMatchers("/{place}/details").permitAll()
                             .requestMatchers("/place/id").permitAll()
                             .requestMatchers("/api/home").permitAll()
+                            .requestMatchers("/api/weather-info").permitAll()
                             .anyRequest().authenticated();
                 })
 

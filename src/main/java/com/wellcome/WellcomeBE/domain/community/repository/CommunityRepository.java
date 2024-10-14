@@ -3,7 +3,6 @@ package com.wellcome.WellcomeBE.domain.community.repository;
 import com.wellcome.WellcomeBE.domain.community.Community;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +14,9 @@ import java.util.Optional;
 public interface CommunityRepository extends JpaRepository<Community, Long> {
 
     Optional<Community> findByTripPlan(TripPlan tripPlan);
+    @Query("SELECT c.tripPlan.id FROM Community c WHERE c.tripPlan.id IN :tripPlanIdList")
+    List<Long> findReferencedTripPlanIds(@Param("tripPlanIdList") List<Long> tripPlanIdList);
+
 
     Page<Community> findByPostTypeOrderByCreatedAtDesc(Pageable pageable, Community.PostType tripPlan);
 
@@ -26,5 +28,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     Page<Community> findByPostTypeOrderBySupportCount(Pageable pageable, @Param("postType") Community.PostType type);
 
     List<Community> findByTripPlanInOrderByCreatedAtDesc(Pageable pageable, List<TripPlan> tripPlanList);
+
+    Optional<Community> findById(Long communityId);
 
 }

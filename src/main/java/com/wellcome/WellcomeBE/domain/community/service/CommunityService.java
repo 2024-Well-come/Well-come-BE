@@ -1,12 +1,14 @@
 package com.wellcome.WellcomeBE.domain.community.service;
 
 import com.wellcome.WellcomeBE.domain.community.Community;
+import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostDetailResponse;
 import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.community.dto.request.ReviewPostRequest;
 import com.wellcome.WellcomeBE.domain.communityImg.CommunityImg;
 import com.wellcome.WellcomeBE.domain.communityImg.repository.CommunityImgRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.support.repository.SupportRepository;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
@@ -43,6 +45,7 @@ public class CommunityService {
     private final TripPlanRepository tripPlanRepository;
     private final TripPlanPlaceRepository tripPlanPlaceRepository;
     private final WellnessInfoRepository wellnessInfoRepository;
+    private final SupportRepository supportRepository;
     private final S3Service s3Service;
     private final CommunityImgRepository communityImgRepository;
     private static final int MAX_IMG_COUNT = 10;
@@ -154,6 +157,34 @@ public class CommunityService {
         );
 
         return ReviewPostResponse.from(recommendPostList, reviewPostList);
+    }
+
+    /**
+     * 후기 게시글 상세 조회
+     */
+    public ReviewPostDetailResponse getReviewPostDetail(Long communityId){
+        // 사용자 인증
+        Member currentMember = tokenProvider.getMember();
+        Community community = communityRepository.findById(communityId).orElseThrow(() -> new CustomException(COMMUNITY_NOT_FOUND));
+
+        // 커뮤니티에 대한 지원 여부 확인
+        boolean isSupport = supportRepository.existsByCommunityAndMember(community, currentMember);
+
+        // 게시 이미지 목록을 가져옵니다.
+        List<String> postImgs = community.getCommunityImgs().stream()
+                .map(CommunityImg::getImgUrl) // 이미지 URL 추출
+                .toList();
+
+        // TODO: 쿼리 DSL 적용 필수!!
+        // WellnessInfo 및 TripPlanPlace와 연결된 Support, Liked 정보를 조회
+        List<Object[]> wellnessInfoWithTripPlanPlaceSupportAndLiked = wellnessInfoRepository.findWellnessInfoWithSupportAndLikedByCommunityId(communityId, currentMember);
+
+        // Object[] 배열을 ReviewWellnessInfoItem으로 변환
+        List<ReviewPostDetailResponse.ReviewWellnessInfoItem> reviewWellnessInfoItems = wellnessInfoWithTripPlanPlaceSupportAndLiked.stream()
+                .map(ReviewPostDetailResponse.ReviewWellnessInfoItem::from)
+                .collect(Collectors.toList());
+        return  ReviewPostDetailResponse.from(community,isSupport,postImgs,reviewWellnessInfoItems);
+
     }
 
 }

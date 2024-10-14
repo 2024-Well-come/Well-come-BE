@@ -2,11 +2,15 @@ package com.wellcome.WellcomeBE.domain.support.service;
 
 import com.wellcome.WellcomeBE.domain.community.Community;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
+import com.wellcome.WellcomeBE.domain.like.Liked;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.support.Support;
+import com.wellcome.WellcomeBE.domain.support.dto.SupportRequest;
 import com.wellcome.WellcomeBE.domain.support.repository.SupportRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
@@ -23,83 +27,57 @@ public class SupportService {
     private final TokenProvider tokenProvider;
     private final SupportRepository supportRepository;
     private final CommunityRepository communityRepository;
-    private final TripPlanPlaceRepository tripPlanPlaceRepository;
+    private final WellnessInfoRepository wellnessInfoRepository;
 
-    @Transactional
-    public void createSupport(List<Long> ids, String type) {
-        Member member = tokenProvider.getMember();
-
-        // COMMUNITY 타입 처리 (단일 ID)
-        if (type.equals("COMMUNITY")) {
-            if (ids == null || ids.size() != 1) {
-                throw new CustomException(CustomErrorCode.SUPPORT_COMMUNITY_CNT);
-            }
-            createCommunitySupport(ids.get(0), member);
-        }
-        // TRIPPLANPLACE 타입 처리 (단일 또는 다중 ID)
-        else if (type.equals("TRIP_PLAN_PLACE")) {
-            if (ids == null || ids.isEmpty()) {
-                throw new CustomException(CustomErrorCode.SUPPORT_TRIP_PLAN_PLACE);
-            }
-            createTripPlanPlaceSupport(ids, member);
-        }
-        else {
-            throw new CustomException(CustomErrorCode.SUPPORT_TYPE_MISMATCH);
-        }
-    }
 
     // 커뮤니티 추천 로직 (단일 ID)
-    private void createCommunitySupport(Long id, Member member) {
-        Community community = communityRepository.findById(id)
+    public void createCommunitySupport(Long communityId) {
+        Member member = tokenProvider.getMember();
+
+        Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.COMMUNITY_NOT_FOUND));
 
-        Support support = Support.builder()
-                .member(member)
-                .community(community)
-                .build();
+        supportRepository.findByMemberAndCommunityId(member, communityId)
+                .orElseGet(() -> supportRepository.save(Support.createcommunitySupport(community, member)));
 
-        supportRepository.save(support);
     }
 
-    // TripPlanPlace 추천 로직 (단일 또는 다중 ID)
-    private void createTripPlanPlaceSupport(List<Long> ids, Member member) {
-        ids.forEach(id -> {
-            TripPlanPlace tripPlanPlace = tripPlanPlaceRepository.findById(id)
-                    .orElseThrow(() -> new CustomException(CustomErrorCode.TRIP_PLAN_PLACE_NOT_FOUND));
+    // 커뮤니티 삭제
+    @Transactional
+    public void deleteCommunitySupport(Long communityId) {
+        Member member = tokenProvider.getMember();
 
-            Support support = Support.builder()
-                    .member(member)
-                    .tripPlanPlace(tripPlanPlace)
-                    .build();
-
-            supportRepository.save(support);
-        });
+        // 요청받은 communityId와 현재 사용자 ID로 Support 조회
+        supportRepository.findByMemberAndCommunityId(member, communityId).ifPresent(
+                supportRepository::delete);
     }
 
     @Transactional
-    public void deleteSupport(Long supportId, String type) {
-        Support support = supportRepository.findById(supportId)
-                .orElseThrow(() -> new CustomException(CustomErrorCode.SUPPORT_NOT_FOUND));
+    public void createTripPlanPlaceSupport(SupportRequest.CreateCommunityInWellnessSupportRequestDto req) {
+        Community community = communityRepository.findById(req.getCommunityId())
+                .orElseThrow(() -> new CustomException(CustomErrorCode.COMMUNITY_NOT_FOUND));
+        Member member = tokenProvider.getMember();
 
-        // 현재 요청을 보낸 사용자
-        Member currentMember = tokenProvider.getMember();
+        // 웰니스 정보 존재 확인
+        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(req.getWellnessInfoId()).orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
-        // 추천 추가자인지 검증
-        if (!support.getMember().getId().equals(currentMember.getId())) {
-            throw new CustomException(CustomErrorCode.ACCESS_DENIED);
-        }
+            // Support 조회 및 생성
+            supportRepository.findByMemberAndCommunityIdAndWellnessInfoId(member, req.getCommunityId() , wellnessInfo.getId())
+                    .orElseGet(() -> {
+                        Support newSupport = Support.createWellnessInfoSupport(community, wellnessInfo, member);
+                        return supportRepository.save(newSupport); // Support 생성 및 저장
+                    });
 
-        boolean isValidType = switch (type) {
-            case "COMMUNITY" -> support.getCommunity() != null;
-            case "TRIP_PLAN_PLACE" -> support.getTripPlanPlace() != null;
-            default -> false;
-        };
+    }
 
-        if (!isValidType) {
-            throw new CustomException(CustomErrorCode.SUPPORT_TYPE_MISMATCH);
-        }
+    @Transactional
+    public void deleteCommunityInWellnessSupport(SupportRequest.DeleteCommunityInWellnessSupportRequestDto req) {
+        Member member = tokenProvider.getMember();
 
-        supportRepository.delete(support);
+        // 특정 TripPlanPlace에 대해 Member와 CommunityId가 일치하는 Support 조회
+        supportRepository.findByMemberAndCommunityIdAndWellnessInfoId(member, req.getCommunityId(), req.getWellnessInfoId())
+                .ifPresent(
+                        supportRepository::delete);
     }
 
 }

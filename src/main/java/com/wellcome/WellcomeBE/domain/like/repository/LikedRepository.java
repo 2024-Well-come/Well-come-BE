@@ -30,5 +30,15 @@ public interface LikedRepository extends JpaRepository<Liked,Long> {
     @Query("SELECT DISTINCT w.thema from Liked l join l.wellnessInfo w where l.member = :member ")
     List<Thema> findLikedThemaByMember(@Param("member") Member member);
 
+    @Query(
+            "SELECT w.thema " +
+            "FROM Liked l " +
+            "JOIN l.wellnessInfo w " +
+            "WHERE l.member = :member " +
+            "GROUP BY w.thema " +
+            "ORDER BY COUNT(l.id) DESC" //좋아요 수에 따라 정렬
+    )
+    List<Thema> findThemaByMemberOrderByLikedCount(@Param("member") Member member);
+
 
 }

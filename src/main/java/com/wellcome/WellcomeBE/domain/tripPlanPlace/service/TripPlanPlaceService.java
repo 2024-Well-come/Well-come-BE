@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.domain.tripPlanPlace.service;
 
+import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceDeleteRequest;
@@ -27,6 +28,7 @@ public class TripPlanPlaceService {
     private final WellnessInfoRepository wellnessInfoRepository;
     private final TripPlanRepository tripPlanRepository;
     private final TripPlanPlaceRepository tripPlanPlaceRepository;
+    private final CommunityRepository communityRepository;
     private final TokenProvider tokenProvider;
 
     public void createTripPlanPlace(Long planId, TripPlanPlaceCreateRequest request){
@@ -56,26 +58,36 @@ public class TripPlanPlaceService {
 
         List<Long> tripPlanPlaceIdList = request.getDeletePlanPlaceIdList();
 
-        // 삭제 요청 유효성 검사
-        // 1. 여행 폴더 존재 유무 + 유저가 해당 여행 폴더에 대해 권한이 있는지 확인
+        // 1. 여행 폴더 존재 유무 및 유저 권한 확인
         TripPlan tripPlan = tripPlanRepository.findByIdAndMemberId(planId, currentMember.getId())
                 .orElseThrow(() -> new CustomException(CustomErrorCode.ACCESS_DENIED));
 
         // 2. 삭제하려는 여행지 리스트가 모두 해당 여행 폴더에 속해 있는지 확인
         List<TripPlanPlace> tripPlanPlaceList = tripPlanPlaceRepository.findByIdIn(tripPlanPlaceIdList);
 
-        // 해당하는 TripPlanPlaceId가 존재하지 않을 경우
-        if(tripPlanPlaceList.size() != tripPlanPlaceIdList.size()){
+        // TripPlanPlaceId가 존재하지 않을 경우 예외 처리
+        if (tripPlanPlaceList.size() != tripPlanPlaceIdList.size()) {
             throw new CustomException(CustomErrorCode.TRIP_PLAN_PLACE_NOT_FOUND, "존재하지 않는 여행지 식별자가 포함되어 있습니다.");
         }
 
-        // TripPlanPlace가 요청된 TripPlan 내 여행지가 아닐 경우
+        // 삭제하려는 여행지가 요청된 TripPlan에 속하지 않는 경우 예외 처리
         tripPlanPlaceList.stream()
-                .filter(tripPlanPlace -> tripPlanPlace.getTripPlan().getId() != tripPlan.getId())
+                .filter(tripPlanPlace -> !tripPlanPlace.getTripPlan().getId().equals(tripPlan.getId()))
                 .findAny()
-                .ifPresent(tripPlanPlace -> { throw new CustomException(CustomErrorCode.TRIP_PLAN_PLACE_NOT_IN_FOLDER); });
+                .ifPresent(tripPlanPlace -> {
+                    throw new CustomException(CustomErrorCode.TRIP_PLAN_PLACE_NOT_IN_FOLDER);
+                });
 
-        // 일괄 삭제 (이미 삭제된 여행지일 경우 무시)
-        tripPlanPlaceRepository.deleteAllByIdInBatch(tripPlanPlaceIdList);
+        // 3. 커뮤니티 참조 여부 확인
+        boolean isReferencedInCommunity = !communityRepository.findByTripPlan(tripPlan).isEmpty();
+
+        if (isReferencedInCommunity) {
+            // 4-1. 커뮤니티에서 참조 중일 경우, 삭제 대신 상태를 비활성화 처리
+            tripPlanPlaceList.forEach(TripPlanPlace::markAsInactive);
+            tripPlanPlaceRepository.saveAll(tripPlanPlaceList);
+        } else {
+            // 4-2. 커뮤니티에서 참조하지 않을 경우, 여행지 일괄 삭제(이미 삭제된 여행지일 경우 무시)
+            tripPlanPlaceRepository.deleteAllByIdInBatch(tripPlanPlaceIdList);
+        }
     }
 }

@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 public class WellnessInfoController {
@@ -53,10 +51,10 @@ public class WellnessInfoController {
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoBasic(wellnessInfoId));
     }
 
-    // 웰니스 장소 상세 조회(2) - 주변 추전 장소
-    @GetMapping("/api/wellness-info/{wellnessInfoId}/nearby-places")
-    public ResponseEntity<WellnessInfoNearbyList>getSurroundingPlaces(@PathVariable Long wellnessInfoId){
-        return ResponseEntity.ok(wellnessInfoApiService.getSurroundingWellnessInfo(wellnessInfoId));
+    // 웰니스 장소 상세 조회(2) - 유용한 정보 제공
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/usefulInformation")
+    public ResponseEntity<WellnessInfoUsefulInformationResponse>getUsefulInformation(@PathVariable Long wellnessInfoId){
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoUsefulInformation(wellnessInfoId));
     }
 
     // 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
@@ -73,6 +71,27 @@ public class WellnessInfoController {
             @PathVariable("wellnessInfoId") Long wellnessInfoId
     ){
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoReviewPosts(wellnessInfoId));
+    }
+
+    
+//    // 현재 날씨 정보 조회 (강원도 날씨 테스트용)
+//    @GetMapping("/api/weather-info")
+//    public ResponseEntity<WeatherResponse> getWeatherInfo() {
+//        return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo(73, 134)); //강원도
+//    }
+
+    //v1
+    // 웰니스 장소 상세 조회(2) - 주변 추전 장소
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/nearby-places")
+    public ResponseEntity<WellnessInfoNearResponse>getSurroundingPlaces(@PathVariable Long wellnessInfoId){
+        return ResponseEntity.ok(wellnessInfoApiService.getSurroundingWellnessInfo(wellnessInfoId));
+    }
+    // 웰니스 장소 상세 조회(5) - 아티클 조회
+    @GetMapping("/api/wellness-info/{wellnessInfoId}/articles")
+    public ResponseEntity<WellnessInfoArticleResponse> getWellnessIngoArticles(
+            @PathVariable("wellnessInfoId") Long wellnessInfoId
+    ){
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoArticle(wellnessInfoId));
     }
 
 }
