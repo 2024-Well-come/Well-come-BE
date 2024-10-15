@@ -31,6 +31,7 @@ public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Lon
             "JOIN FETCH tpp.wellnessInfo w " +
             "WHERE tpp.tripPlan.id = :planId " +
             "AND (:thema IS NULL OR tpp.wellnessInfo.thema = :thema) " +
+            "AND tpp.status = 'ACTIVE' " + // 상태가 ACTIVE인 조건 추가
             "ORDER BY tpp.createdAt DESC")
     Page<TripPlanPlace> findByTripPlanIdAndThema(PageRequest pageRequest,
                                                  @Param("planId") Long planId,

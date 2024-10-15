@@ -29,11 +29,19 @@ public class TripPlanPlace extends BaseTimeEntity {
     private Integer rating;
     private String review;
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 10)
-    protected TripPlan.Status status = TripPlan.Status.ACTIVE; // 여행지 삭제 여부
+    @Column(nullable = false, columnDefinition = "ENUM('ACTIVE', 'INACTIVE') DEFAULT 'ACTIVE'")
+    private TripPlan.Status status;
 
     public enum Status {
         ACTIVE, INACTIVE;
+    }
+
+    // 엔티티가 DB에 저장되기 전에 호출되는 메서드
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = TripPlan.Status.ACTIVE; // 기본값 설정
+        }
     }
 
     public void updatePlaceReview(Integer rating, String review) {
