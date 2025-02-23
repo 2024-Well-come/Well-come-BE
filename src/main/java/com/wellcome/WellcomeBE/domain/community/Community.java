@@ -12,6 +12,8 @@ import java.util.List;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Community extends BaseTimeEntity {
 
@@ -50,15 +52,15 @@ public class Community extends BaseTimeEntity {
     @OneToMany(mappedBy = "community")
     private List<CommunityImg> communityImgs;
 
-    @Builder
-    private Community(Member member, TripPlan tripPlan,
-                      String title, String content
-    ){
-        this.member = member;
-        this.tripPlan= tripPlan;
-        this.title = title;
-        this.content = content;
-    }
+//    @Builder
+//    private Community(Member member, TripPlan tripPlan,
+//                      String title, String content
+//    ){
+//        this.member = member;
+//        this.tripPlan= tripPlan;
+//        this.title = title;
+//        this.content = content;
+//    }
 
     public static Community createByTripPlan(Member member, TripPlan tripPlan,
                                              String title, String content){

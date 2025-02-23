@@ -5,10 +5,7 @@ import com.wellcome.WellcomeBE.domain.BaseTimeEntity;
 import com.wellcome.WellcomeBE.global.type.Role;
 import com.wellcome.WellcomeBE.global.type.SocialLogin;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import static jakarta.persistence.EnumType.STRING;
 
