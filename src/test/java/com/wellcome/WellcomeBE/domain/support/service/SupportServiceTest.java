@@ -57,7 +57,7 @@ class SupportServiceTest {
                 .view(3L)
                 .build();
 
-        support = Support.createcommunitySupport(community, member);
+        support = Support.createCommunitySupport(community, member);
         // ID 강제 설정
         ReflectionTestUtils.setField(support, "id", 100L);
 
