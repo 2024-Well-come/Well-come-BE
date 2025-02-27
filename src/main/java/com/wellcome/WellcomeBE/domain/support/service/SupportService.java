@@ -2,13 +2,10 @@ package com.wellcome.WellcomeBE.domain.support.service;
 
 import com.wellcome.WellcomeBE.domain.community.Community;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
-import com.wellcome.WellcomeBE.domain.like.Liked;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.support.Support;
 import com.wellcome.WellcomeBE.domain.support.dto.SupportRequest;
 import com.wellcome.WellcomeBE.domain.support.repository.SupportRepository;
-import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
-import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
@@ -17,8 +14,6 @@ import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 
 @Service
@@ -38,7 +33,7 @@ public class SupportService {
                 .orElseThrow(() -> new CustomException(CustomErrorCode.COMMUNITY_NOT_FOUND));
 
         supportRepository.findByMemberAndCommunityId(member, communityId)
-                .orElseGet(() -> supportRepository.save(Support.createcommunitySupport(community, member)));
+                .orElseGet(() -> supportRepository.save(Support.createCommunitySupport(community, member)));
 
     }
 

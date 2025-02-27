@@ -41,7 +41,7 @@ public class Support {
     }
 
 
-    public static Support createcommunitySupport(Community community, Member member){
+    public static Support createCommunitySupport(Community community, Member member){
         return Support.builder()
                 .member(member)
                 .community(community)

@@ -67,9 +67,18 @@ dependencies {
 	implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.4.2'
 	implementation 'com.amazonaws:aws-java-sdk-s3'
 
+	// 테스트 코드 설정
+	testImplementation'org.junit.jupiter:junit-jupiter:5.5.0'
+	testImplementation'org.mockito:mockito-core:2.26.0'
+	testImplementation 'com.h2database:h2'
+
+
 
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	testLogging{
+		events "passed", "skipped","failed"
+	}
 }
