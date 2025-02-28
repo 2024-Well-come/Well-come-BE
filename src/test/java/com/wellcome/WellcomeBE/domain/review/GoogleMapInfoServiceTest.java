@@ -1,5 +1,9 @@
 package com.wellcome.WellcomeBE.domain.review;
 
+import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +15,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.function.Function;
 
@@ -34,15 +39,19 @@ class GoogleMapInfoServiceTest {
     private WebClient.RequestHeadersSpec requestHeadersSpec;
     @Mock
     private WebClient.ResponseSpec responseSpec;
-
     @InjectMocks
     private GoogleMapInfoService googleMapInfoService;
+    @Mock
+    private WellnessInfoRepository wellnessInfoRepository;
+
+    private MockWebServer mockWebServer;
 
     private static final String PLACE_ID = "test_place_id";
     private PlaceReviewResponse mockReviewResponse;
 
+
     @BeforeEach
-    void setUp(){
+    void setUp() {
         mockReviewResponse = new PlaceReviewResponse();
         PlaceReviewResponse.PlaceResult placeResult = new PlaceReviewResponse.PlaceResult();
         placeResult.setName("Test Place");
@@ -53,7 +62,6 @@ class GoogleMapInfoServiceTest {
 
         mockReviewResponse.setResult(placeResult);
         mockReviewResponse.setStatus("OK");
-
 
 
         when(jsonRedisTemplate.opsForValue()).thenReturn(valueOperations);
@@ -94,6 +102,41 @@ class GoogleMapInfoServiceTest {
         verify(valueOperations).set(eq(PLACE_ID), eq(mockReviewResponse), eq(Duration.ofDays(7)));  // 캐시에 저장된 내용 확인
     }
 
+
+    @BeforeEach
+    void setUp2() throws Exception {
+        mockWebServer = new MockWebServer();
+        mockWebServer.start();
+
+    }
+
+    @Test
+    void GoogleMaps_외부_API_호출_검증_200() {
+        // MockWebServer 200 응답
+        mockWebServer.enqueue(new MockResponse()
+                .setBody("{\"status\": \"OK\", \"result\": {\"name\": \"Test Place\"}}")
+                .addHeader("Content-Type", "application/json"));
+
+        //given WebClient의 URL을 mockWebServer URL로 설정
+        String baseUrl = mockWebServer.url("/").toString();
+        WebClient webClient = WebClient.create(baseUrl);
+
+        GoogleMapInfoService googleMapInfoService = new GoogleMapInfoService(webClient, jsonRedisTemplate, wellnessInfoRepository);
+
+        //when API 호출
+        Mono<PlaceReviewResponse> resultMono = googleMapInfoService.getPlaceDetails(PLACE_ID);
+        PlaceReviewResponse result = resultMono.block();
+
+        //then 결과 검증
+        assertNotNull(result);
+        assertEquals("Test Place", result.getResult().getName());
+
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mockWebServer.shutdown(); // 서버 종료
+    }
 
 
 }
