@@ -1,0 +1,220 @@
+package com.wellcome.WellcomeBE.domain.community.service;
+
+import com.wellcome.WellcomeBE.domain.community.Community;
+import com.wellcome.WellcomeBE.domain.community.CommunityTestHelper;
+import com.wellcome.WellcomeBE.domain.community.dto.request.ReviewPostRequest;
+import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
+import com.wellcome.WellcomeBE.domain.communityImg.CommunityImg;
+import com.wellcome.WellcomeBE.domain.communityImg.repository.CommunityImgRepository;
+import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.support.repository.SupportRepository;
+import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
+import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.global.exception.CustomException;
+import com.wellcome.WellcomeBE.global.image.S3Service;
+import com.wellcome.WellcomeBE.global.security.TokenProvider;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static com.wellcome.WellcomeBE.domain.community.CommunityTestHelper.*;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.COMMUNITY_ALREADY_EXISTS;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class CommunityServiceTest {
+
+    @InjectMocks
+    private CommunityService communityService;
+
+    @Mock
+    private CommunityRepository communityRepository;
+
+    @Mock
+    private TokenProvider tokenProvider;
+
+    @Mock
+    private TripPlanRepository tripPlanRepository;
+
+    @Mock
+    private TripPlanPlaceRepository tripPlanPlaceRepository;
+
+    @Mock
+    private WellnessInfoRepository wellnessInfoRepository;
+
+    @Mock
+    private SupportRepository supportRepository;
+
+    @Mock
+    private S3Service s3Service;
+
+    @Mock
+    private CommunityImgRepository communityImgRepository;
+
+    private static final long memberId = 1L;
+    private static final long tripPlanId = 10L;
+
+
+    @Test
+    void createReviewPost_게시글과_장소개별후기_정상_등록() {
+        // given
+        // 커뮤니티 게시글 o + 장소 개별 후기 o + 이미지 x
+        Member member = Mockito.mock(Member.class);
+        when(member.getId()).thenReturn(memberId);
+        when(tokenProvider.getMember()).thenReturn(member);
+
+        TripPlan tripPlan = createTestTripPlan(member);
+        ReviewPostRequest request = createReviewPostRequest(tripPlan.getId(), true);
+
+        when(tripPlanRepository.findById(request.getPlanId()))
+                .thenReturn(Optional.of(tripPlan)); //작성 권한 o
+        when(communityRepository.findByTripPlan(tripPlan))
+                .thenReturn(Optional.empty()); //이미 작성된 후기 x
+
+        // - 장소 개별 후기 o
+        List<ReviewPostRequest.UserReview> reviewList = request.getReviewList();
+        List<TripPlanPlace> places = new ArrayList<>();
+
+        reviewList.forEach(r -> {
+            WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
+            when(wellnessInfo.getId()).thenReturn(r.getWellnessInfoId());
+
+            TripPlanPlace place = createTestTripPlanPlace(wellnessInfo, tripPlan);
+            places.add(place);
+
+            when(wellnessInfoRepository.findById(r.getWellnessInfoId()))
+                    .thenReturn(Optional.of(wellnessInfo));
+            when(tripPlanPlaceRepository.findByTripPlanIdAndWellnessInfoId(tripPlan.getId(), r.getWellnessInfoId()))
+                    .thenReturn(Optional.of(place));
+        });
+
+        // when
+        communityService.createReviewPost(request, null); //이미지 x
+
+        // then
+        // - 커뮤니티 게시글 저장 여부 검증
+        verify(communityRepository, times(1)).save(any(Community.class));
+
+        // - 장소 개별 후기 저장 여부 검증
+        for(int i = 0; i < places.size(); i++){
+            assertEquals(reviewList.get(i).getRating(), places.get(i).getRating());
+            assertEquals(reviewList.get(i).getReview(), places.get(i).getReview());
+        }
+        assertFalse(tripPlan.getIsActive());
+
+        // - 이미지 저장 로직 실행 여부 검증
+        verify(communityImgRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void createReviewPost_게시글과_이미지_정상_등록() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        // given
+        // 커뮤니티 게시글 o + 장소 개별 후기 x + 이미지 o
+        Member member = Mockito.mock(Member.class);
+        when(member.getId()).thenReturn(memberId);
+        when(tokenProvider.getMember()).thenReturn(member);
+
+        TripPlan tripPlan = Mockito.mock(TripPlan.class);
+        when(tripPlan.getMember()).thenReturn(member);
+
+        ReviewPostRequest request = Mockito.spy(createReviewPostRequest(tripPlan.getId(), false));
+
+        when(tripPlanRepository.findById(request.getPlanId()))
+                .thenReturn(Optional.of(tripPlan)); //작성 권한 o
+        when(communityRepository.findByTripPlan(tripPlan))
+                .thenReturn(Optional.empty()); //이미 작성된 후기 x
+
+        // - 장소 개별 후기 x
+        doReturn(null).when(request).getReviewList(); //장소 개별 후기 x
+
+        // - 이미지 o
+        List<MultipartFile> imgFileList = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            imgFileList.add(Mockito.mock(MultipartFile.class));
+        }
+
+        // Reflection을 사용하여 private 메소드에 접근 가능하도록 설정
+        Method saveImgListMethod = CommunityService.class.getDeclaredMethod("saveImgList", Community.class, List.class);
+        saveImgListMethod.setAccessible(true);
+
+        // when
+        communityService.createReviewPost(request, imgFileList); //이미지 o
+
+        // then
+        // - 커뮤니티 게시글 저장 여부 검증
+        verify(communityRepository, times(1)).save(any(Community.class));
+
+        // - 이미지 저장 로직 실행 여부 검증
+        saveImgListMethod.invoke(communityService, Mockito.mock(Community.class), imgFileList);
+    }
+
+    @Test
+    void createReviewPost_작성_권한이_없는_경우_예외발생(){
+        // given
+        Member folderOwner = Mockito.mock(Member.class);
+        when(folderOwner.getId()).thenReturn(memberId);
+
+        TripPlan tripPlan = Mockito.mock(TripPlan.class);
+        when(tripPlan.getMember()).thenReturn(folderOwner);
+        when(tripPlanRepository.findById(tripPlanId)).thenReturn(Optional.of(tripPlan));
+
+        Member anotherMember = Mockito.mock(Member.class);
+        when(anotherMember.getId()).thenReturn(2L);
+        when(tokenProvider.getMember()).thenReturn(anotherMember);
+
+        ReviewPostRequest request = mock(ReviewPostRequest.class);
+        when(request.getPlanId()).thenReturn(tripPlanId);
+
+        // when
+        CustomException exception = assertThrows(CustomException.class, () ->
+                communityService.createReviewPost(request, null)
+        );
+
+        // then
+        assertEquals(ACCESS_DENIED, exception.getCustomErrorCode());
+    }
+
+    @Test
+    void createReviewPost_해당_여행폴더에_대한_후기_게시글을_이미_작성한_경우_예외발생(){
+        // given
+        Member member = Mockito.mock(Member.class);
+        when(member.getId()).thenReturn(memberId);
+        when(tokenProvider.getMember()).thenReturn(member);
+
+        TripPlan tripPlan = Mockito.mock(TripPlan.class);
+        when(tripPlan.getMember()).thenReturn(member);
+
+        ReviewPostRequest request = mock(ReviewPostRequest.class);
+        when(request.getPlanId()).thenReturn(tripPlanId);
+
+        when(tripPlanRepository.findById(request.getPlanId()))
+                .thenReturn(Optional.of(tripPlan));
+        when(communityRepository.findByTripPlan(tripPlan))
+                .thenReturn(Optional.of(Mockito.mock(Community.class)));
+
+        // when
+        CustomException exception = assertThrows(CustomException.class, () ->
+                communityService.createReviewPost(request, null)
+        );
+
+        // then
+        assertEquals(COMMUNITY_ALREADY_EXISTS, exception.getCustomErrorCode());
+    }
+
+}
