@@ -3,6 +3,7 @@ package com.wellcome.WellcomeBE.domain.community.service;
 import com.wellcome.WellcomeBE.domain.community.Community;
 import com.wellcome.WellcomeBE.domain.community.CommunityTestHelper;
 import com.wellcome.WellcomeBE.domain.community.dto.request.ReviewPostRequest;
+import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.communityImg.CommunityImg;
 import com.wellcome.WellcomeBE.domain.communityImg.repository.CommunityImgRepository;
@@ -22,14 +23,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.domain.community.CommunityTestHelper.*;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
@@ -71,6 +76,9 @@ class CommunityServiceTest {
     private static final long tripPlanId = 10L;
 
 
+    /**
+     * 후기 게시글 등록
+     */
     @Test
     void createReviewPost_게시글과_장소개별후기_정상_등록() {
         // given
@@ -215,6 +223,57 @@ class CommunityServiceTest {
 
         // then
         assertEquals(COMMUNITY_ALREADY_EXISTS, exception.getCustomErrorCode());
+    }
+
+    /**
+     * 후기 게시글 목록 조회
+     */
+    @Test
+    void getReviewPostList_기본_최신순_조회(){
+        // given
+        // - 커뮤니티 생성
+        List<Community> communityList = new ArrayList<>();
+        LocalDateTime date = LocalDateTime.of(2025, 1, 15, 0, 0, 0);
+        for(int i = 0; i < 5; i++){
+            Community community = Mockito.mock(Community.class);
+            lenient().when(community.getCreatedAt()).thenReturn(date.minusDays(i));
+            communityList.add(community);
+        }
+
+        // - [웰컴인들이 공감해요] 조회 (추천순)
+        PageRequest recommendPageRequest = PageRequest.of(0, 2);
+        Page<Community> resultPage1 = new PageImpl<>(communityList.subList(0, 2), recommendPageRequest, communityList.size());
+        when(communityRepository.findByPostTypeOrderBySupportCount(any(PageRequest.class), eq(Community.PostType.TRIP_PLAN)))
+                .thenReturn(resultPage1);
+
+        // - [전체글] 조회 (최신순)
+        String sort = "latest";
+        int page = 0;
+        int pageSize = 3;
+        PageRequest reviewPageRequest = PageRequest.of(page, pageSize);
+        Page<Community> resultPage2 = new PageImpl<>(communityList.subList(page * pageSize, pageSize), reviewPageRequest, communityList.size());
+        when(communityRepository.findByPostTypeOrderByCreatedAtDesc(any(PageRequest.class), eq(Community.PostType.TRIP_PLAN)))
+                .thenReturn(resultPage2);
+
+        // when
+        ReviewPostResponse response = communityService.getReviewPostList(sort, page);
+
+        // then
+        assertEquals(communityList.size(), response.getReviewList().getTotalCount());
+        assertEquals(pageSize, response.getReviewList().getData().size());
+
+        assertFalse(response.getReviewList().isHasPrevious());
+        assertTrue(response.getReviewList().isHasNext());
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy년 MM월 dd일");
+        List<LocalDate> actualDates = response.getReviewList().getData().stream()
+                        .map(ReviewPostResponse.ReviewPostBrief::getPostDate)
+                        .map(d -> LocalDate.parse(d, formatter))
+                        .collect(Collectors.toList());
+        List<LocalDate> expectedDates = actualDates.stream()
+                        .sorted(Comparator.reverseOrder())
+                        .collect(Collectors.toList());
+        assertEquals(expectedDates, actualDates);
     }
 
 }
