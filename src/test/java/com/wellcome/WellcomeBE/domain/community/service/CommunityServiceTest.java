@@ -55,8 +55,6 @@ class CommunityServiceTest {
         member = mock(Member.class);
         when(tokenProvider.getMember()).thenReturn(member);
 
-        wellnessInfo = Mockito.mock(WellnessInfo.class);
-        when(wellnessInfo.getThema()).thenReturn(Thema.STAY);
     }
 
     @Test
@@ -66,6 +64,9 @@ class CommunityServiceTest {
         Community community = Mockito.mock(Community.class);
         when(communityRepository.findById(communityId)).thenReturn(Optional.of(community)); // 커뮤니티 조회 성공
         when(community.getMember()).thenReturn(member);
+
+        wellnessInfo = Mockito.mock(WellnessInfo.class);
+        when(wellnessInfo.getThema()).thenReturn(Thema.STAY);
 
         String imgUrl = "https://Test_Mock_Images";
         java.util.List<CommunityImg> imgList = List.of(CommunityImg.create(community,imgUrl));
@@ -119,6 +120,9 @@ class CommunityServiceTest {
         Community mockCommunity = Mockito.mock(Community.class);
         when(communityRepository.findById(communityId)).thenReturn(Optional.of(mockCommunity));
         when(mockCommunity.getMember()).thenReturn(member);
+
+        wellnessInfo = Mockito.mock(WellnessInfo.class);
+        when(wellnessInfo.getThema()).thenReturn(Thema.STAY);
 
         Object[] wellnessInfoData = new Object[]{wellnessInfo, mock(TripPlanPlace.class), false, true};
         List<Object[]> mockWellnessInfo = Arrays.asList(new Object[][]{wellnessInfoData});
