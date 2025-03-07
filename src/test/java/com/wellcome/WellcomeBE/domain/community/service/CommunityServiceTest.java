@@ -28,6 +28,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
@@ -37,8 +38,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.domain.community.CommunityTestHelper.*;
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.COMMUNITY_ALREADY_EXISTS;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -131,9 +131,11 @@ class CommunityServiceTest {
     }
 
     @Test
-    void createReviewPost_게시글과_이미지_정상_등록() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    void createReviewPost_게시글과_이미지_정상_등록() {
         // given
         // 커뮤니티 게시글 o + 장소 개별 후기 x + 이미지 o
+        CommunityService spyService = spy(communityService);
+
         Member member = Mockito.mock(Member.class);
         when(member.getId()).thenReturn(memberId);
         when(tokenProvider.getMember()).thenReturn(member);
@@ -151,25 +153,23 @@ class CommunityServiceTest {
         // - 장소 개별 후기 x
         doReturn(null).when(request).getReviewList(); //장소 개별 후기 x
 
-        // - 이미지 o
-        List<MultipartFile> imgFileList = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            imgFileList.add(Mockito.mock(MultipartFile.class));
-        }
+        // - 게시글 등록
+        Community savedCommunity = mock(Community.class);
+        when(communityRepository.save(any(Community.class))).thenReturn(savedCommunity);
 
-        // Reflection을 사용하여 private 메소드에 접근 가능하도록 설정
-        Method saveImgListMethod = CommunityService.class.getDeclaredMethod("saveImgList", Community.class, List.class);
-        saveImgListMethod.setAccessible(true);
+        // - 이미지 o
+        List<MultipartFile> imgFileList = List.of(mock(MultipartFile.class), mock(MultipartFile.class));
+        doNothing().when(spyService).saveImgList(any(Community.class), anyList());
 
         // when
-        communityService.createReviewPost(request, imgFileList); //이미지 o
+        spyService.createReviewPost(request, imgFileList);
 
         // then
         // - 커뮤니티 게시글 저장 여부 검증
         verify(communityRepository, times(1)).save(any(Community.class));
 
         // - 이미지 저장 로직 실행 여부 검증
-        saveImgListMethod.invoke(communityService, Mockito.mock(Community.class), imgFileList);
+        verify(spyService, times(1)).saveImgList(any(Community.class), anyList());
     }
 
     @Test
@@ -223,6 +223,79 @@ class CommunityServiceTest {
 
         // then
         assertEquals(COMMUNITY_ALREADY_EXISTS, exception.getCustomErrorCode());
+    }
+
+    @Test
+    void saveImgList_이미지_정상_등록() throws IOException {
+        // given
+        Community community = Mockito.mock(Community.class);
+
+        List<MultipartFile> imgFileList = new ArrayList<>();
+        for(int i = 0; i < 3; i++){
+            imgFileList.add(mock(MultipartFile.class));
+        }
+
+        // - 이미지 Url 설정
+        when(s3Service.uploadImgFile(any(MultipartFile.class)))
+                .thenReturn("imgUrl1", "imgUrl2", "imgUrl3");
+
+        // when
+        communityService.saveImgList(community, imgFileList);
+
+        // then
+        verify(s3Service, times(3)).uploadImgFile(any(MultipartFile.class));
+
+        ArgumentCaptor<List<CommunityImg>> captor = ArgumentCaptor.forClass(List.class);
+        verify(communityImgRepository, times(1)).saveAll(captor.capture());
+
+        List<CommunityImg> savedImgs = captor.getValue();
+        assertEquals(3, savedImgs.size());
+        assertEquals("imgUrl1", savedImgs.get(0).getImgUrl());
+        assertEquals("imgUrl2", savedImgs.get(1).getImgUrl());
+        assertEquals("imgUrl3", savedImgs.get(2).getImgUrl());
+    }
+
+    @Test
+    void saveImgList_이미지_개수_초과시_예외발생() throws IOException {
+        // given
+        Community community = Mockito.mock(Community.class);
+
+        List<MultipartFile> imgFileList = new ArrayList<>();
+        for(int i = 0; i < 20; i++){
+            imgFileList.add(mock(MultipartFile.class));
+        }
+
+        // when
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            communityService.saveImgList(community, imgFileList);
+        });
+
+        // then
+        assertEquals(IMG_LIMIT_EXCEEDED, exception.getCustomErrorCode());
+
+        verify(s3Service, never()).uploadImgFile(any(MultipartFile.class));
+        verify(communityImgRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void saveImgList_IOException_발생시_커스텀_예외발생() throws IOException {
+        // given
+        Community community = Mockito.mock(Community.class);
+        List<MultipartFile> imgFileList = List.of(mock(MultipartFile.class));
+
+        // - 강제로 IOException 발생시키기
+        when(s3Service.uploadImgFile(any(MultipartFile.class)))
+                .thenThrow(new IOException("이미지 저장 실패"));
+
+        // when
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            communityService.saveImgList(community, imgFileList);
+        });
+
+        // then
+        assertEquals(IMG_UPLOAD_ERROR, exception.getCustomErrorCode());
+
+        verify(communityImgRepository, never()).saveAll(anyList());
     }
 
     /**

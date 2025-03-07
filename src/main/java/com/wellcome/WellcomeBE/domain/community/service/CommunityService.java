@@ -98,7 +98,7 @@ public class CommunityService {
     /**
      * 이미지 저장
      */
-    private void saveImgList(Community community, List<MultipartFile> imgFileList){
+    protected void saveImgList(Community community, List<MultipartFile> imgFileList){
         // 이미지 개수 제한 확인
         if(imgFileList.size() > MAX_IMG_COUNT){
             throw new CustomException(IMG_LIMIT_EXCEEDED);
