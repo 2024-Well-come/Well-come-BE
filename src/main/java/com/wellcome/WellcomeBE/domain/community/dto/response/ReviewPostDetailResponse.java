@@ -23,11 +23,10 @@ public class ReviewPostDetailResponse {
     private List<ReviewWellnessInfoItem> wellnessInfoHistory;
 
     public static ReviewPostDetailResponse from(Community community, boolean isSupport ,List<String> postImgs, List<ReviewWellnessInfoItem> reviewWellnessInfoItem){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일");
         return ReviewPostDetailResponse.builder()
                 .communityId(community.getId())
                 .nickname(community.getMember().getNickname())
-                .createdAt(formatter.format(community.getCreatedAt()))
+                .createdAt((community.getCreatedAt() != null) ? DateTimeFormatter.ofPattern("yyyy년 MM월 dd일").format(community.getCreatedAt()) : "N/A")
                 .title(community.getTitle())
                 .postImgs(postImgs)
                 .content(community.getContent())
