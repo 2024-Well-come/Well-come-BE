@@ -146,6 +146,19 @@ public class WellnessInfoServiceTest {
         return w;
     }
 
+    @Test
+    void sortThemaListByLikedOrder_테마_정렬_검증(){
+        // given
+        List<Thema> themaList = new ArrayList<>(List.of(Thema.NATURE, Thema.STAY, Thema.FOOD));
+        List<Thema> likedThemaList = List.of(Thema.STAY);
+
+        // when
+        List<Thema> sortedThemaList = wellnessInfoApiService.sortThemaListByLikedOrder(themaList, likedThemaList);
+
+        // then
+        assertEquals(List.of(Thema.STAY, Thema.NATURE, Thema.FOOD), sortedThemaList);
+    }
+
     /**
      * 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
      */

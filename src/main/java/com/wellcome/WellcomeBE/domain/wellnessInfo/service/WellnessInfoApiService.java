@@ -103,12 +103,15 @@ public class WellnessInfoApiService {
     }
 
     // themaList를 likedThemaList의 순서를 반영하여 정렬
-    private List<Thema> sortThemaListByLikedOrder(List<Thema> themaList, List<Thema> likedThemaList) {
+    protected List<Thema> sortThemaListByLikedOrder(List<Thema> themaList, List<Thema> likedThemaList) {
         if (themaList == null || themaList.isEmpty()) {
             return likedThemaList;
         }
 
-        themaList.sort(Comparator.comparingInt(likedThemaList::indexOf));
+        themaList.sort(Comparator.comparingInt(t -> {
+            int idx = likedThemaList.indexOf(t);
+            return idx == -1 ? Integer.MAX_VALUE : idx; //likedThema에 없는 테마는 맨 뒤로 배치
+        }));
         return themaList;
     }
 
