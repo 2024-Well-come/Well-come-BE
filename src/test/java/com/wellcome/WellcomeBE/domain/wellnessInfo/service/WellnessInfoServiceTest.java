@@ -2,14 +2,15 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
 
 import com.wellcome.WellcomeBE.domain.Article.repository.ArticleRepository;
 import com.wellcome.WellcomeBE.domain.community.Community;
-import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
+import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
@@ -21,12 +22,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -64,6 +66,104 @@ public class WellnessInfoServiceTest {
     @Mock
     private ArticleRepository articleRepository;
 
+
+    /**
+     * 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
+     */
+    @Test
+    void getWellnessInfoGoogleReviews_구글_리뷰_정상_조회(){
+        // given
+        long wellnessInfoId = 1000L;
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
+        when(wellnessInfoRepository.findById(wellnessInfoId))
+                .thenReturn(Optional.ofNullable(wellnessInfo));
+
+        // - 구글맵에 해당 웰니스 정보가 있도록 설정 (parentId != null)
+        when(wellnessInfo.getParentId()).thenReturn("parentId");
+
+        // - PlaceResult 설정: 평점(rating) o, 리뷰(reviews) o
+        PlaceReviewResponse.PlaceResult placeResult = Mockito.mock(PlaceReviewResponse.PlaceResult.class);
+        when(placeResult.getRating()).thenReturn(3.0);
+
+        List<PlaceReviewResponse.PlaceResult.PlaceReview> reviews = new ArrayList<>();
+        for(int i = 0; i < 3; i++){
+            PlaceReviewResponse.PlaceResult.PlaceReview review = Mockito.mock(PlaceReviewResponse.PlaceResult.PlaceReview.class);
+            lenient().when(review.getAuthor_name()).thenReturn("user"+i);
+            reviews.add(review);
+        }
+        when(placeResult.getReviews()).thenReturn(reviews);
+
+        // - PlaceReviewResponse 설정
+        PlaceReviewResponse placeReviewResponse = Mockito.mock(PlaceReviewResponse.class);
+        when(placeReviewResponse.getResult()).thenReturn(placeResult);
+        when(googleMapInfoService.getPlaceDetails(anyString()))
+                .thenReturn(Mono.just(placeReviewResponse));
+
+        // when
+        WellnessInfoGoogleReviewResponse response = wellnessInfoApiService.getWellnessInfoGoogleReviews(wellnessInfoId);
+
+        // then
+        verify(googleMapInfoService, times(1)).getPlaceDetails(anyString());
+
+        assertEquals(3.0, response.getRating());
+        assertFalse(response.getReviewList().isEmpty());
+        IntStream.range(0, response.getReviewList().size())
+                .forEach(i -> assertEquals("user" + i, response.getReviewList().get(i).getAuthorName()));
+    }
+
+    @Test
+    void getWellnessInfoGoogleReviews_구글맵에_해당_웰니스_정보가_없는경우(){
+        // given
+        long wellnessInfoId = 1000L;
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
+        when(wellnessInfoRepository.findById(wellnessInfoId))
+                .thenReturn(Optional.ofNullable(wellnessInfo));
+
+        // - 구글맵에 해당 웰니스 정보가 없도록 설정 (parentId = null)
+        when(wellnessInfo.getParentId()).thenReturn(null);
+
+        // when
+        WellnessInfoGoogleReviewResponse response = wellnessInfoApiService.getWellnessInfoGoogleReviews(wellnessInfoId);
+
+        // then
+        assertNull(response.getRating());
+        assertTrue(response.getReviewList().isEmpty());
+    }
+
+    @Test
+    void getWellnessInfoGoogleReviews_구글맵에_해당_웰니스_정보가_있지만_리뷰_정보가_없는경우(){
+        // given
+        long wellnessInfoId = 1000L;
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
+        when(wellnessInfoRepository.findById(wellnessInfoId))
+                .thenReturn(Optional.ofNullable(wellnessInfo));
+
+        // - 구글맵에 해당 웰니스 정보가 있도록 설정 (parentId != null)
+        when(wellnessInfo.getParentId()).thenReturn("parentId");
+
+        // - PlaceResult 설정: 평점(rating) o, 리뷰(reviews) x
+        PlaceReviewResponse.PlaceResult placeResult = Mockito.mock(PlaceReviewResponse.PlaceResult.class);
+        when(placeResult.getRating()).thenReturn(3.0);
+        when(placeResult.getReviews()).thenReturn(List.of());
+
+        // - PlaceReviewResponse 설정
+        PlaceReviewResponse placeReviewResponse = Mockito.mock(PlaceReviewResponse.class);
+        when(placeReviewResponse.getResult()).thenReturn(placeResult);
+        when(googleMapInfoService.getPlaceDetails(anyString()))
+                .thenReturn(Mono.just(placeReviewResponse));
+
+        // when
+        WellnessInfoGoogleReviewResponse response = wellnessInfoApiService.getWellnessInfoGoogleReviews(wellnessInfoId);
+
+        // then
+        assertNotNull(placeResult);
+        assertEquals(3.0, response.getRating());
+        assertTrue(response.getReviewList().isEmpty());
+    }
+
+    /**
+     * 웰니스 장소 상세 조회(4) - 후기 게시글 조회
+     */
     @Test
     void getWellnessInfoReviewPosts_후기_게시글_정상_조회(){
         // given
