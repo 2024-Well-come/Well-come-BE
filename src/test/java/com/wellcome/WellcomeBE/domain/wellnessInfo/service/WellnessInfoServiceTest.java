@@ -10,20 +10,30 @@ import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
+import com.wellcome.WellcomeBE.global.type.Category;
+import com.wellcome.WellcomeBE.global.type.ImgSavedType;
+import com.wellcome.WellcomeBE.global.type.Sigungu;
+import com.wellcome.WellcomeBE.global.type.Thema;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -66,6 +76,75 @@ public class WellnessInfoServiceTest {
     @Mock
     private ArticleRepository articleRepository;
 
+
+    /**
+     * 웰니스 장소 추천 목록 조회
+     */
+    @Test
+    void getWellnessInfoList_웰니스_장소_목록_정상_조회(){
+        // given
+        Member member = Mockito.mock(Member.class);
+        when(tokenProvider.getMember()).thenReturn(member);
+
+        // - request (themaList, sigunguList)
+        List<Thema> themaList = new ArrayList<>(List.of(Thema.NATURE, Thema.STAY));
+        List<Sigungu> sigunguList = List.of(Sigungu.DONGHAE, Sigungu.SOKCHO);
+        WellnessInfoListRequest request = WellnessInfoListRequest.create(
+                themaList, sigunguList, LocalDate.parse("2025-01-01"), LocalDate.parse("2025-01-03")
+        );
+
+        // - likedThema
+        List<Thema> likedThemaList = List.of(Thema.STAY);
+        when(likedRepository.findThemaByMemberOrderByLikedCount(member))
+                .thenReturn(likedThemaList);
+
+        // - WellnessInfo Mock 데이터 생성
+        List<Object[]> content = new ArrayList<>();
+        for(int i = 0; i < 2; i++){
+            WellnessInfo wellnessInfo = createTestWellnessInfo(themaList, i);
+            Object[] obj = {wellnessInfo, false};
+            content.add(obj);
+        }
+
+        // - 페이징 설정
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 5);
+        Page<Object[]> data = new PageImpl<>(content, pageable, content.size());
+
+        when(wellnessInfoRepository.findWellnessInfoByThemaAndSigunguWithWeight(
+                any(), eq(member), eq(themaList), eq(sigunguList), any(), any(), any()
+        )).thenReturn(data);
+        when(wellnessInfoRepository.findDistinctThema(themaList)).thenReturn(themaList);
+        when(wellnessInfoRepository.findDistinctSigungu(sigunguList)).thenReturn(sigunguList);
+
+        // when
+        WellnessInfoResponse response = wellnessInfoApiService.getWellnessInfoList(page, request, ImgSavedType.S3);
+
+        // then
+        verify(likedRepository, times(1)).findThemaByMemberOrderByLikedCount(member);
+        verify(wellnessInfoRepository, times(1)).findWellnessInfoByThemaAndSigunguWithWeight(
+                any(), eq(member), eq(themaList), eq(sigunguList), any(), any(), any()
+        );
+
+        assertEquals(2, response.getWellnessInfoList().getTotalCount());
+        assertFalse(response.getWellnessInfoList().isHasPrevious());
+        assertFalse(response.getWellnessInfoList().isHasNext());
+    }
+
+    private WellnessInfo createTestWellnessInfo(List<Thema> sortedThemaList, int idx){
+        WellnessInfo w = Mockito.mock(WellnessInfo.class);
+
+        when(w.getThema()).thenReturn(idx >= sortedThemaList.size() ? null : sortedThemaList.get(idx));
+        when(w.getId()).thenReturn((long) idx);
+        when(w.getThumbnailUrl()).thenReturn("thumbnailUrl");
+        when(w.getTitle()).thenReturn("title");
+        when(w.getCategory()).thenReturn(Category.TOURIST_SPOT);
+        when(w.getAddress()).thenReturn("address");
+        when(w.getMapX()).thenReturn(0.0);
+        when(w.getMapY()).thenReturn(0.0);
+
+        return w;
+    }
 
     /**
      * 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
