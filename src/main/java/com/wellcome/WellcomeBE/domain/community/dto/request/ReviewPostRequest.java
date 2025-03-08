@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class ReviewPostRequest {
     private List<UserReview> reviewList;
 
     @Getter
+    @AllArgsConstructor
     public static class UserReview {
         private Long wellnessInfoId;
 
