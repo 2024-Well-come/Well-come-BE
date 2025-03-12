@@ -183,4 +183,76 @@ class MemberServiceTest {
         assertEquals(refreshToken, response.getRefreshToken());
     }
 
+    /**
+     * 토큰 갱신
+     */
+    @Test
+    void renewKakaoToken_accessToken은_갱신되고_refreshToken은_갱신되지_않음(){
+        // given
+        HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+        String newAccessToken = "test-updated-access-token";
+        String refreshToken = "test-refresh-token";
+        long kakaoId = 12345;
+
+        // - refresh token 추출
+        when(tokenProvider.extractToken(httpServletRequest)).thenReturn(refreshToken);
+
+        // - refresh token이 유효한 경우 kakaoId를 반환
+        when(refreshTokenService.getKakaoIdByRefreshToken(refreshToken)).thenReturn(String.valueOf(kakaoId));
+
+        // - access token 재발급 / refresh token 갱신 x
+        KakaoTokenResponse tokens = mock(KakaoTokenResponse.class);
+        when(tokens.getAccessToken()).thenReturn(newAccessToken);
+
+        when(kakaoAuthService.getNewToken(refreshToken)).thenReturn(Mono.just(tokens));
+
+        // when
+        LoginResponse response = memberService.renewKakaoToken(httpServletRequest);
+
+        // then
+        // - access token 갱신 o
+        assertEquals(newAccessToken, response.getAccessToken());
+        // - refresh token 갱신 x
+        assertEquals(refreshToken, response.getRefreshToken());
+        verify(refreshTokenService, never()).updateRefreshToken(any(), any(), any());
+    }
+
+    @Test
+    void renewKakaoToken_accessToken과_refreshToken이_모두_갱신됨(){
+        // given
+        HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+        String newAccessToken = "test-updated-access-token";
+        String refreshToken = "test-refresh-token";
+        String newRefreshToken = "test-updated-refresh-token";
+        long kakaoId = 12345;
+
+        // - refresh token 추출
+        when(tokenProvider.extractToken(httpServletRequest)).thenReturn(refreshToken);
+
+        // - refresh token이 유효한 경우 kakaoId를 반환
+        when(refreshTokenService.getKakaoIdByRefreshToken(refreshToken)).thenReturn(String.valueOf(kakaoId));
+
+        // - access token 재발급
+        KakaoTokenResponse tokens = mock(KakaoTokenResponse.class);
+        when(tokens.getAccessToken()).thenReturn(newAccessToken);
+        when(kakaoAuthService.getNewToken(refreshToken)).thenReturn(Mono.just(tokens));
+
+        // - refresh token 갱신
+        when(tokens.getRefreshToken()).thenReturn(newRefreshToken);
+
+        KakaoUserInfoResponse userInfo = mock(KakaoUserInfoResponse.class);
+        when(kakaoAuthService.getUserInfo(newAccessToken)).thenReturn(Mono.just(userInfo));
+        when(userInfo.getId()).thenReturn(kakaoId);
+
+        // when
+        LoginResponse response = memberService.renewKakaoToken(httpServletRequest);
+
+        // then
+        // - access token 갱신 o
+        assertEquals(newAccessToken, response.getAccessToken());
+        // - refresh token 갱신 o
+        assertEquals(newRefreshToken, response.getRefreshToken());
+        verify(refreshTokenService, times(1)).updateRefreshToken(any(), any(), any());
+    }
+
 }
