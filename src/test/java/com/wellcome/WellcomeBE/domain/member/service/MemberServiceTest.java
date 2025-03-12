@@ -1,7 +1,9 @@
 package com.wellcome.WellcomeBE.domain.member.service;
 
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoTokenResponse;
 import com.wellcome.WellcomeBE.domain.member.dto.response.KakaoUserInfoResponse;
+import com.wellcome.WellcomeBE.domain.member.dto.response.LoginResponse;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.security.KakaoAuthService;
@@ -17,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -93,6 +96,91 @@ class MemberServiceTest {
 
         // then
         verify(memberRepository, never()).save(any());
+    }
+
+    /**
+     * 카카오 로그인
+     */
+    @Test
+    void handleKakaoLogin_로그인(){
+        // given
+        String code = "test-code";
+        String accessToken = "test-access-token";
+        String refreshToken = "test-refresh-token";
+        long kakaoId = 12345;
+
+        MemberService spyService = spy(memberService);
+
+        // - 토큰 발급
+        KakaoTokenResponse tokens = mock(KakaoTokenResponse.class);
+        when(kakaoAuthService.getAccessToken(code)).thenReturn(Mono.just(tokens));
+        when(tokens.getAccessToken()).thenReturn(accessToken);
+        when(tokens.getRefreshToken()).thenReturn(refreshToken);
+
+        // - 카카오 사용자 정보
+        KakaoUserInfoResponse userInfo = mock(KakaoUserInfoResponse.class);
+        when(userInfo.getId()).thenReturn(kakaoId);
+        when(kakaoAuthService.getUserInfo(tokens.getAccessToken())).thenReturn(Mono.just(userInfo));
+
+        // - 유저가 회원가입된 상태로 설정
+        Member member = mock(Member.class);
+        when(memberRepository.findByKakaoId(userInfo.getId())).thenReturn(Optional.of(member));
+
+        // when
+        LoginResponse response = spyService.handleKakaoLogin(code);
+
+        // then
+        // - 회원가입 진행 x
+        verify(spyService, times(1)).verifyAndRegisterMember(userInfo);
+        verify(memberRepository, never()).save(any());
+
+        // - refresh token 저장 검증
+        verify(refreshTokenService, times(1)).saveRefreshToken(any(), any(), any());
+
+        // - 토큰 검증
+        assertEquals(accessToken, response.getAccessToken());
+        assertEquals(refreshToken, response.getRefreshToken());
+    }
+
+    @Test
+    void handleKakaoLogin_로그인_후_가입되지_않은_유저는_회원가입_진행(){
+        // given
+        String code = "test-code";
+        String accessToken = "test-access-token";
+        String refreshToken = "test-refresh-token";
+        long kakaoId = 12345;
+
+        MemberService spyService = spy(memberService);
+        doReturn(mock(Member.class)).when(spyService).createKakaoUser(any());
+
+        // - 토큰 발급
+        KakaoTokenResponse tokens = mock(KakaoTokenResponse.class);
+        when(kakaoAuthService.getAccessToken(code)).thenReturn(Mono.just(tokens));
+        when(tokens.getAccessToken()).thenReturn(accessToken);
+        when(tokens.getRefreshToken()).thenReturn(refreshToken);
+
+        // - 카카오 사용자 정보
+        KakaoUserInfoResponse userInfo = mock(KakaoUserInfoResponse.class);
+        when(userInfo.getId()).thenReturn(kakaoId);
+        when(kakaoAuthService.getUserInfo(tokens.getAccessToken())).thenReturn(Mono.just(userInfo));
+
+        // - 유저가 회원가입되지 않은 상태로 설정
+        when(memberRepository.findByKakaoId(userInfo.getId())).thenReturn(Optional.empty());
+
+        // when
+        LoginResponse response = spyService.handleKakaoLogin(code);
+
+        // then
+        // - 회원가입 진행 o
+        verify(spyService, times(1)).verifyAndRegisterMember(userInfo);
+        verify(memberRepository, times(1)).save(any());
+
+        // - refresh token 저장 검증
+        verify(refreshTokenService, times(1)).saveRefreshToken(any(), any(), any());
+
+        // - 토큰 검증
+        assertEquals(accessToken, response.getAccessToken());
+        assertEquals(refreshToken, response.getRefreshToken());
     }
 
 }
