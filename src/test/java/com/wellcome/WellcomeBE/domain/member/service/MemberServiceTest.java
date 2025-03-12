@@ -255,4 +255,26 @@ class MemberServiceTest {
         verify(refreshTokenService, times(1)).updateRefreshToken(any(), any(), any());
     }
 
+    /**
+     * 로그아웃
+     */
+    @Test
+    void handleKakaoLogout_로그아웃(){
+        // given
+        HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+        String accessToken = "test-access-token";
+        String refreshToken = "test-refresh-token";
+
+        // - access token 추출
+        when(tokenProvider.extractToken(httpServletRequest)).thenReturn(accessToken);
+
+        // when
+        memberService.handleKakaoLogout(httpServletRequest, refreshToken);
+
+        // then
+        verify(kakaoAuthService, times(1)).logout(accessToken);
+        verify(refreshTokenService, times(1)).deleteRefreshToken(refreshToken);
+        verify(tokenProvider, times(1)).clearContext();
+    }
+
 }
