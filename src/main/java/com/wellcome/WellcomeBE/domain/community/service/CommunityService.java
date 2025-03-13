@@ -165,12 +165,13 @@ public class CommunityService {
     public ReviewPostDetailResponse getReviewPostDetail(Long communityId){
         // 사용자 인증
         Member currentMember = tokenProvider.getMember();
+        // 커뮤니티 유효성 검증
         Community community = communityRepository.findById(communityId).orElseThrow(() -> new CustomException(COMMUNITY_NOT_FOUND));
 
         // 커뮤니티에 대한 지원 여부 확인
         boolean isSupport = supportRepository.existsByCommunityAndMember(community, currentMember);
 
-        // 게시 이미지 목록을 가져옵니다.
+        // 게시글 이미지 목록을 가져옵니다.
         List<String> postImgs = community.getCommunityImgs().stream()
                 .map(CommunityImg::getImgUrl) // 이미지 URL 추출
                 .toList();
