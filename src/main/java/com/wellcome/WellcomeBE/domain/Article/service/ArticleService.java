@@ -27,15 +27,15 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
     private final GoogleMapInfoService googleMapInfoService;
-    private static final int ARTICLE_LIST_SIZE = 5;
-    private static final int ARTICLE_PAGE_SIZE = 5;
+    private static final int ARTICLE_POPULAR_SIZE = 5;
+    private static final int ARTICLE_BREF_SIZE = 5;
 
     public ArticleResponse.ArticleBest getPopularArticles() {
         // 최근 한 달 전의 날짜를 LocalDateTime으로 가져옵니다.
         LocalDateTime oneMonthAgo = LocalDateTime.now().minus(30, ChronoUnit.DAYS);
 
         // 최근 한 달 동안 조회수가 높은 아티클 가져오기
-        List<Article> topArticles = articleRepository.findTopArticles(oneMonthAgo, PageRequest.of(0, ARTICLE_LIST_SIZE));
+        List<Article> topArticles = articleRepository.findTopArticles(oneMonthAgo, PageRequest.of(0, ARTICLE_POPULAR_SIZE));
 
         // 만약 조회수가 모두 5 미만이라면 랜덤으로 아티클 가져오기
         if (topArticles.isEmpty()) {
@@ -48,8 +48,9 @@ public class ArticleService {
 
     }
 
+    // 최신 아티클 조회
     public ArticleResponse.ArticleBrief getArticles(int page) {
-        Pageable pageable = PageRequest.of(page, ARTICLE_PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page, ARTICLE_BREF_SIZE);
         Page<Article> articles = articleRepository.findAllArticleByCreatedAt(pageable);
         List<ArticleResponse.ArticleItem> items = articles.stream()
                 .map(ArticleResponse.ArticleItem::from)
@@ -70,6 +71,8 @@ public class ArticleService {
 
         ArticleResponse.IncludeWellnessInfoItem wellnessInfoItem = ArticleResponse.IncludeWellnessInfoItem.from(wellnessInfo, placeResult);
 
+        // 조회수 증가
+        article.incrementView();
         // 4. ArticleDetail DTO로 변환하여 반환
         return ArticleResponse.ArticleDetail.from(article, Collections.singletonList(wellnessInfoItem)); // 리스트로 변환하여 반환
     }

@@ -1,0 +1,139 @@
+package com.wellcome.WellcomeBE.domain.Article.service;
+
+import com.wellcome.WellcomeBE.domain.Article.Article;
+import com.wellcome.WellcomeBE.domain.Article.dto.ArticleResponse;
+import com.wellcome.WellcomeBE.domain.Article.repository.ArticleRepository;
+import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
+
+import static com.wellcome.WellcomeBE.domain.Article.Article.create;
+import static org.assertj.core.api.BDDAssertions.within;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class ArticleServiceTest {
+    @Mock
+    private ArticleRepository articleRepository;
+
+    @Mock
+    private GoogleMapInfoService googleMapInfoService;
+
+    @InjectMocks
+    private ArticleService articleService;
+
+    @Captor
+    private ArgumentCaptor<LocalDateTime> dateCaptor;
+
+    @Test
+    void getPopularArticles_조회수높은아티클이있을때 (){
+        //given
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusDays(30);
+        WellnessInfo wellnessInfo = mock(WellnessInfo.class);
+
+        Article article1 = create(1L, "Title 1", "Content 1", "", 100, wellnessInfo);
+        ReflectionTestUtils.setField(article1, "createdAt", oneMonthAgo.plusDays(5)); // 25일 전
+        Article article2 = create(2L, "Title 2", "Content 2", "", 90, wellnessInfo);
+        ReflectionTestUtils.setField(article2, "createdAt", oneMonthAgo.plusDays(10)); // 20일 전
+
+        List<Article> mockArticles = List.of(article1, article2);
+
+        when(articleRepository.findTopArticles(any(LocalDateTime.class), eq(PageRequest.of(0, 5))))
+                .thenReturn(mockArticles);
+        // when
+        ArticleResponse.ArticleBest result = articleService.getPopularArticles();
+
+        // then
+        assertThat(result.getArticleItem()).hasSize(2);
+        assertThat(result.getArticleItem().get(0).getTitle()).isEqualTo("Title 1");
+        assertThat(result.getArticleItem().get(1).getTitle()).isEqualTo("Title 2");
+
+        // ArgumentCaptor로 실제 값 캡처
+        ArgumentCaptor<LocalDateTime> captor = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(articleRepository, times(1)).findTopArticles(captor.capture(), any(PageRequest.class));
+
+        // 실제 호출된 LocalDateTime 값을 초 단위까지 비교
+        assertThat(captor.getValue().truncatedTo(ChronoUnit.SECONDS))
+                .isEqualTo(oneMonthAgo.truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    @Test
+    void getPopularArticles_조회수5미만이면랜덤아티클가져오기() {
+        // given
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusDays(30);
+        WellnessInfo wellnessInfo = mock(WellnessInfo.class);
+
+        Article article = create(3L, "Random Title", "Random Content", "", 3, wellnessInfo);
+        ReflectionTestUtils.setField(article, "createdAt", oneMonthAgo.plusDays(2));
+        List<Article> mockArticles = List.of(article);
+
+        // when
+        // findRandomArticles 스텁 설정
+        when(articleRepository.findRandomArticles()).thenReturn(mockArticles);
+        when(articleRepository.findTopArticles(any(LocalDateTime.class), eq(PageRequest.of(0, 5))))
+                .thenReturn(Collections.emptyList());
+
+        // ArticleService의 getPopularArticles 호출
+        ArticleResponse.ArticleBest result = articleService.getPopularArticles();
+
+        // then
+        assertThat(result.getArticleItem()).hasSize(1);
+        assertThat(result.getArticleItem().get(0).getTitle()).isEqualTo("Random Title");
+
+        // verify 메서드로 호출된 횟수 및 인자 확인
+        verify(articleRepository, times(1)).findTopArticles(any(LocalDateTime.class), eq(PageRequest.of(0, 5)));  // 정확한 인자 비교
+        verify(articleRepository, times(1)).findRandomArticles();
+    }
+
+
+    @Test
+    void getPopularArticles_한달_기준_점검 (){
+        // given
+        LocalDateTime now = LocalDateTime.now();
+        WellnessInfo wellnessInfo = mock(WellnessInfo.class);
+        LocalDateTime expectedOneMonthAgo = now.minus(30, ChronoUnit.DAYS);
+
+        Article article1 = create(1L, "Title 1", "Content 1", "", 100, wellnessInfo);
+        ReflectionTestUtils.setField(article1, "createdAt", now.plusDays(5)); // 25일 전
+        Article article2 = create(2L, "Title 2", "Content 2", "", 90, wellnessInfo);
+        ReflectionTestUtils.setField(article2, "createdAt", now.plusDays(10)); // 20일 전
+        List<Article> mockArticles = List.of(article1, article2);
+
+
+        when(articleRepository.findTopArticles(any(LocalDateTime.class), any(PageRequest.class)))
+                .thenReturn(mockArticles);
+
+        // when
+        articleService.getPopularArticles();
+
+        // then
+        verify(articleRepository).findTopArticles(dateCaptor.capture(), any(PageRequest.class));
+
+        LocalDateTime actualOneMonthAgo = dateCaptor.getValue();
+
+        // 30일 전인지 검증 (1초 정도 차이가 날 수 있으므로 isCloseTo 사용)
+        assertThat(actualOneMonthAgo)
+                .isCloseTo(expectedOneMonthAgo, within(1, ChronoUnit.SECONDS));
+
+        // 반환된 아티클이 1개월 이내인지 검증
+        for (Article article : mockArticles) {
+            assertThat(article.getCreatedAt()).isAfterOrEqualTo(actualOneMonthAgo);
+        }
+    }
+}
