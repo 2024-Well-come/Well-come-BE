@@ -5,14 +5,16 @@ import com.wellcome.WellcomeBE.domain.Article.dto.ArticleResponse;
 import com.wellcome.WellcomeBE.domain.Article.repository.ArticleRepository;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDateTime;
@@ -135,5 +137,38 @@ class ArticleServiceTest {
         for (Article article : mockArticles) {
             assertThat(article.getCreatedAt()).isAfterOrEqualTo(actualOneMonthAgo);
         }
+    }
+
+
+    @Test
+    void getArticles_페이지별아티클조회_최신순() {
+        // given
+        int page = 1;
+        Pageable pageable = PageRequest.of(page, 5);
+        LocalDateTime now = LocalDateTime.now();
+
+        // 최신 아티클이 먼저 오도록 생성
+        WellnessInfo wellnessInfo = mock(WellnessInfo.class);
+        Article article1 = create(1L, "Title 1", "Content 1", "", 100, wellnessInfo);
+        ReflectionTestUtils.setField(article1, "createdAt", now.minusDays(1));
+        Article article2 = create(2L, "Title 2", "Content 2", "", 90, wellnessInfo);
+        ReflectionTestUtils.setField(article2, "createdAt", now.minusDays(2));
+        List<Article> Articles = List.of(article1, article2);
+
+        Page<Article> mockPage = new PageImpl<>(Articles, pageable, Articles.size());
+        when(articleRepository.findAllArticleByCreatedAt(pageable)).thenReturn(mockPage);
+
+        // when
+        ArticleResponse.ArticleBrief result = articleService.getArticles(page);
+
+        // then
+        assertThat(result.getData()).hasSize(2);
+        assertThat(result.getData().get(0).getTitle()).isEqualTo("Title 1");  // 최신 아티클이 먼저 나와야 함
+        assertThat(result.getData().get(1).getTitle()).isEqualTo("Title 2");
+        assertThat(result.getTotalCount()).isEqualTo(2);
+        assertThat(result.getPageNum()).isEqualTo(1);
+
+        // repository 메서드가 정확히 호출되었는지 검증
+        verify(articleRepository, times(1)).findAllArticleByCreatedAt(pageable);
     }
 }
