@@ -61,5 +61,14 @@ public class TripPlan extends BaseTimeEntity {
     // 상태 업데이트 메서드 추가
     public void markAsInactive() { this.status = Status.INACTIVE;}
 
+    public static TripPlan createDefault(Member member) {
+        return TripPlan.builder()
+                .title("기본 여행 계획")  // 기본 제목 설정
+                .member(member)
+                .isActive(true)
+                .status(Status.ACTIVE)
+                .build();
+    }
+
 
 }
