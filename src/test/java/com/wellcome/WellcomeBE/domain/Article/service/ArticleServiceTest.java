@@ -175,7 +175,7 @@ class ArticleServiceTest {
         assertThat(result.getData().get(0).getTitle()).isEqualTo("Title 1");  // 최신 아티클이 먼저 나와야 함
         assertThat(result.getData().get(1).getTitle()).isEqualTo("Title 2");
         assertThat(result.getTotalCount()).isEqualTo(7);
-        assertThat(result.getPageNum()).isEqualTo(2);
+        assertThat(result.getPageNum()).isEqualTo(1);
 
         // repository 메서드가 정확히 호출되었는지 검증
         verify(articleRepository, times(1)).findAllArticleByCreatedAt(pageable);

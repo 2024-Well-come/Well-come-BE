@@ -55,7 +55,7 @@ public class ArticleService {
         List<ArticleResponse.ArticleItem> items = articles.stream()
                 .map(ArticleResponse.ArticleItem::from)
                 .collect(Collectors.toList());
-        return ArticleResponse.ArticleBrief.from(items,articles.getTotalElements(),articles.getTotalPages(),articles.hasPrevious(),articles.hasNext());
+        return ArticleResponse.ArticleBrief.from(items,articles.getTotalElements(),articles.getNumber(),articles.hasPrevious(),articles.hasNext());
     }
 
     public ArticleResponse.ArticleDetail getArticleDetail(Long articleId) {
