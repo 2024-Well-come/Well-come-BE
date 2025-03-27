@@ -26,10 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
@@ -194,17 +191,23 @@ public class TripPlanService {
 
     @Transactional
     public void updateTripPlan(Long planId, TripPlanCreateRequest request) {
-        TripPlan existingPlan = tripPlanRepository.findById(planId).orElseThrow(() -> new CustomException(CustomErrorCode.TRIP_PLAN_NOT_FOUND));
+        Optional<TripPlan> optionalTripPlan = Optional.ofNullable(tripPlanRepository.findById(planId).orElse(null));
+        if (optionalTripPlan.isPresent()) {
+            TripPlan existingPlan = optionalTripPlan.get();
 
-        if (request.getName() != null) {
-            existingPlan.updateTitle(request.getName());
+            //TripPlan existingPlan = tripPlanRepository.findById(planId).orElseThrow(() -> new CustomException(CustomErrorCode.TRIP_PLAN_NOT_FOUND));
+
+            if (request.getName() != null) {
+                existingPlan.updateTitle(request.getName());
+            }
+            if (request.getTripStartDate() != null) {
+                existingPlan.updateStartDate(request.getTripStartDate());
+            }
+            if (request.getTripEndDate() != null) {
+                existingPlan.updateEndDate(request.getTripEndDate());
+            }
         }
-        if (request.getTripStartDate() != null) {
-            existingPlan.updateStartDate(request.getTripStartDate());
-        }
-        if (request.getTripEndDate() != null) {
-            existingPlan.updateEndDate(request.getTripEndDate());
-        }
+
 
     }
 

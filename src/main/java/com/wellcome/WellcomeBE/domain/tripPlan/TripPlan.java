@@ -34,6 +34,7 @@ public class TripPlan extends BaseTimeEntity {
     @OneToMany(mappedBy = "tripPlan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TripPlanPlace> tripPlanPlaces;
 
+    @Builder.Default
     private Boolean isActive = true; // 후기 작성 활성화 여부
 
     @Enumerated(EnumType.STRING)
