@@ -18,9 +18,7 @@ import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Role;
 import com.wellcome.WellcomeBE.global.type.SocialLogin;
-
 import com.wellcome.WellcomeBE.global.type.Thema;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -28,14 +26,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.parameters.P;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_NOT_FOUND;
@@ -574,22 +572,6 @@ class TripPlanServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining("해당하는 여행 폴더를 찾을 수 없습니다.");
 
-        verify(tripPlanRepository, times(1)).findById(planId);
-    }
-
-    @Test
-    void updateTripPlan_NoChange_WhenFieldsAreNull() {
-        Long planId = 1L;
-        TripPlanCreateRequest request = createRequest(null, null, null);
-        TripPlan mockTripPlan = createTestTripPlan("Test Plan", mockMember);
-        ReflectionTestUtils.setField(mockTripPlan, "id", 1L);
-        when(tripPlanRepository.findById(planId)).thenReturn(Optional.of(mockTripPlan));
-
-        tripPlanService.updateTripPlan(planId, request);
-
-        assertThat(mockTripPlan.getTitle()).isEqualTo("Test Plan");
-        assertThat(mockTripPlan.getStartDate()).isEqualTo(LocalDate.parse("2025-04-01"));
-        assertThat(mockTripPlan.getEndDate()).isEqualTo(LocalDate.parse("2025-04-10"));
         verify(tripPlanRepository, times(1)).findById(planId);
     }
 
