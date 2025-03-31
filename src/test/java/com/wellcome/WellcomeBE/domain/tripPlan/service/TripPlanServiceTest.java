@@ -16,9 +16,8 @@ import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepo
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
-import com.wellcome.WellcomeBE.global.type.Role;
-import com.wellcome.WellcomeBE.global.type.SocialLogin;
 import com.wellcome.WellcomeBE.global.type.Thema;
+import com.wellcome.WellcomeBE.utils.TestObjectFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -37,6 +36,7 @@ import java.util.Optional;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_NOT_FOUND;
+import static com.wellcome.WellcomeBE.utils.TestObjectFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
@@ -70,6 +70,11 @@ class TripPlanServiceTest {
     private Thema thema;
     private Member mockMember;
     private TripPlan mockTripPlan;
+
+    // TestObjectFactory에서 제공하는 메서드로 객체 생성
+    private Member member = TestObjectFactory.createTestMember("nickname", 12345L);
+
+
 
 
     @Test
@@ -477,23 +482,6 @@ class TripPlanServiceTest {
         verify(tripPlanRepository).deleteAllByIdInBatch(List.of(tripPlan2.getId()));
     }
 
-    private Member createTestMember(String nickname, Long kakaoId){
-        return Member.builder()
-                .nickname(nickname)
-                .profileImg("profileImgUrl")
-                .role(Role.USER)
-                .socialType(SocialLogin.KAKAO)
-                .kakaoId(kakaoId)
-                .build();
-    }
-
-
-    private TripPlanPlace createTestTripPlanPlace(WellnessInfo wellnessInfo, TripPlan tripPlan){
-        return TripPlanPlace.builder()
-                .tripPlan(tripPlan)
-                .wellnessInfo(wellnessInfo)
-                .build();
-    }
 
     // 테스트 전용 생성 메서드
     private TripPlanCreateRequest createRequest(String name, String startDate, String endDate) {
@@ -504,17 +492,6 @@ class TripPlanServiceTest {
                 .build();
     }
 
-    private static TripPlan createTestTripPlan(String title, Member member) {
-        return TripPlan.builder()
-                .title(title)
-                .startDate(LocalDate.parse("2025-04-01"))
-                .endDate(LocalDate.parse("2025-04-10"))
-                .member(member)
-                .isActive(true)
-                .tripPlanPlaces(new ArrayList<>())
-                .status(TripPlan.Status.ACTIVE)
-                .build();
-    }
 
     @Test
     void createTripPlan_여행폴더생성_성공() {
@@ -530,17 +507,21 @@ class TripPlanServiceTest {
 
     @Test
     void getTripPlanList_여행폴더목록조회_성공() {
-        List<TripPlan> tripPlans = new ArrayList<>();
-        TripPlan tripPlan = createTestTripPlan("Test Plan", mockMember);
-        tripPlans.add(tripPlan);
+        // Given
+        TripPlan tripPlan = TestObjectFactory.createTestTripPlan(member);
+        ReflectionTestUtils.setField(tripPlan, "tripPlanPlaces", new ArrayList<>()); // 특정 테스트에서만 초기화
+
+        List<TripPlan> tripPlans = List.of(tripPlan);
+
         when(tokenProvider.getMember()).thenReturn(mockMember);
         when(tripPlanRepository.findByMemberAndStatus(mockMember, TripPlan.Status.ACTIVE)).thenReturn(tripPlans);
 
+        //when
         TripPlanResponse.TripPlanBriefResponse response = tripPlanService.getTripPlanList();
 
         // Then: 리스트 개수 및 내용 검증
         assertThat(response.getTripPlanList()).hasSize(1);
-        assertThat(response.getTripPlanList().get(0).getName()).isEqualTo("Test Plan");
+        assertThat(response.getTripPlanList().get(0).getName()).isEqualTo("title");
         verify(tripPlanRepository, times(1)).findByMemberAndStatus(mockMember, TripPlan.Status.ACTIVE);
     }
 
