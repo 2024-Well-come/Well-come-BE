@@ -75,7 +75,7 @@ public class MemberService {
     }
 
     // 회원가입 여부 확인 후 회원가입 진행
-    private void verifyAndRegisterMember(KakaoUserInfoResponse userInfoResponse) {
+    protected void verifyAndRegisterMember(KakaoUserInfoResponse userInfoResponse) {
         Optional<Member> member = memberRepository.findByKakaoId(userInfoResponse.getId());
         if(!member.isPresent()){
             memberRepository.save(this.createKakaoUser(userInfoResponse));
