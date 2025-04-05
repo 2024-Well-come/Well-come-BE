@@ -6,18 +6,18 @@ import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
-import com.wellcome.WellcomeBE.global.type.Role;
-import com.wellcome.WellcomeBE.global.type.SocialLogin;
-
 import com.wellcome.WellcomeBE.global.type.Thema;
+import com.wellcome.WellcomeBE.utils.TestObjectFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -25,18 +25,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.parameters.P;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_NOT_FOUND;
+import static com.wellcome.WellcomeBE.utils.TestObjectFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -66,6 +68,14 @@ class TripPlanServiceTest {
     @Captor
     private ArgumentCaptor<List<TripPlan>> tripPlanCaptor;
     private Thema thema;
+    private Member mockMember;
+    private TripPlan mockTripPlan;
+
+    // TestObjectFactory에서 제공하는 메서드로 객체 생성
+    private Member member = TestObjectFactory.createTestMember("nickname", 12345L);
+
+
+
 
     @Test
     void getTripPlan_존재하지_않는_여행폴더_조회시_예외발생(){
@@ -472,31 +482,78 @@ class TripPlanServiceTest {
         verify(tripPlanRepository).deleteAllByIdInBatch(List.of(tripPlan2.getId()));
     }
 
-    private Member createTestMember(String nickname, Long kakaoId){
-        return Member.builder()
-                .nickname(nickname)
-                .profileImg("profileImgUrl")
-                .role(Role.USER)
-                .socialType(SocialLogin.KAKAO)
-                .kakaoId(kakaoId)
+
+    // 테스트 전용 생성 메서드
+    private TripPlanCreateRequest createRequest(String name, String startDate, String endDate) {
+        return TripPlanCreateRequest.builder()
+                .name(name)
+                .tripStartDate(startDate != null ? LocalDate.parse(startDate) : null)
+                .tripEndDate(endDate != null ? LocalDate.parse(endDate) : null)
                 .build();
     }
 
-    private TripPlan createTestTripPlan(String folderName, Member member){
-        return TripPlan.builder()
-                .title(folderName)
-                .startDate(LocalDate.parse("2025-01-01"))
-                .endDate(LocalDate.parse("2025-01-05"))
-                .member(member)
-                .isActive(true)
-                .status(TripPlan.Status.ACTIVE)
-                .build();
+
+    @Test
+    void createTripPlan_여행폴더생성_성공() {
+        // Given: TripPlan 생성 요청 준비
+        TripPlanCreateRequest request = createRequest("Spring Trip", "2025-04-01", "2025-04-10");
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+        when(tripPlanRepository.save(any(TripPlan.class))).thenReturn(mockTripPlan);
+
+        tripPlanService.createTripPlan(request);
+
+        verify(tripPlanRepository, times(1)).save(any(TripPlan.class));
     }
 
-    private TripPlanPlace createTestTripPlanPlace(WellnessInfo wellnessInfo, TripPlan tripPlan){
-        return TripPlanPlace.builder()
-                .tripPlan(tripPlan)
-                .wellnessInfo(wellnessInfo)
-                .build();
+    @Test
+    void getTripPlanList_여행폴더목록조회_성공() {
+        // Given
+        TripPlan tripPlan = TestObjectFactory.createTestTripPlan(member);
+        ReflectionTestUtils.setField(tripPlan, "tripPlanPlaces", new ArrayList<>()); // 특정 테스트에서만 초기화
+
+        List<TripPlan> tripPlans = List.of(tripPlan);
+
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+        when(tripPlanRepository.findByMemberAndStatus(mockMember, TripPlan.Status.ACTIVE)).thenReturn(tripPlans);
+
+        //when
+        TripPlanResponse.TripPlanBriefResponse response = tripPlanService.getTripPlanList();
+
+        // Then: 리스트 개수 및 내용 검증
+        assertThat(response.getTripPlanList()).hasSize(1);
+        assertThat(response.getTripPlanList().get(0).getName()).isEqualTo("title");
+        verify(tripPlanRepository, times(1)).findByMemberAndStatus(mockMember, TripPlan.Status.ACTIVE);
     }
+
+    @Test
+    void updateTripPlan_여행폴더수정_전체내용수정() {
+        Long planId = 1L;
+        TripPlanCreateRequest request = createRequest("Updated Plan", "2025-05-01", "2025-05-10");
+        TripPlan tripPlan = createTestTripPlan("folder1", mockMember);
+        ReflectionTestUtils.setField(tripPlan, "id", 1L);
+        when(tripPlanRepository.findById(planId)).thenReturn(Optional.of(tripPlan));
+
+
+        tripPlanService.updateTripPlan(planId, request);
+
+        assertThat(tripPlan.getTitle()).isEqualTo("Updated Plan");
+        assertThat(tripPlan.getStartDate()).isEqualTo(LocalDate.parse("2025-05-01"));
+        assertThat(tripPlan.getEndDate()).isEqualTo(LocalDate.parse("2025-05-10"));
+        verify(tripPlanRepository, times(1)).findById(planId);
+    }
+
+    @Test
+    void updateTripPlan_NotFound_존재하지않는여행폴더조회() {
+        Long planId = 99L;
+        TripPlanCreateRequest request = createRequest("New Title", "2025-06-01", "2025-06-10");
+        when(tripPlanRepository.findById(planId)).thenReturn(Optional.empty());
+
+        // 에러 메시지 일치 확인
+        assertThatThrownBy(() -> tripPlanService.updateTripPlan(planId, request))
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining("해당하는 여행 폴더를 찾을 수 없습니다.");
+
+        verify(tripPlanRepository, times(1)).findById(planId);
+    }
+
 }

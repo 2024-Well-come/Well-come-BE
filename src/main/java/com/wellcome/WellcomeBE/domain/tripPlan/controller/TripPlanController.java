@@ -79,7 +79,7 @@ public class TripPlanController {
     }
 
     @PatchMapping("plans/{planId}")
-    public ResponseEntity<?> modifyTripPlan(@PathVariable Long planId, @RequestBody TripPlanCreateRequest request){
+    public ResponseEntity<?> modifyTripPlan(@PathVariable Long planId, @RequestBody @Valid TripPlanCreateRequest request){
         tripPlanService.updateTripPlan(planId,request);
         return ResponseEntity.ok().build();
     }
