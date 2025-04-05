@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_PLACE_NOT_IN_FOLDER;
+import static com.wellcome.WellcomeBE.utils.TestObjectFactory.createTestTripPlanPlace;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -205,10 +206,4 @@ class TripPlanPlaceServiceTest {
         assertEquals(TripPlan.Status.INACTIVE, place2.getStatus());
     }
 
-    private TripPlanPlace createTestTripPlanPlace(WellnessInfo wellnessInfo, TripPlan tripPlan){
-        return TripPlanPlace.builder()
-                .tripPlan(tripPlan)
-                .wellnessInfo(wellnessInfo)
-                .build();
-    }
 }

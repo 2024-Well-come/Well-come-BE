@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 
@@ -33,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_NOT_FOUND;
@@ -554,6 +557,84 @@ class TripPlanServiceTest {
                 .hasMessageContaining("해당하는 여행 폴더를 찾을 수 없습니다.");
 
         verify(tripPlanRepository, times(1)).findById(planId);
+    }
+
+    @Test
+    void getTripPlans_정렬조건이_upcoming(){
+        // given
+        String sort = "upcoming";
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<TripPlan> resultPage = createMockTripPlanPage(pageable);
+
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+        when(tripPlanRepository.findUpcomingPlansByMember(mockMember, (PageRequest) pageable)).thenReturn(resultPage);
+
+        // when
+        tripPlanService.getTripPlans(sort, page);
+
+        // then
+        verify(tripPlanRepository, times(1)).findUpcomingPlansByMember(mockMember, (PageRequest) pageable);
+        verify(tripPlanRepository, never()).findCreateLatestPlansByMember(any(), any());
+    }
+
+    @Test
+    void getTripPlans_정렬조건_latest(){
+        // given
+        String sort = "latest";
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<TripPlan> resultPage = createMockTripPlanPage(pageable);
+
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+        when(tripPlanRepository.findCreateLatestPlansByMember(mockMember, (PageRequest) pageable)).thenReturn(resultPage);
+
+        // when
+        tripPlanService.getTripPlans(sort, page);
+
+        // then
+        verify(tripPlanRepository, times(1)).findCreateLatestPlansByMember(mockMember, (PageRequest) pageable);
+        verify(tripPlanRepository, never()).findUpcomingPlansByMember(any(), any());
+    }
+
+    @Test
+    void getTripPlans_페이징_응답점검(){
+        // given
+        String sort = "latest";
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<TripPlan> resultPage = new PageImpl<>(List.of(createMockTripPlan(null, 0)), pageable, 15);
+
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+        when(tripPlanRepository.findCreateLatestPlansByMember(mockMember, (PageRequest) pageable)).thenReturn(resultPage);
+
+        // when
+        TripPlanResponse.TripPlanListResponse response = tripPlanService.getTripPlans(sort, page);
+
+        // then
+        TripPlanResponse.TripPlanListItem listItem = response.getTripPlanList();
+        assertEquals(15, listItem.getTotalCount());
+        assertEquals(0, listItem.getPageNum());
+        assertFalse(listItem.isHasPrevious());
+        assertTrue(listItem.isHasNext());
+    }
+
+    private TripPlan createMockTripPlan(String thumbnailUrl, int placeCount) {
+        WellnessInfo wellnessInfo = WellnessInfo.builder().thumbnailUrl(thumbnailUrl).build();
+        List<TripPlanPlace> tripPlanPlaces = IntStream.range(0, placeCount)
+                .mapToObj(i -> TripPlanPlace.builder().wellnessInfo(wellnessInfo).build())
+                .collect(Collectors.toList());
+
+        return TripPlan.builder()
+                .id(1L)
+                .title("Mock Plan")
+                .tripPlanPlaces(tripPlanPlaces)
+                .build();
+    }
+
+    private Page<TripPlan> createMockTripPlanPage(Pageable pageable) {
+        TripPlan tripPlan = createMockTripPlan("http://example.com/image.jpg", 2);
+        return new PageImpl<>(List.of(tripPlan), pageable, 1);
     }
 
 }
