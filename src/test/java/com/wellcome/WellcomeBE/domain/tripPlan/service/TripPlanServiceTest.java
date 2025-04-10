@@ -10,6 +10,7 @@ import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanCreateRequest
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
@@ -557,6 +558,79 @@ class TripPlanServiceTest {
                 .hasMessageContaining("해당하는 여행 폴더를 찾을 수 없습니다.");
 
         verify(tripPlanRepository, times(1)).findById(planId);
+    }
+
+    @Test
+    void getTripPlanWriteReview_작성할_리뷰_있음(){
+        // given: 회원 정보와 여행 계획 페이지 구성
+        int page = 0;
+        int pageSize = 10;
+        Member mockMember = mock(Member.class);
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+
+        // WellnessInfo mock
+        WellnessInfo wellnessInfo = mock(WellnessInfo.class);
+        when(wellnessInfo.getThumbnailUrl()).thenReturn("http://example.com/image.jpg");
+
+        // TripPlanPlace mock
+        TripPlanPlace tripPlanPlace = mock(TripPlanPlace.class);
+        when(tripPlanPlace.getWellnessInfo()).thenReturn(wellnessInfo);
+
+        // TripPlan mock
+        TripPlan tripPlan = mock(TripPlan.class);
+        when(tripPlan.getTripPlanPlaces()).thenReturn(List.of(tripPlanPlace));
+        when(tripPlan.getId()).thenReturn(1L);
+        when(tripPlan.getTitle()).thenReturn("제주도 여행");
+        when(tripPlan.getStartDate()).thenReturn(LocalDate.of(2023, 6, 1));
+        when(tripPlan.getEndDate()).thenReturn(LocalDate.of(2023, 6, 5));
+        when(tripPlan.getIsActive()).thenReturn(true);
+
+        Page<TripPlan> tripPlanPage = new PageImpl<>(
+                List.of(tripPlan),
+                PageRequest.of(page, pageSize),
+                1
+        );
+
+        when(tripPlanRepository.findPastTripPlans(eq(mockMember), any(LocalDate.class), any(Pageable.class)))
+                .thenReturn(tripPlanPage);
+
+        // when: 서비스 호출
+        TripPlanReviewResponse response = tripPlanService.getTripPlanWriteReview(page);
+
+        // then: 응답 검증
+        assertEquals(1, response.getTotalCount());
+        assertEquals(1, response.getData().size());
+
+        TripPlanReviewResponse.TripPlanReviewItem item = response.getData().get(0);
+        assertEquals(1L, item.getPlanId());
+        assertEquals("제주도 여행", item.getName());
+        assertEquals("2023.06.01", item.getTripStartDate());
+        assertEquals("2023.06.05", item.getTripEndDate());
+        assertEquals("http://example.com/image.jpg", item.getRepresentativeImage());
+        assertEquals(1, item.getSavedNum());
+        assertTrue(item.isActive());
+    }
+
+    @Test
+    void getTripPlanWriteReview_작성할_리뷰_없음(){
+        // given: 회원 정보 설정
+        int page = 0;
+        Member mockMember = mock(Member.class);
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+
+        // 빈 페이지 반환 설정
+        Page<TripPlan> emptyPage = new PageImpl<>(List.of(), PageRequest.of(page, 10), 0);
+        when(tripPlanRepository.findPastTripPlans(eq(mockMember), any(LocalDate.class), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        // when: 서비스 호출
+        TripPlanReviewResponse response = tripPlanService.getTripPlanWriteReview(page);
+
+        // then: 빈 리스트 검증
+        assertEquals(0, response.getTotalCount());
+        assertEquals(0, response.getData().size());
+        assertFalse(response.isHasNext());
+        assertFalse(response.isHasPrevious());
     }
 
     @Test
