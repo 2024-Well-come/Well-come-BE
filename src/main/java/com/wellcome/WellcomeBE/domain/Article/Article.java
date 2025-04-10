@@ -26,12 +26,11 @@ public class Article extends BaseTimeEntity {
     private String content;
 
     @Lob
-    @Column(nullable = false)
     private String thumbnailUrl;
 
     @Builder.Default
     @Column(nullable = false)
-    private Long view = 0L;
+    private int view = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wellness_info_id")
@@ -40,6 +39,10 @@ public class Article extends BaseTimeEntity {
     // 조회수 증가 메서드
     public void incrementView() {
         this.view++;
+    }
+
+    public  static Article create(Long id, String title, String content, String thumbnailUrl, int view, WellnessInfo wellnessInfo) {
+        return new Article(id, title, null, content, thumbnailUrl, view, wellnessInfo);
     }
 
 }
