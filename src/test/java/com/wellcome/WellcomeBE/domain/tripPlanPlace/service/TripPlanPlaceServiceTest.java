@@ -6,10 +6,12 @@ import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceCreateRequest;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.dto.request.TripPlanPlaceDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 
@@ -25,6 +27,7 @@ import java.util.Optional;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_PLACE_NOT_IN_FOLDER;
+import static com.wellcome.WellcomeBE.utils.TestObjectFactory.createTestTripPlanPlace;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -205,10 +208,84 @@ class TripPlanPlaceServiceTest {
         assertEquals(TripPlan.Status.INACTIVE, place2.getStatus());
     }
 
-    private TripPlanPlace createTestTripPlanPlace(WellnessInfo wellnessInfo, TripPlan tripPlan){
-        return TripPlanPlace.builder()
-                .tripPlan(tripPlan)
-                .wellnessInfo(wellnessInfo)
-                .build();
+    @Test
+    void createTripPlanPlace_여행폴더_여행지_추가하기(){
+        // given
+        Long planId = 1L;
+        Long wellnessId = 100L;
+        TripPlan tripPlan = Mockito.mock(TripPlan.class);
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
+        TripPlanPlaceCreateRequest request = mock(TripPlanPlaceCreateRequest.class);
+        when(request.getWellnessInfoId()).thenReturn(wellnessId);
+
+
+        when(wellnessInfoRepository.findById(wellnessId)).thenReturn(Optional.of(wellnessInfo));
+        when(tripPlanRepository.findById(planId)).thenReturn(Optional.of(tripPlan));
+        when(tokenProvider.getMember()).thenReturn(member);
+        when(tripPlanPlaceRepository.existsByTripPlanAndWellnessInfoAndMember(tripPlan, wellnessInfo, member)).thenReturn(false);
+
+        // when
+        tripPlanPlaceService.createTripPlanPlace(planId, request);
+
+        // then
+        verify(tripPlanPlaceRepository, times(1)).save(any(TripPlanPlace.class));
+    }
+
+    @Test
+    void createTripPlanPlace_웰니스_X() {
+        // given
+        Long wellnessId = 1L;
+        Long planId = 99L;
+        TripPlanPlaceCreateRequest request = mock(TripPlanPlaceCreateRequest.class);
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
+        when(wellnessInfoRepository.findById(wellnessId)).thenReturn(Optional.of(wellnessInfo));
+        when(tripPlanRepository.findById(planId)).thenReturn(Optional.empty());
+
+        // when
+        CustomException exception = assertThrows(CustomException.class, () ->
+                tripPlanPlaceService.createTripPlanPlace(planId, request)
+        );
+
+        // then
+        assertEquals(CustomErrorCode.WELLNESS_INFO_NOT_FOUND, exception.getCustomErrorCode());
+    }
+
+    @Test
+    void createTripPlanPlace_TripPlan_X() {
+        // given
+        Long wellnessId = 1L;
+        Long planId = 99L;
+        TripPlanPlaceCreateRequest request = mock(TripPlanPlaceCreateRequest.class);
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
+
+        when(request.getWellnessInfoId()).thenReturn(wellnessId);
+        when(wellnessInfoRepository.findById(wellnessId)).thenReturn(Optional.of(wellnessInfo));
+        when(tripPlanRepository.findById(planId)).thenReturn(Optional.empty());
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class, () -> tripPlanPlaceService.createTripPlanPlace(planId, request));
+        // then
+        assertEquals(CustomErrorCode.TRIP_PLAN_NOT_FOUND, exception.getCustomErrorCode());
+
+    }
+
+    @Test
+    void createTripPlanPlace_shouldThrow_whenDuplicatePlace() {
+        // given
+        Long planId = 1L;
+        Long wellnessId = 100L;
+        TripPlan tripPlan = Mockito.mock(TripPlan.class);
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
+        TripPlanPlaceCreateRequest request = mock(TripPlanPlaceCreateRequest.class);
+        when(request.getWellnessInfoId()).thenReturn(wellnessId);
+
+        when(wellnessInfoRepository.findById(wellnessId)).thenReturn(Optional.of(wellnessInfo));
+        when(tripPlanRepository.findById(planId)).thenReturn(Optional.of(tripPlan));
+        when(tokenProvider.getMember()).thenReturn(member);
+        when(tripPlanPlaceRepository.existsByTripPlanAndWellnessInfoAndMember(tripPlan, wellnessInfo, member)).thenReturn(true);
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class, () -> tripPlanPlaceService.createTripPlanPlace(planId, request));
+        assertEquals(CustomErrorCode.TRIP_PLAN_PLACE_DUPLICATION, exception.getCustomErrorCode());
     }
 }

@@ -10,6 +10,7 @@ import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanCreateRequest
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanDetailResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanResponse;
+import com.wellcome.WellcomeBE.domain.tripPlan.dto.response.TripPlanReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.repository.TripPlanRepository;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.TripPlanPlace;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
@@ -25,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 
@@ -33,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ACCESS_DENIED;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TRIP_PLAN_NOT_FOUND;
@@ -554,6 +558,157 @@ class TripPlanServiceTest {
                 .hasMessageContaining("해당하는 여행 폴더를 찾을 수 없습니다.");
 
         verify(tripPlanRepository, times(1)).findById(planId);
+    }
+
+    @Test
+    void getTripPlanWriteReview_작성할_리뷰_있음(){
+        // given: 회원 정보와 여행 계획 페이지 구성
+        int page = 0;
+        int pageSize = 10;
+        Member mockMember = mock(Member.class);
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+
+        // WellnessInfo mock
+        WellnessInfo wellnessInfo = mock(WellnessInfo.class);
+        when(wellnessInfo.getThumbnailUrl()).thenReturn("http://example.com/image.jpg");
+
+        // TripPlanPlace mock
+        TripPlanPlace tripPlanPlace = mock(TripPlanPlace.class);
+        when(tripPlanPlace.getWellnessInfo()).thenReturn(wellnessInfo);
+
+        // TripPlan mock
+        TripPlan tripPlan = mock(TripPlan.class);
+        when(tripPlan.getTripPlanPlaces()).thenReturn(List.of(tripPlanPlace));
+        when(tripPlan.getId()).thenReturn(1L);
+        when(tripPlan.getTitle()).thenReturn("제주도 여행");
+        when(tripPlan.getStartDate()).thenReturn(LocalDate.of(2023, 6, 1));
+        when(tripPlan.getEndDate()).thenReturn(LocalDate.of(2023, 6, 5));
+        when(tripPlan.getIsActive()).thenReturn(true);
+
+        Page<TripPlan> tripPlanPage = new PageImpl<>(
+                List.of(tripPlan),
+                PageRequest.of(page, pageSize),
+                1
+        );
+
+        when(tripPlanRepository.findPastTripPlans(eq(mockMember), any(LocalDate.class), any(Pageable.class)))
+                .thenReturn(tripPlanPage);
+
+        // when: 서비스 호출
+        TripPlanReviewResponse response = tripPlanService.getTripPlanWriteReview(page);
+
+        // then: 응답 검증
+        assertEquals(1, response.getTotalCount());
+        assertEquals(1, response.getData().size());
+
+        TripPlanReviewResponse.TripPlanReviewItem item = response.getData().get(0);
+        assertEquals(1L, item.getPlanId());
+        assertEquals("제주도 여행", item.getName());
+        assertEquals("2023.06.01", item.getTripStartDate());
+        assertEquals("2023.06.05", item.getTripEndDate());
+        assertEquals("http://example.com/image.jpg", item.getRepresentativeImage());
+        assertEquals(1, item.getSavedNum());
+        assertTrue(item.isActive());
+    }
+
+    @Test
+    void getTripPlanWriteReview_작성할_리뷰_없음(){
+        // given: 회원 정보 설정
+        int page = 0;
+        Member mockMember = mock(Member.class);
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+
+        // 빈 페이지 반환 설정
+        Page<TripPlan> emptyPage = new PageImpl<>(List.of(), PageRequest.of(page, 10), 0);
+        when(tripPlanRepository.findPastTripPlans(eq(mockMember), any(LocalDate.class), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        // when: 서비스 호출
+        TripPlanReviewResponse response = tripPlanService.getTripPlanWriteReview(page);
+
+        // then: 빈 리스트 검증
+        assertEquals(0, response.getTotalCount());
+        assertEquals(0, response.getData().size());
+        assertFalse(response.isHasNext());
+        assertFalse(response.isHasPrevious());
+    }
+
+    @Test
+    void getTripPlans_정렬조건이_upcoming(){
+        // given
+        String sort = "upcoming";
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<TripPlan> resultPage = createMockTripPlanPage(pageable);
+
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+        when(tripPlanRepository.findUpcomingPlansByMember(mockMember, (PageRequest) pageable)).thenReturn(resultPage);
+
+        // when
+        tripPlanService.getTripPlans(sort, page);
+
+        // then
+        verify(tripPlanRepository, times(1)).findUpcomingPlansByMember(mockMember, (PageRequest) pageable);
+        verify(tripPlanRepository, never()).findCreateLatestPlansByMember(any(), any());
+    }
+
+    @Test
+    void getTripPlans_정렬조건_latest(){
+        // given
+        String sort = "latest";
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<TripPlan> resultPage = createMockTripPlanPage(pageable);
+
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+        when(tripPlanRepository.findCreateLatestPlansByMember(mockMember, (PageRequest) pageable)).thenReturn(resultPage);
+
+        // when
+        tripPlanService.getTripPlans(sort, page);
+
+        // then
+        verify(tripPlanRepository, times(1)).findCreateLatestPlansByMember(mockMember, (PageRequest) pageable);
+        verify(tripPlanRepository, never()).findUpcomingPlansByMember(any(), any());
+    }
+
+    @Test
+    void getTripPlans_페이징_응답점검(){
+        // given
+        String sort = "latest";
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<TripPlan> resultPage = new PageImpl<>(List.of(createMockTripPlan(null, 0)), pageable, 15);
+
+        when(tokenProvider.getMember()).thenReturn(mockMember);
+        when(tripPlanRepository.findCreateLatestPlansByMember(mockMember, (PageRequest) pageable)).thenReturn(resultPage);
+
+        // when
+        TripPlanResponse.TripPlanListResponse response = tripPlanService.getTripPlans(sort, page);
+
+        // then
+        TripPlanResponse.TripPlanListItem listItem = response.getTripPlanList();
+        assertEquals(15, listItem.getTotalCount());
+        assertEquals(0, listItem.getPageNum());
+        assertFalse(listItem.isHasPrevious());
+        assertTrue(listItem.isHasNext());
+    }
+
+    private TripPlan createMockTripPlan(String thumbnailUrl, int placeCount) {
+        WellnessInfo wellnessInfo = WellnessInfo.builder().thumbnailUrl(thumbnailUrl).build();
+        List<TripPlanPlace> tripPlanPlaces = IntStream.range(0, placeCount)
+                .mapToObj(i -> TripPlanPlace.builder().wellnessInfo(wellnessInfo).build())
+                .collect(Collectors.toList());
+
+        return TripPlan.builder()
+                .id(1L)
+                .title("Mock Plan")
+                .tripPlanPlaces(tripPlanPlaces)
+                .build();
+    }
+
+    private Page<TripPlan> createMockTripPlanPage(Pageable pageable) {
+        TripPlan tripPlan = createMockTripPlan("http://example.com/image.jpg", 2);
+        return new PageImpl<>(List.of(tripPlan), pageable, 1);
     }
 
 }

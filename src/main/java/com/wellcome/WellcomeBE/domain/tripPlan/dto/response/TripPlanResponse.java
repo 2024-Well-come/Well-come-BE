@@ -49,9 +49,9 @@ public class TripPlanResponse {
     @Builder
     public static class TripPlanListItem {
         private long totalCount;
-        private int pageNum;
-        private boolean hasPrevious;
-        private boolean hasNext;
+        private int pageNum; //현재 페이지
+        private boolean hasPrevious; //이전
+        private boolean hasNext; //이후
         private List<TripPlanItem> data;
 
         public static TripPlanListItem from(

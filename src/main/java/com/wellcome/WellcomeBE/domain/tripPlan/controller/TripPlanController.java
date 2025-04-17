@@ -42,7 +42,7 @@ public class TripPlanController {
         tripPlanService.deleteTripPlan(request);
         return ResponseEntity.ok().build();
     }
-    // 여행 폴더 목록 조회
+    // 여행 폴더 내역 조회
     @GetMapping("/plans")
     public ResponseEntity<TripPlanResponse.TripPlanListResponse> getTripPlans(
             @RequestParam(defaultValue = "latest") String sort,

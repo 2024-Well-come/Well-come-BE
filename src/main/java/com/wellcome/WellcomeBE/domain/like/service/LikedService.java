@@ -88,8 +88,8 @@ public class LikedService {
             themaList = Thema.getThemaList();
         } else {
             themaList.add(thema);
-            log.info(String.valueOf(thema));
-            log.info(themaList.toString());
+            //log.info(String.valueOf(thema));
+            //log.info(themaList.toString());
 
         }
 
