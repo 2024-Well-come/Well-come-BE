@@ -40,8 +40,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.wellcome.WellcomeBE.domain.community.CommunityTestHelper.*;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
+import static com.wellcome.WellcomeBE.utils.TestObjectFactory.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 

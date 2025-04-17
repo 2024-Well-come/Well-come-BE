@@ -2,10 +2,12 @@ package com.wellcome.WellcomeBE.domain.tripPlan.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
 
+@Builder
 @Getter
 public class TripPlanCreateRequest {
     @NotBlank(message = "여행 계획의 이름은 필수입니다.")

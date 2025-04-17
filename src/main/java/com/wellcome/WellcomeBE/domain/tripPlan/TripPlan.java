@@ -34,6 +34,7 @@ public class TripPlan extends BaseTimeEntity {
     @OneToMany(mappedBy = "tripPlan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TripPlanPlace> tripPlanPlaces;
 
+    @Builder.Default
     private Boolean isActive = true; // 후기 작성 활성화 여부
 
     @Enumerated(EnumType.STRING)
@@ -60,6 +61,15 @@ public class TripPlan extends BaseTimeEntity {
 
     // 상태 업데이트 메서드 추가
     public void markAsInactive() { this.status = Status.INACTIVE;}
+
+    public static TripPlan createDefault(Member member) {
+        return TripPlan.builder()
+                .title("기본 여행 계획")  // 기본 제목 설정
+                .member(member)
+                .isActive(true)
+                .status(Status.ACTIVE)
+                .build();
+    }
 
 
 }

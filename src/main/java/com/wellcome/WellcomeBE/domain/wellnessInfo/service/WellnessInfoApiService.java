@@ -9,6 +9,7 @@ import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
+import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
@@ -56,6 +57,7 @@ public class WellnessInfoApiService {
      * 웰니스 장소 추천 목록 조회
      * - 로그인 가정
      */
+    @Transactional
     public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request, ImgSavedType savedType) {
 
         // 사용자 정보 조회
@@ -99,16 +101,23 @@ public class WellnessInfoApiService {
                 data.hasPrevious(), data.hasNext(),
                 wellnessInfoItemList);
 
+        // 빈 폴더 생성 호출 시점
+        TripPlan.createDefault(tokenProvider.getMember());
+
+
         return WellnessInfoResponse.from(searchedThemaList, searchedSigunguList, request, WellnessInfoList);
     }
 
     // themaList를 likedThemaList의 순서를 반영하여 정렬
-    private List<Thema> sortThemaListByLikedOrder(List<Thema> themaList, List<Thema> likedThemaList) {
+    protected List<Thema> sortThemaListByLikedOrder(List<Thema> themaList, List<Thema> likedThemaList) {
         if (themaList == null || themaList.isEmpty()) {
             return likedThemaList;
         }
 
-        themaList.sort(Comparator.comparingInt(likedThemaList::indexOf));
+        themaList.sort(Comparator.comparingInt(t -> {
+            int idx = likedThemaList.indexOf(t);
+            return idx == -1 ? Integer.MAX_VALUE : idx; //likedThema에 없는 테마는 맨 뒤로 배치
+        }));
         return themaList;
     }
 
