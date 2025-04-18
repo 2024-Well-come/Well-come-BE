@@ -48,7 +48,7 @@ class WellnessInfoRepositoryTest {
     }};
 
     @Test
-    void findWellnessInfoByThemaAndSigunguWithWeight_웰니스_장소_목록조회(){
+    void findWellnessInfoByThemaAndSigunguWithWeight_웰니스_장소_목록조회_테마가_3개일_경우(){
         // given
         int page = 0;
         PageRequest pageRequest = PageRequest.of(page, 5);
@@ -83,6 +83,44 @@ class WellnessInfoRepositoryTest {
                 .map(w -> w.getWellnessInfo().getTitle())
                 .collect(Collectors.toList())
         ).containsExactly("장소9", "장소10", "장소8", "장소4", "장소3");
+    }
+
+    @Test
+    void findWellnessInfoByThemaAndSigunguWithWeight_웰니스_장소_목록조회_테마가_3개미만일_경우(){
+        // given
+        int page = 0;
+        PageRequest pageRequest = PageRequest.of(page, 5);
+
+        // - 멤버 생성
+        Member member = TestObjectFactory.createTestMember("member", 12345L);
+        memberRepository.save(member);
+
+        // - 여러 테마의 웰니스 장소 생성
+        wellnessInfoRepository.saveAll(createTestWellnessInfosWithThemaTypesAndView(themaTypes));
+
+        // - 테마, 시군구 설정
+        List<Thema> themaList = List.of(Thema.NATURE, Thema.FOOD);
+        List<Sigungu> sigunguList = List.of(Sigungu.GANGNEUNG, Sigungu.SOKCHO);
+        Thema thema1 = Thema.NATURE;
+        Thema thema2 = Thema.FOOD;
+        Thema thema3 = null;
+
+        // when
+        Page<WellnessInfoWithLiked> result = wellnessInfoRepository.findWellnessInfoByThemaAndSigunguWithWeight(
+                pageRequest, member, themaList, sigunguList, thema1, thema2, thema3
+        );
+
+        // then
+        assertEquals(5, result.getContent().size());
+        assertEquals(6, result.getTotalElements());
+        assertEquals(0, result.getNumber());
+        assertEquals(false, result.hasPrevious());
+        assertEquals(true, result.hasNext());
+
+        assertThat(result.getContent().stream()
+                .map(w -> w.getWellnessInfo().getTitle())
+                .collect(Collectors.toList())
+        ).containsExactly("장소9", "장소8", "장소4", "장소3", "장소2");
     }
 
     @Test

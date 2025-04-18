@@ -106,7 +106,7 @@ public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom 
     }
 
     private BooleanExpression themaEq(Thema thema) {
-        return thema != null ? w.thema.eq(thema) : null;
+        return thema != null ? w.thema.eq(thema) : Expressions.FALSE;
     }
 
     private BooleanExpression themaIn(List<Thema> themaList) {
