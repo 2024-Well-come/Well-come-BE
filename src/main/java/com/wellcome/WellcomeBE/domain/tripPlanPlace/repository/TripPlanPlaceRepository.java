@@ -52,5 +52,5 @@ public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Lon
     @Query("SELECT tpp.tripPlan FROM TripPlanPlace tpp " +
             "WHERE tpp.wellnessInfo = :wellnessInfo " +
             "AND (tpp.rating IS NOT NULL OR tpp.review IS NOT NULL)")
-    List<TripPlan> findByWellnessInfoAndReviewConditionsExist(WellnessInfo wellnessInfo);
+    List<TripPlan> findByWellnessInfoAndReviewConditionsExist(@Param("wellnessInfo") WellnessInfo wellnessInfo);
 }
