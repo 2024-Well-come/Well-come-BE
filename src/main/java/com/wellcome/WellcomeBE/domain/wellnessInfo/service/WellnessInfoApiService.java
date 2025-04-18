@@ -12,6 +12,7 @@ import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -83,7 +84,7 @@ public class WellnessInfoApiService {
 
         // 웰니스 정보 목록 조회
         Pageable pageable = PageRequest.of(page, 10);
-        Page<Object[]> data = wellnessInfoRepository.findWellnessInfoByThemaAndSigunguWithWeight(
+        Page<WellnessInfoWithLiked> data = wellnessInfoRepository.findWellnessInfoByThemaAndSigunguWithWeight(
                 pageable,
                 member,
                 sortedThemaList.isEmpty() ? null : sortedThemaList, sigunguList,
@@ -93,9 +94,12 @@ public class WellnessInfoApiService {
         List<Thema> searchedThemaList = wellnessInfoRepository.findDistinctThema(themaList);
         List<Sigungu> searchedSigunguList = wellnessInfoRepository.findDistinctSigungu(sigunguList);
 
-        List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = data.stream()
-                .map(objects -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from((WellnessInfo) objects[0], (Boolean) objects[1], savedType))
+        List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = data.getContent().stream()
+                .map(dto -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from(
+                        dto.getWellnessInfo(), dto.isLiked(), savedType)
+                )
                 .collect(Collectors.toList());
+
         WellnessInfoResponse.WellnessInfoList WellnessInfoList = WellnessInfoResponse.WellnessInfoList.from(
                 data.getTotalElements(), data.getNumber(),
                 data.hasPrevious(), data.hasNext(),
