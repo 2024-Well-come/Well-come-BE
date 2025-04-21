@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.0'
 	id 'io.spring.dependency-management' version '1.1.5'
+	id 'jacoco'
 }
 
 group = 'com.wellcome'
@@ -46,7 +47,6 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 
 	// jsch 라이브러리, for ssh tunneling
@@ -83,3 +83,35 @@ tasks.named('test') {
 		events "passed", "skipped","failed"
 	}
 }
+
+
+jacocoTestReport {
+	dependsOn test // test 태스크 후에 실행되도록
+	reports {
+		xml.required = true
+		csv.required = false
+		html.required = true
+		html.outputLocation = file("$buildDir/jacocoHtml") // 경로 수정
+	}
+}
+
+task testCoverageVerification(type: JacocoCoverageVerification) {
+	dependsOn test
+	violationRules {
+		rule {
+			limit {
+				counter = 'METHOD'
+				value = 'TOTALCOUNT' // 커버리지 값 지정
+				minimum = 0.60 // 최소 60% 커버리지
+			}
+			limit {
+				counter = 'LINE'
+				value = 'TOTALCOUNT' // 커버리지 값 지정
+				minimum = 0.70 // 최소 70% 커버리지
+			}
+		}
+	}
+}
+
+tasks.check.dependsOn testCoverageVerification
+tasks.check.dependsOn jacocoTestReport
