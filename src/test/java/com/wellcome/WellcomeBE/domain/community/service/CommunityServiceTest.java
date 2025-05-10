@@ -84,8 +84,7 @@ class CommunityServiceTest {
     @BeforeEach
     void setUp(){
         member = mock(Member.class);
-        when(tokenProvider.getMember()).thenReturn(member);
-
+        lenient().when(tokenProvider.getMember()).thenReturn(member);
     }
 
     @Test
