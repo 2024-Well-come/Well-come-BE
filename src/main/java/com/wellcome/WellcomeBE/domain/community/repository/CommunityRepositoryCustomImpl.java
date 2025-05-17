@@ -13,10 +13,10 @@ import java.util.List;
 import static com.wellcome.WellcomeBE.domain.community.QCommunity.community;
 import static com.wellcome.WellcomeBE.domain.support.QSupport.support;
 
-public class CommunityRepositoryImpl implements CommunityRepositoryCustom {
+public class CommunityRepositoryCustomImpl implements CommunityRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
-    public CommunityRepositoryImpl(EntityManager em) {
+    public CommunityRepositoryCustomImpl(EntityManager em) {
         this.queryFactory = new JPAQueryFactory(em);
     }
 

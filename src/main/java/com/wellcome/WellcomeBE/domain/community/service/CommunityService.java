@@ -176,15 +176,12 @@ public class CommunityService {
                 .map(CommunityImg::getImgUrl) // 이미지 URL 추출
                 .toList();
 
-        // TODO: 쿼리 DSL 적용 필수!!
         // WellnessInfo 및 TripPlanPlace와 연결된 Support, Liked 정보를 조회
-        List<Object[]> wellnessInfoWithTripPlanPlaceSupportAndLiked = wellnessInfoRepository.findWellnessInfoWithSupportAndLikedByCommunityId(communityId, currentMember);
+        List<ReviewPostDetailResponse.ReviewWellnessInfoItem> reviewWellnessInfoItems =
+                wellnessInfoRepository.findWellnessInfoWithSupportAndLikedByCommunityId(communityId, currentMember);
 
-        // Object[] 배열을 ReviewWellnessInfoItem으로 변환
-        List<ReviewPostDetailResponse.ReviewWellnessInfoItem> reviewWellnessInfoItems = wellnessInfoWithTripPlanPlaceSupportAndLiked.stream()
-                .map(ReviewPostDetailResponse.ReviewWellnessInfoItem::from)
-                .collect(Collectors.toList());
-        return  ReviewPostDetailResponse.from(community,isSupport,postImgs,reviewWellnessInfoItems);
+        return ReviewPostDetailResponse.from(community, isSupport, postImgs, reviewWellnessInfoItems);
+
 
     }
 
