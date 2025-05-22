@@ -11,7 +11,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long> {
 
@@ -64,15 +63,15 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
     /**
      * 임시 반경 계산
      */
-    @Query(value = "SELECT * FROM wellness_info wi " +
-            "WHERE wi.wellness_info_id != :wellness_info_id " +
-            "AND (6371 * acos(cos(radians(:mapY)) * cos(radians(wi.mapy)) * cos(radians(wi.mapx) - radians(:mapX)) + sin(radians(:mapY)) * sin(radians(wi.mapy)))) < :radius " +
-            "ORDER BY (6371 * acos(cos(radians(:mapY)) * cos(radians(wi.mapy)) * cos(radians(wi.mapx) - radians(:mapX)) + sin(radians(:mapY)) * sin(radians(wi.mapy)))) " +
-            "LIMIT 6", nativeQuery = true)
-    List<WellnessInfo> findTop6NearbyWellnessInfo(@Param("mapX") Double mapX,
-                                                  @Param("mapY") Double mapY,
-                                                  @Param("wellness_info_id") Long wellnessInfoId,
-                                                  @Param("radius") Double radius);
+//    @Query(value = "SELECT * FROM wellness_info wi " +
+//            "WHERE wi.wellness_info_id != :wellness_info_id " +
+//            "AND (6371 * acos(cos(radians(:mapY)) * cos(radians(wi.mapy)) * cos(radians(wi.mapx) - radians(:mapX)) + sin(radians(:mapY)) * sin(radians(wi.mapy)))) < :radius " +
+//            "ORDER BY (6371 * acos(cos(radians(:mapY)) * cos(radians(wi.mapy)) * cos(radians(wi.mapx) - radians(:mapX)) + sin(radians(:mapY)) * sin(radians(wi.mapy)))) " +
+//            "LIMIT 6", nativeQuery = true)
+//    List<WellnessInfo> findTop6NearbyWellnessInfo(@Param("mapX") Double mapX,
+//                                                  @Param("mapY") Double mapY,
+//                                                  @Param("wellness_info_id") Long wellnessInfoId,
+//                                                  @Param("radius") Double radius);
 
 
 
