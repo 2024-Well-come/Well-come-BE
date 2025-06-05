@@ -14,7 +14,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Long> {
+public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Long>, TripPlanPlaceRepositoryCustom {
 
     @Query("SELECT tpp FROM TripPlanPlace tpp " +
             "JOIN FETCH tpp.tripPlan " +
@@ -26,16 +26,6 @@ public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Lon
             "JOIN FETCH tpp.tripPlan " +
             "WHERE tpp.id IN :idList")
     List<TripPlanPlace> findByIdIn(@Param("idList") List<Long> tripPlanPlaceIdList);
-
-    @Query("SELECT tpp FROM TripPlanPlace tpp " +
-            "JOIN FETCH tpp.wellnessInfo w " +
-            "WHERE tpp.tripPlan.id = :planId " +
-            "AND (:thema IS NULL OR tpp.wellnessInfo.thema = :thema) " +
-            "AND tpp.status = 'ACTIVE' " + // 상태가 ACTIVE인 조건 추가
-            "ORDER BY tpp.createdAt DESC")
-    Page<TripPlanPlace> findByTripPlanIdAndThema(PageRequest pageRequest,
-                                                 @Param("planId") Long planId,
-                                                 @Param("thema") Thema thema);
 
     @Query("SELECT COUNT(tp) > 0 FROM TripPlanPlace tp " +
             "JOIN tp.wellnessInfo wi " +
@@ -49,8 +39,4 @@ public interface TripPlanPlaceRepository extends JpaRepository<TripPlanPlace,Lon
 
     Optional<TripPlanPlace> findByTripPlanIdAndWellnessInfoId(Long planId, Long wellnessInfoId);
 
-    @Query("SELECT tpp.tripPlan FROM TripPlanPlace tpp " +
-            "WHERE tpp.wellnessInfo = :wellnessInfo " +
-            "AND (tpp.rating IS NOT NULL OR tpp.review IS NOT NULL)")
-    List<TripPlan> findByWellnessInfoAndReviewConditionsExist(WellnessInfo wellnessInfo);
 }
