@@ -3,7 +3,9 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.controller;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoApiService;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoAsyncService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService2;
 import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +17,13 @@ public class WellnessInfoController {
 
     private final WellnessInfoService wellnessInfoService;
     private final WellnessInfoApiService wellnessInfoApiService;
+    private final WellnessInfoAsyncService wellnessInfoAsyncService;
 
     // 한국관광공사_국문 API 호출 및 데이터 저장
     @GetMapping("/getTourBasicApiData")
     public void fetchAndSaveTourInfo(){
-        wellnessInfoService.fetchAndSaveTourInfo();
+        //wellnessInfoService.fetchAndSaveTourInfo();
+        wellnessInfoAsyncService.fetchAllData();
     }
 
     // 한국관광공사_국문 API 썸네일 이미지 S3에 저장

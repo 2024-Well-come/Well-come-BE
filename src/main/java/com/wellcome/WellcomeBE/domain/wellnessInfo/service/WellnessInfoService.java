@@ -65,6 +65,7 @@ public class WellnessInfoService {
         this.s3Service = s3Service;
     }
     public void fetchAndSaveTourInfo() {
+        long start = System.currentTimeMillis();
 
         // Basic API 호출 및 저장
         Flux.fromIterable(CategoryDetail.CATEGORY_PARAM_LIST)
@@ -81,6 +82,10 @@ public class WellnessInfoService {
                 .doOnNext(wellnessInfoRepository::saveAll)
                 .block();
 
+        long end = System.currentTimeMillis();
+        log.info("** API 호출 및 데이터 저장 완료 ** \n" +
+                        "  - 총 처리 시간: {}ms",
+                (end - start));
     }
 
     private Flux<WellnessInfo> fetchData(CategoryDetail categoryDetail) {

@@ -1,0 +1,52 @@
+package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
+
+import com.wellcome.WellcomeBE.global.type.CategoryDetail;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class WellnessInfoAsyncService {
+
+    private final WellnessInfoService2 wellnessInfoService2;
+
+    // 한국관광공사 API 호출 및 데이터 저장 로직 실행
+    public void fetchAllData() {
+        log.info("[메인 스레드 확인] thread={}", Thread.currentThread().getName());
+
+        long start = System.currentTimeMillis();
+
+        // 카테고리별 API 호출
+        List<CompletableFuture<Integer>> futures = new ArrayList<>();
+        for (CategoryDetail category : CategoryDetail.CATEGORY_PARAM_LIST) {
+            futures.add(wellnessInfoService2.fetchAndSaveByCategory(category));
+        }
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join(); //모든 카테고리 작업 완료 대기
+
+        int categorySavedCount = futures.stream()
+                .mapToInt(future -> {
+                    try {
+                        return future.get();
+                    } catch (Exception e){
+                        return 0;
+                    }
+                })
+                .sum();
+
+        // 키워드별 API 호출
+        int keywordSavedCount = wellnessInfoService2.fetchAndSaveByKeywords();
+
+        long end = System.currentTimeMillis();
+        int totalSavedCount = categorySavedCount + keywordSavedCount;
+        log.info("** API 호출 및 데이터 저장 완료 ** \n" +
+                "  - 총 처리 시간: {}ms \n" +
+                "  - 총 데이터 수: {}건 (카테고리 API: {}건, 키워드 API: {}건)",
+                (end - start), totalSavedCount, categorySavedCount, keywordSavedCount);
+    }
+}
