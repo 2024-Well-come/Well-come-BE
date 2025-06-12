@@ -76,7 +76,7 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
 
 
 
-    List<WellnessInfo> findByThumbnailUrlNotNull();
+    List<WellnessInfo> findByOriginalThumbnailUrlNotNull();
 
     // 후기 게시글 내부 웰니스 장소 정보
     @Query(

@@ -23,11 +23,13 @@ public class WellnessInfoAsyncService {
         long start = System.currentTimeMillis();
 
         // 카테고리별 API 호출
+        log.info("<< 카테고리별 API 호출 시작 >>");
         List<CompletableFuture<Integer>> futures = new ArrayList<>();
         for (CategoryDetail category : CategoryDetail.CATEGORY_PARAM_LIST) {
             futures.add(wellnessInfoService2.fetchAndSaveByCategory(category));
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join(); //모든 카테고리 작업 완료 대기
+        log.info("<< 카테고리별 API 호출 완료 >>");
 
         int categorySavedCount = futures.stream()
                 .mapToInt(future -> {
@@ -40,7 +42,14 @@ public class WellnessInfoAsyncService {
                 .sum();
 
         // 키워드별 API 호출
+        log.info("<< 키워드별 API 호출 시작 >>");
         int keywordSavedCount = wellnessInfoService2.fetchAndSaveByKeywords();
+        log.info("<< 키워드별 API 호출 완료 >>");
+
+        // 썸네일 이미지 URL -> S3에 업로드 후 thumbnailUrl 컬럼 업데이트
+        log.info("<< 썸네일 이미지 S3에 업로드 시작 >>");
+        wellnessInfoService2.uploadThumbnailImgToS3();
+        log.info("<< 썸네일 이미지 S3에 업로드 완료 >>");
 
         long end = System.currentTimeMillis();
         int totalSavedCount = categorySavedCount + keywordSavedCount;

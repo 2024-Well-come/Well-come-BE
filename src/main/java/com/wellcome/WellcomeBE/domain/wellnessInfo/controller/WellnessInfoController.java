@@ -8,41 +8,41 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService2;
 import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class WellnessInfoController {
 
     private final WellnessInfoService wellnessInfoService;
     private final WellnessInfoApiService wellnessInfoApiService;
     private final WellnessInfoAsyncService wellnessInfoAsyncService;
 
-    // 한국관광공사_국문 API 호출 및 데이터 저장
+    // 한국관광공사_국문 API 호출 및 데이터 저장 (기존: WebFlux)
+    @GetMapping("/getTourBasicApiData-webflux")
+    public void fetchAndSaveTourInfoByWebFlux(){
+        long start = System.currentTimeMillis();
+
+        wellnessInfoService.fetchAndSaveTourInfo();
+        wellnessInfoService.uploadThumbnailImgToS3();
+
+        long end = System.currentTimeMillis();
+        log.info("** API 호출 및 데이터 저장 완료 ** \n" +
+                        "  - 총 처리 시간: {}ms", end - start);
+    }
+
+    // 한국관광공사_국문 API 호출 및 데이터 저장 (변경: @Async)
     @GetMapping("/getTourBasicApiData")
     public void fetchAndSaveTourInfo(){
-        //wellnessInfoService.fetchAndSaveTourInfo();
         wellnessInfoAsyncService.fetchAllData();
     }
 
-    // 한국관광공사_국문 API 썸네일 이미지 S3에 저장
-    @PostMapping("/uploadThumbnail")
-    public void uploadThumbnailImgToS3() { wellnessInfoService.uploadThumbnailImgToS3(); }
-
-    // TODO 이미지 저장 방식 선택 후 endpoint 수정 필요
-    // 웰니스 장소 추천 목록 (썸네일 이미지 URL DB에 바로 저장)
-//    @PostMapping("/api/wellness-info")
-//    public ResponseEntity<WellnessInfoResponse> getWellnessInfoListWithOriginalThumbnail(
-//            @RequestParam(value = "page", defaultValue = "0") int page,
-//            @RequestBody WellnessInfoListRequest request
-//    ){
-//        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoList(page, request, ImgSavedType.ORIGINAL));
-//    }
-
-    // 웰니스 장소 추천 목록 (썸네일 이미지 URL S3에 업로드 -> 생성되는 객체 URL을 DB에 저장)
+    // 웰니스 장소 추천 목록 (썸네일 이미지 URL은 S3에 업로드된 URL을 가져온다.)
     @PostMapping("/api/wellness-info")
-    public ResponseEntity<WellnessInfoResponse> getWellnessInfoListWithS3Thumbnail(
+    public ResponseEntity<WellnessInfoResponse> getWellnessInfoList(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestBody WellnessInfoListRequest request
     ){

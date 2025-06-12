@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.UnsupportedEncodingException;
@@ -32,6 +33,10 @@ import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_RESPONSE_ERROR;
 import static com.wellcome.WellcomeBE.global.type.Keyword.KEYWORDS;
 
+/**
+ * 관광공사 API 호출 및 데이터 저장
+ * - @Async 기반 비동기 처리
+ */
 @Service
 @Slf4j
 public class WellnessInfoService2 {
@@ -85,31 +90,31 @@ public class WellnessInfoService2 {
             }
 
             try{
-                List<TourBasicApiResponse.Response.Body.Items.Item> items = response.getResponse().getBody().getItems().getItem();
-                if(items == null || items.isEmpty()){
-                    log.warn("[데이터 없음] category='{}', page={}", categoryLog, page);
-                }
-
-                // 썸네일 이미지 처리
-                List<WellnessInfo> entities = items.stream()
-                        .map(item -> {
-                            try {
-                                return processImgByItem(item);
-                            } catch (Exception e){
-                                log.error("[이미지 처리 오류] contentId={}, error={}", item.getContentid(), e.getMessage(), e);
-                                return null;
-                            }
-                        })
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-
-                // 데이터 DB 저장
-                if(!entities.isEmpty()) {
-                    wellnessInfoRepository.saveAll(entities);
-                    savedCount += entities.size();
-                    log.info("[저장 완료] category='{}', page={}, {}건", categoryLog, page, entities.size());
+                TourBasicApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
+                if(items == null) {
+                    log.warn("[조회된 데이터 없음] category='{}', page={}", categoryLog, page);
                 }else{
-                    log.warn("[저장 대상 없음] category='{}', page={}", categoryLog, page);
+                    List<TourBasicApiResponse.Response.Body.Items.Item> itemList = response.getResponse().getBody().getItems().getItem();
+                    List<WellnessInfo> entities = itemList.stream()
+                            .map(item -> {
+                                try {
+                                    return item.toEntity();
+                                } catch (ParseException e) {
+                                    log.error("[DTO -> 엔티티 변환 오류] error={}", e.getMessage(), e);
+                                    return null;
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+
+                    // 데이터 DB 저장
+                    if(!entities.isEmpty()) {
+                        wellnessInfoRepository.saveAll(entities);
+                        savedCount += entities.size();
+                        log.info("[저장 완료] category='{}', page={}, {}건", categoryLog, page, entities.size());
+                    }else{
+                        log.warn("[저장 대상 없음] category='{}', page={}", categoryLog, page);
+                    }
                 }
             } catch(Exception e){
                 log.error("[데이터 처리 오류] category='{}', page={}, error={}", categoryLog, page, e.getMessage(), e);
@@ -147,31 +152,31 @@ public class WellnessInfoService2 {
                 }
 
                 try{
-                    List<TourBasicApiResponse.Response.Body.Items.Item> items = response.getResponse().getBody().getItems().getItem();
-                    if(items == null || items.isEmpty()){
-                        log.warn("[데이터 없음] keyword='{}', page={}", keyword, page);
-                    }
-
-                    // 썸네일 이미지 처리
-                    List<WellnessInfo> entities = items.stream()
-                            .map(item -> {
-                                try {
-                                    return processImgByItem(item);
-                                } catch (Exception e){
-                                    log.error("[이미지 처리 오류] contentId={}, error={}", item.getContentid(), e.getMessage(), e);
-                                    return null;
-                                }
-                            })
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-
-                    // 데이터 DB 저장
-                    if(!entities.isEmpty()) {
-                        wellnessInfoRepository.saveAll(entities);
-                        savedCountPerKeyword += entities.size();
-                        //log.info("[저장 완료] keyword='{}', page={}, {}건", keyword, page, entities.size());
+                    TourBasicApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
+                    if(items == null){
+                        log.warn("[조회된 데이터 없음] keyword='{}', page={}", keyword, page);
                     }else{
-                        log.warn("[저장 대상 없음] keyword='{}', page={}", keyword, page);
+                        List<TourBasicApiResponse.Response.Body.Items.Item> itemList = items.getItem();
+                        List<WellnessInfo> entities = itemList.stream()
+                                .map(item -> {
+                                    try {
+                                        return item.toEntity();
+                                    } catch (ParseException e) {
+                                        log.error("[DTO -> 엔티티 변환 오류] error={}", e.getMessage(), e);
+                                        return null;
+                                    }
+                                })
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
+
+                        // 데이터 DB 저장
+                        if(!itemList.isEmpty()) {
+                            wellnessInfoRepository.saveAll(entities);
+                            savedCountPerKeyword += entities.size();
+                            //log.info("[저장 완료] keyword='{}', page={}, {}건", keyword, page, entities.size());
+                        }else{
+                            log.warn("[저장 대상 없음] keyword='{}', page={}", keyword, page);
+                        }
                     }
                 } catch(Exception e){
                     log.error("[데이터 처리 오류] keyword='{}', page={}, error={}", keyword, page, e.getMessage(), e);
@@ -251,26 +256,19 @@ public class WellnessInfoService2 {
         }
     }
 
-    // 썸네일 이미지가 있을 경우 S3에 업로드
-    private WellnessInfo processImgByItem(TourBasicApiResponse.Response.Body.Items.Item item) {
-        String originalUrl = item.getFirstimage2();
-//        String s3Url = null;
-//
-//        // 이미지 URL이 있는 경우 S3에 업로드
-//        if (originalUrl != null && !originalUrl.trim().isEmpty()) {
-//            s3Url = s3Service.uploadImgFromUrl(originalUrl, item.getContentid());
-//        }
+    // 이미 저장된 웰니스 정보에 대해, 썸네일 이미지 S3에 업로드 후 컬럼(thumbnailUrl) 업데이트
+    @Transactional
+    public void uploadThumbnailImgToS3(){
+        List<WellnessInfo> hasThumbnailUrlWellnessInfoList = wellnessInfoRepository.findByOriginalThumbnailUrlNotNull();
 
-//        return convertToEntity(item, s3Url);
-        return convertToEntity(item, originalUrl); //TODO 임시
-    }
+        hasThumbnailUrlWellnessInfoList.forEach(wellnessInfo -> {
+            String originalUrl = wellnessInfo.getOriginalThumbnailUrl();
 
-    private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item, String s3ThumbnailUrl){
-        try {
-            return item.toEntity(s3ThumbnailUrl);
-        } catch (ParseException e) {
-            throw new RuntimeException("Failed to convert item to entity: ", e);
-        }
+            if(originalUrl != null && !originalUrl.trim().isEmpty()){
+                String s3Url = s3Service.uploadImgFromUrl(originalUrl, wellnessInfo.getContentId());
+                wellnessInfo.updateThumbnailUrl(s3Url);
+            }
+        });
     }
 
     private TourBasicApiResponse handleResponse(ResponseEntity<String> response){

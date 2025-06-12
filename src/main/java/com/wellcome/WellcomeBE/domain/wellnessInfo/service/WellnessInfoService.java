@@ -32,11 +32,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
 import static com.wellcome.WellcomeBE.global.type.Keyword.KEYWORDS;
 
+/**
+ * 관광공사 API 호출 및 데이터 저장
+ * - WebFlux
+ */
 @Service
 @Slf4j
 public class WellnessInfoService {
@@ -65,8 +70,6 @@ public class WellnessInfoService {
         this.s3Service = s3Service;
     }
     public void fetchAndSaveTourInfo() {
-        long start = System.currentTimeMillis();
-
         // Basic API 호출 및 저장
         Flux.fromIterable(CategoryDetail.CATEGORY_PARAM_LIST)
                 .flatMap(this::fetchData)
@@ -81,11 +84,6 @@ public class WellnessInfoService {
                 .collectList()
                 .doOnNext(wellnessInfoRepository::saveAll)
                 .block();
-
-        long end = System.currentTimeMillis();
-        log.info("** API 호출 및 데이터 저장 완료 ** \n" +
-                        "  - 총 처리 시간: {}ms",
-                (end - start));
     }
 
     private Flux<WellnessInfo> fetchData(CategoryDetail categoryDetail) {
@@ -107,7 +105,15 @@ public class WellnessInfoService {
                     }
                     return Flux.fromIterable(items.getItem());
                 })
-                .map(this::processImgByItem);
+                .map(item -> {
+                    try {
+                        return item.toEntity();
+                    } catch (ParseException e) {
+                        log.error("[DTO -> 엔티티 변환 오류] error={}", e.getMessage(), e);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull);
     }
 
     private Mono<TourBasicApiResponse> fetchFromTourBasicApi(CategoryDetail categoryDetail, int pageNo){
@@ -159,7 +165,15 @@ public class WellnessInfoService {
                     }
                     return Flux.fromIterable(response.getResponse().getBody().getItems().getItem());
                 })
-                .map(this::processImgByItem);
+                .map(item -> {
+                    try {
+                        return item.toEntity();
+                    } catch (ParseException e) {
+                        log.error("[DTO -> 엔티티 변환 오류] error={}", e.getMessage(), e);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull);
     }
 
     private Mono<TourBasicApiResponse> fetchDataFromTourSearchApi(String keyword, int pageNo) {
@@ -190,14 +204,6 @@ public class WellnessInfoService {
         } catch (URISyntaxException e) {
             log.error("Invalid URI syntax: {}", e.getMessage());
             return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, "Invalid URI syntax"));
-        }
-    }
-
-    private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item, String s3ThumbnailUrl){
-        try {
-            return item.toEntity(s3ThumbnailUrl);
-        } catch (ParseException e) {
-            throw new RuntimeException("Failed to convert item to entity: ", e);
         }
     }
 
@@ -241,43 +247,44 @@ public class WellnessInfoService {
         }
     }
 
-//    private Mono<TourBasicApiResponse> handleXmlResponse(String responseBody) {
-//        String errorMessage = errorHandler.handleXmlErrorResponse(responseBody);
-//        return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, TOUR_API_RESPONSE_ERROR.getMessage() + ": " + errorMessage));
+//    // 썸네일 이미지가 있을 경우 S3에 업로드
+//    private WellnessInfo processImgByItem(TourBasicApiResponse.Response.Body.Items.Item item) {
+//        String originalUrl = item.getFirstimage2();
+//        String s3Url = null;
+//
+//        // 이미지 URL이 있는 경우 S3에 업로드
+//        if (originalUrl != null && !originalUrl.trim().isEmpty()) {
+//            s3Url = s3Service.uploadImgFromUrl(originalUrl, item.getContentid());
+//        }
+//
+//        return convertToEntity(item, s3Url);
 //    }
 
-    // 썸네일 이미지가 있을 경우 S3에 업로드
-    private WellnessInfo processImgByItem(TourBasicApiResponse.Response.Body.Items.Item item) {
-        String originalUrl = item.getFirstimage2();
-        String s3Url = null;
-
-        // 이미지 URL이 있는 경우 S3에 업로드
-        if (originalUrl != null && !originalUrl.trim().isEmpty()) {
-            s3Url = s3Service.uploadImgFromUrl(originalUrl, item.getContentid());
-        }
-
-        return convertToEntity(item, s3Url);
-    }
+//    private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item, String s3ThumbnailUrl){
+//        try {
+//            return item.toEntity(s3ThumbnailUrl);
+//        } catch (ParseException e) {
+//            throw new RuntimeException("Failed to convert item to entity: ", e);
+//        }
+//    }
 
     /**
-     * 이미 저장된 웰니스 정보에 대해, 썸네일 이미지 S3에 업로드 후 컬럼 업데이트(s3ThumbnailUrl)
-     * - thumbnailUrl: API에서 제공하는 썸네일 이미지 URL
+     * 이미 저장된 웰니스 정보에 대해, 썸네일 이미지 S3에 업로드 후 컬럼(thumbnailUrl) 업데이트
+     * - originalThumbnailUrl: API에서 제공하는 썸네일 이미지 URL
      * - s3ThumbnailUrl: S3 객체 URL
      */
     @Transactional
     public void uploadThumbnailImgToS3(){
-        List<WellnessInfo> hasThumbnailUrlWellnessInfoList = wellnessInfoRepository.findByThumbnailUrlNotNull();
+        List<WellnessInfo> hasThumbnailUrlWellnessInfoList = wellnessInfoRepository.findByOriginalThumbnailUrlNotNull();
 
         hasThumbnailUrlWellnessInfoList.forEach(wellnessInfo -> {
-            String originalUrl = wellnessInfo.getThumbnailUrl();
+            String originalUrl = wellnessInfo.getOriginalThumbnailUrl();
 
             if(originalUrl != null && !originalUrl.trim().isEmpty()){
                 String s3Url = s3Service.uploadImgFromUrl(originalUrl, wellnessInfo.getContentId());
-                wellnessInfo.updateS3ThumbnailUrl(s3Url);
+                wellnessInfo.updateThumbnailUrl(s3Url);
             }
         });
-
-        wellnessInfoRepository.saveAll(hasThumbnailUrlWellnessInfoList);
     }
 
     /**
