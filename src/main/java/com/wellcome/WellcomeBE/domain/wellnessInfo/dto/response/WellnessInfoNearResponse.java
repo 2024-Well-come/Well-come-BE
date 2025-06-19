@@ -1,7 +1,11 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
+import com.querydsl.core.annotations.QueryProjection;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.global.type.Category;
+import com.wellcome.WellcomeBE.global.type.Thema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -48,4 +52,36 @@ public class WellnessInfoNearResponse {
                     .build();
         }
     }
+
+    @Getter
+    @AllArgsConstructor
+    public static class WellnessNearbyDto {
+        private Long id;
+        private String name;
+        private Double mapX;
+        private Double mapY;
+        private Double distance;
+        private String thumbnailUrl;
+        private String title;
+        private Category category;
+        private Thema thema;
+
+        private String placeId;
+
+        public WellnessNearbyDto(Long id, String title, String placeId,
+                                 Category category, Double mapX, Double mapY,
+                                 Thema thema, String thumbnailUrl, Double distance) {
+            this.id = id;
+            this.title = title;
+            this.placeId = placeId;
+            this.category = category;
+            this.mapX = mapX;
+            this.mapY = mapY;
+            this.thema = thema;
+            this.thumbnailUrl = thumbnailUrl;
+            this.distance = distance;
+        }
+
+    }
+
 }

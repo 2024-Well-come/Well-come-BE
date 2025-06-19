@@ -6,12 +6,12 @@ import com.querydsl.core.types.dsl.NumberPath;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MysqlNativeSqlCreator implements NativeSqlCreator {
-    @Override
+public class MysqlNativeSqlCreator {
     public NumberExpression<Double> createCalcDistanceSQL(Double longitudeCond, Double latitudeCond,
                                                           NumberPath<Double> dbLongitude, NumberPath<Double> dbLatitude) {
-        return Expressions.numberTemplate(Double.class,
-                "ST_Distance_Sphere(POINT({0}, {1}), POINT({2}, {3}))",
-                longitudeCond, latitudeCond, dbLongitude, dbLatitude);
+        return Expressions.numberTemplate(Double.class, "ST_Distance_Sphere({0}, {1})",
+                Expressions.stringTemplate("POINT({0}, {1})", longitudeCond, latitudeCond),
+                Expressions.stringTemplate("POINT({0}, {1})", dbLongitude, dbLatitude)
+        );
     }
 }

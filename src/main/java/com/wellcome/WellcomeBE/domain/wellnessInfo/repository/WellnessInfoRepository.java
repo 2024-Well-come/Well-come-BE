@@ -12,8 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long> {
-
+public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long>, WellnessInfoRepositoryCustom{
     /**
      * 목록 조회
      */
