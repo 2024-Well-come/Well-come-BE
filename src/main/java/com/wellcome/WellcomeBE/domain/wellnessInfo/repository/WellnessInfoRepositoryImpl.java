@@ -78,7 +78,6 @@ public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom 
                 )
                 .fetch();
     }
-}
 
 
     /**
