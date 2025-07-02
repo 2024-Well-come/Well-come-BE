@@ -6,15 +6,14 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.QWellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNearResponse;
-import jakarta.persistence.EntityManager;
 
 import java.util.List;
 
 public class WellnessInfoRepositoryCustomImpl implements WellnessInfoRepositoryCustom{
     private final JPAQueryFactory queryFactory;
     private final NativeSqlCreator nativeSqlCreator;
-    public WellnessInfoRepositoryCustomImpl(EntityManager em, NativeSqlCreator nativeSqlCreator) {
-        this.queryFactory = new JPAQueryFactory(em);
+    public WellnessInfoRepositoryCustomImpl(JPAQueryFactory queryFactory, NativeSqlCreator nativeSqlCreator) {
+        this.queryFactory = queryFactory;
         this.nativeSqlCreator = nativeSqlCreator;
     }
 
