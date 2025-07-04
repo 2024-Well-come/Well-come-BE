@@ -11,15 +11,15 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface ArticleRepository extends JpaRepository<Article, Long> {
+public interface ArticleRepository extends JpaRepository<Article, Long> , ArticleRepositoryCustom {
 
     // 최근 한 달 동안 조회수가 높은 아티클을 가져오는 쿼리
     @Query("SELECT a FROM Article a WHERE a.createdAt >= :startDate ORDER BY a.view DESC")
     List<Article> findTopArticles(LocalDateTime startDate, Pageable pageable);
 
     // 랜덤으로 5개 아티클 가져오는 쿼리
-    @Query(value = "SELECT * FROM Article ORDER BY RANDOM() LIMIT 5", nativeQuery = true)
-    List<Article> findRandomArticles();
+//    @Query(value = "SELECT * FROM Article ORDER BY RANDOM() LIMIT 5", nativeQuery = true)
+//    List<Article> findRandomArticles();
 
     @Query("SELECT a FROM Article a ORDER BY a.createdAt DESC")
     Page<Article> findAllArticleByCreatedAt(Pageable pageable);

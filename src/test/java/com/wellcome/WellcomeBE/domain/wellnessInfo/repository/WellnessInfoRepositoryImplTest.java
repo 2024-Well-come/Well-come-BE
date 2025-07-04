@@ -26,7 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class WellnessInfoRepositoryCustomImplTest {
+class WellnessInfoRepositoryImplTest {
 
     @Mock
     private EntityManager entityManager;
@@ -38,13 +38,12 @@ class WellnessInfoRepositoryCustomImplTest {
     private JPAQuery<WellnessInfoNearResponse.WellnessNearbyDto> query;
 
     private JPAQueryFactory queryFactory;
-    private WellnessInfoRepositoryCustomImpl wellnessInfoRepository;
+    private WellnessInfoRepositoryImpl wellnessInfoRepository;
 
     @BeforeEach
     void setUp() {
         queryFactory = mock(JPAQueryFactory.class);
-        wellnessInfoRepository = new WellnessInfoRepositoryCustomImpl(queryFactory, nativeSqlCreator);
-
+        wellnessInfoRepository = new WellnessInfoRepositoryImpl(queryFactory, nativeSqlCreator);
     }
 
     // 단위 테스트
