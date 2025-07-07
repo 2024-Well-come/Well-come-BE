@@ -16,11 +16,13 @@ import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -308,42 +310,56 @@ public class WellnessInfoService {
          params.put("ny", String.valueOf(ny));
 
          String uriString = webClientConfig.getWeatherApiUrl(params);
-         Mono<WeatherApiResponse> weatherApiResponse;
+         WeatherApiResponse response;
+         List<WeatherApiResponse.Response.Body.Items.Item> items;
 
          // API 호출
          try {
              URI uri = new URI(uriString);
-             weatherApiResponse = webClient.get()
+             response = webClient.get()
                      .uri(uri)
                      .retrieve()
-                     .bodyToMono(WeatherApiResponse.class);
+                     .onStatus(
+                             status -> status.is4xxClientError(),
+                             res -> Mono.error(new CustomException(WEATHER_API_CLIENT_ERROR))
+                     )
+                     .onStatus(
+                             status -> status.is5xxServerError(),
+                             res -> Mono.error(new CustomException(WEATHER_API_SERVER_ERROR))
+                    )
+                     .bodyToMono(WeatherApiResponse.class)
+                     .block();
+             items = extractValidResponse(response);
          } catch (URISyntaxException e) {
-             log.error("Invalid URI syntax: {}", e.getMessage());
-             throw new CustomException(WEATHER_API_RESPONSE_ERROR, "Invalid URI syntax");
+             throw new CustomException(WEATHER_API_URI_ERROR);
+         } catch (CustomException e) {
+            throw e;
+         } catch (Exception e) {
+             throw new CustomException(WEATHER_API_UNKNOWN_ERROR);
          }
 
-         // API 응답 -> 필요한 데이터 DTO 매핑
-         return weatherApiResponse.flatMap(response -> {
-             WeatherApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
+         // 응답 데이터 처리
+         String checkedTime = String.format("%02d", (Integer.parseInt(releaseTime.substring(0, 2)) + 1) % 24);
+         Map<String, String> values = items.stream()
+                 .filter(item -> item.getFcstTime().startsWith(checkedTime))
+                 .collect(Collectors.toMap(
+                         WeatherApiResponse.Response.Body.Items.Item::getCategory,
+                         WeatherApiResponse.Response.Body.Items.Item::getFcstValue
+                 ));
 
-             if (items != null && items.getItem() != null && !items.getItem().isEmpty()) {
-                 Map<String, String> values = items.getItem().stream()
-                         .filter(item -> {
-                             if (item.getFcstTime() != null && releaseTime != null) {
-                                 String checkedTime = String.format("%02d", (Integer.parseInt(releaseTime.substring(0, 2)) + 1) % 24);
-                                 return item.getFcstTime().substring(0, 2).equals(checkedTime);
-                             } else {
-                                 return false;
-                             }
-                         })
-                         .collect(Collectors.toMap(
-                                 WeatherApiResponse.Response.Body.Items.Item::getCategory,
-                                 WeatherApiResponse.Response.Body.Items.Item::getFcstValue
-                         ));
-                 return Mono.just(WeatherResponse.from(values));
-             } else {
-                 return Mono.error(new CustomException(WEATHER_API_RESPONSE_ERROR, "API 데이터 값이 없습니다."));
-             }
-         }).block();
+         return WeatherResponse.from(values);
+     }
+
+     private List<WeatherApiResponse.Response.Body.Items.Item> extractValidResponse(WeatherApiResponse response){
+         if(response == null || response.getResponse().getBody() == null){
+             throw new CustomException(WEATHER_API_NO_RESPONSE);
+         }
+
+         List<WeatherApiResponse.Response.Body.Items.Item> items = response.getResponse().getBody().getItems().getItem();
+         if(items == null || items.isEmpty()){
+             throw new CustomException(WEATHER_API_NO_DATA);
+         }
+
+         return items;
      }
 }

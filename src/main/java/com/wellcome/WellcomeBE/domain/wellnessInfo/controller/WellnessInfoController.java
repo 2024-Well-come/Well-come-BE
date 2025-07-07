@@ -77,11 +77,11 @@ public class WellnessInfoController {
     }
 
     
-//    // 현재 날씨 정보 조회 (강원도 날씨 테스트용)
-//    @GetMapping("/api/weather-info")
-//    public ResponseEntity<WeatherResponse> getWeatherInfo() {
-//        return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo(73, 134)); //강원도
-//    }
+    // 현재 날씨 정보 조회 (강원도 날씨 테스트용)
+    @GetMapping("/api/weather-info")
+    public ResponseEntity<WeatherResponse> getWeatherInfo() {
+        return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo(73, 134)); //강원도
+    }
 
     //v1
     // 웰니스 장소 상세 조회(2) - 주변 추전 장소
