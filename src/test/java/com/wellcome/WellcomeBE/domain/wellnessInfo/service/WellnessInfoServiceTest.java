@@ -11,11 +11,11 @@ import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoogleReviewResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoReviewPostResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
+import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Category;
 import com.wellcome.WellcomeBE.global.type.ImgSavedType;
@@ -34,14 +34,14 @@ import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 
 @ExtendWith(MockitoExtension.class)
 public class WellnessInfoServiceTest {
@@ -75,6 +75,8 @@ public class WellnessInfoServiceTest {
 
     @Mock
     private ArticleRepository articleRepository;
+
+    @Mock private WellnessInfo wellness;
 
 
     /**
@@ -158,6 +160,133 @@ public class WellnessInfoServiceTest {
         // then
         assertEquals(List.of(Thema.STAY, Thema.NATURE, Thema.FOOD), sortedThemaList);
     }
+
+
+    /**(1) 웰니스 기본 정보 조회
+     * [정상 흐름] parentId, 이미지, 좋아요, 날씨 데이터 모두 존재하는 경우
+     */
+    @Test
+    void getWellnessInfoBasic_allDataPresent_successfullyReturnsResponse() {
+        // given
+        Long id = 123L;
+        String parentId = "place_abc123";
+
+        // 1. wellnessInfo 존재
+        when(wellnessInfoRepository.findById(id)).thenReturn(Optional.of(wellness));
+        when(wellness.getParentId()).thenReturn(parentId);
+        when(wellness.getSigungu()).thenReturn(Sigungu.DONGHAE);
+        when(wellness.getCategory()).thenReturn(Category.EVENT);
+        when(wellness.getTel()).thenReturn("031-989-8282");
+
+        // 2. Google Place API mock
+        PlaceReviewResponse placeReviewResponse = createTestPlaceReviewResponseWithReviews();
+        when(googleMapInfoService.getPlaceDetails(parentId)).thenReturn(Mono.just(placeReviewResponse));
+
+        // 3. 이미지 mock
+        List<String> images = List.of("img1.jpg", "img2.jpg");
+        when(wellnessInfoImgRepository.findByWellnessInfo(wellness)).thenReturn(images);
+
+        // 4. 좋아요 여부 mock
+        Member member = mock(Member.class);
+        when(tokenProvider.getMember()).thenReturn(member);
+        when(likedRepository.existsByWellnessInfoAndMember(wellness, member)).thenReturn(true);
+
+        // 5. 날씨 정보 mock
+        // 5. 날씨 정보 mock
+        Map<String, String> weatherMap = Map.of(
+                "SKY", "1",    // 맑음
+                "PTY", "0",    // 강수 없음
+                "T1H", "25.0"  // 온도
+        );
+        WeatherResponse weather = WeatherResponse.from(weatherMap);
+
+        // wellness.getSigungu()가 실제로 사용할 값 설정
+        when(wellness.getSigungu()).thenReturn(Sigungu.DONGHAE);
+        when(wellness.getMapX()).thenReturn(128.0);
+        when(wellness.getMapY()).thenReturn(37.5);
+
+        // fetchWeatherInfo stub: 실제 객체 호출 X, 직접 지정된 weather 반환
+        when(wellnessInfoService.fetchWeatherInfo(anyInt(), anyInt())).thenReturn(weather);
+
+
+        // 6. 뷰 카운트 업데이트 무시
+        doNothing().when(wellness).updateViewNum();
+
+        // when
+        WellnessInfoBasicResponse response = wellnessInfoApiService.getWellnessInfoBasic(id);
+
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getImgList()).containsExactly("img1.jpg", "img2.jpg");
+        assertThat(response.getIsLiked()).isTrue();
+        assertThat(response.getOpenDetail()).isNotBlank();
+        assertThat(response.getTel()).isNotNull();
+        assertThat(response.getWebsite()).isNotNull();
+        assertThat(response.getWeather()).isEqualTo(weather);
+
+        // verify 의존 객체 호출 및 인자 검증
+        verify(wellnessInfoRepository).findById(id);
+        verify(googleMapInfoService).getPlaceDetails(parentId);
+        verify(wellnessInfoImgRepository).findByWellnessInfo(wellness);
+        verify(likedRepository).existsByWellnessInfoAndMember(eq(wellness), isNotNull());
+        verify(wellnessInfoService).fetchWeatherInfo(anyInt(), anyInt());
+        verify(wellness).updateViewNum();
+    }
+
+
+    /**
+     * [분기 처리] parentId가 null인 경우, Google Place API를 호출하지 않아야 함
+     */
+    @Test
+    void getWellnessInfoBasic_whenParentIdIsNull_shouldSkipPlaceApiCall() {
+        // given
+        Long id = 456L;
+        when(wellnessInfoRepository.findById(id)).thenReturn(Optional.of(wellness));
+        when(wellness.getParentId()).thenReturn(null); // parentId가 null
+        when(wellness.getSigungu()).thenReturn(Sigungu.SOKCHO);
+        when(wellness.getCategory()).thenReturn(Category.EVENT);
+        when(wellnessInfoImgRepository.findByWellnessInfo(wellness)).thenReturn(List.of());
+        Member member = Mockito.mock(Member.class);
+        when(tokenProvider.getMember()).thenReturn(member);
+        lenient().when(likedRepository.existsByWellnessInfoAndMember(wellness, member)).thenReturn(false);
+
+        WeatherResponse weather = WeatherResponse.builder().temperature("22.0").build();
+        lenient().when(wellnessInfoService.fetchWeatherInfo(anyInt(), anyInt())).thenReturn(weather);
+        doNothing().when(wellness).updateViewNum();
+
+        // when
+        WellnessInfoBasicResponse response = wellnessInfoApiService.getWellnessInfoBasic(id);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getOpenDetail()).isEqualTo("정보 없음");
+        assertThat(response.getWebsite()).isEqualTo("");
+        assertThat(response.getTel()).isNull();
+        assertThat(response.getIsOpen()).isNull();
+
+        // Google API는 호출되지 않아야 함
+        verify(googleMapInfoService, never()).getPlaceDetails(anyString());
+    }
+
+    /**
+     * [예외 처리] wellnessInfoId에 해당하는 데이터가 존재하지 않는 경우 예외 발생
+     */
+    @Test
+    void getWellnessInfoBasic_whenWellnessNotFound_shouldThrowException() {
+        // given
+        Long id = 999L;
+        when(wellnessInfoRepository.findById(id)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> wellnessInfoApiService.getWellnessInfoBasic(id))
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining(CustomErrorCode.WELLNESS_INFO_NOT_FOUND.getMessage());
+
+        // 다른 의존 객체들은 호출되지 않아야 함
+        verifyNoInteractions(googleMapInfoService, wellnessInfoImgRepository, likedRepository, wellnessInfoService);
+    }
+
 
     /**
      * 웰니스 장소 상세 조회(3) - 구글 리뷰 조회
@@ -338,4 +467,32 @@ public class WellnessInfoServiceTest {
     private Community createTestCommunity(int idx){
         return Community.createByTripPlan(Mockito.mock(Member.class), Mockito.mock(TripPlan.class), "후기"+idx, "내용");
     }
+
+    // 평점과 리뷰가 포함된 PlaceReviewResponse 생성
+    private PlaceReviewResponse createTestPlaceReviewResponseWithReviews() {
+        PlaceReviewResponse.PlaceResult placeResult = new PlaceReviewResponse.PlaceResult();
+        placeResult.setRating(4.5);
+        placeResult.setUser_ratings_total(3);
+        placeResult.setName("테스트 장소");
+        placeResult.setRating(4.5);
+        placeResult.setUser_ratings_total(3);
+        placeResult.setWebsite("http://place.example.com");
+
+        List<PlaceReviewResponse.PlaceResult.PlaceReview> reviews = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            PlaceReviewResponse.PlaceResult.PlaceReview review = new PlaceReviewResponse.PlaceResult.PlaceReview();
+            review.setAuthor_name("작성자" + i);
+            review.setText("리뷰 내용 " + i);
+            review.setRating(5);
+            reviews.add(review);
+        }
+        placeResult.setReviews(reviews);
+
+        // PlaceReviewResponse 생성
+        PlaceReviewResponse placeReviewResponse = new PlaceReviewResponse();
+        placeReviewResponse.setResult(placeResult);
+
+        return placeReviewResponse;
+    }
+
 }
