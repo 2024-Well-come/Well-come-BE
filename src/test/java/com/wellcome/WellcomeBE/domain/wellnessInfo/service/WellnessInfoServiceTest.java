@@ -10,6 +10,7 @@ import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -101,17 +102,16 @@ public class WellnessInfoServiceTest {
                 .thenReturn(likedThemaList);
 
         // - WellnessInfo Mock 데이터 생성
-        List<Object[]> content = new ArrayList<>();
+        List<WellnessInfoWithLiked> content = new ArrayList<>();
         for(int i = 0; i < 2; i++){
             WellnessInfo wellnessInfo = createTestWellnessInfo(themaList, i);
-            Object[] obj = {wellnessInfo, false};
-            content.add(obj);
+            content.add(new WellnessInfoWithLiked(wellnessInfo, false));
         }
 
         // - 페이징 설정
         int page = 0;
         Pageable pageable = PageRequest.of(page, 5);
-        Page<Object[]> data = new PageImpl<>(content, pageable, content.size());
+        Page<WellnessInfoWithLiked> data = new PageImpl<>(content, pageable, content.size());
 
         when(wellnessInfoRepository.findWellnessInfoByThemaAndSigunguWithWeight(
                 any(), eq(member), eq(themaList), eq(sigunguList), any(), any(), any()

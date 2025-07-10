@@ -1,5 +1,7 @@
 package com.wellcome.WellcomeBE.domain.support.repository;
 
+import com.wellcome.WellcomeBE.NativeSqlCreatorTestConfig;
+import com.wellcome.WellcomeBE.global.config.QuerydslConfig;
 import com.wellcome.WellcomeBE.domain.community.Community;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
@@ -19,14 +21,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import java.awt.*;
 import java.util.Optional;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.springframework.context.annotation.Import;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@Import({QuerydslConfig.class, NativeSqlCreatorTestConfig.class})
 class SupportRepositoryTest {
 
     @Autowired
