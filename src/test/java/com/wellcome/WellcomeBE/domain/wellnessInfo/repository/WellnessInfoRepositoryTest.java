@@ -1,12 +1,15 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.repository;
 
 import com.wellcome.WellcomeBE.NativeSqlCreatorTestConfig;
-import com.wellcome.WellcomeBE.global.config.QuerydslConfig;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
-import com.wellcome.WellcomeBE.global.type.*;
+import com.wellcome.WellcomeBE.global.config.QuerydslConfig;
+import com.wellcome.WellcomeBE.global.type.Area;
+import com.wellcome.WellcomeBE.global.type.Category;
+import com.wellcome.WellcomeBE.global.type.Sigungu;
+import com.wellcome.WellcomeBE.global.type.Thema;
 import com.wellcome.WellcomeBE.utils.TestObjectFactory;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -22,7 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
