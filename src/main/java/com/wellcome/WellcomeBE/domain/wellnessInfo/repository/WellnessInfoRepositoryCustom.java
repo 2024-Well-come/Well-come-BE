@@ -5,5 +5,5 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNear
 import java.util.List;
 
 public interface WellnessInfoRepositoryCustom {
-    List<WellnessInfoNearResponse.WellnessNearbyDto> findNearbyWithinRadius(Double mapX, Double mapY, Long excludeId, Double radiusKm, long limit);
+    List<WellnessInfoNearResponse.WellnessNearbyDto> findNearbyWithinRadius(Double mapX, Double mapY, Long excludeId, Double radiusKm, int limit);
 }

@@ -55,7 +55,7 @@ class WellnessInfoRepositoryCustomImplTest {
         double mapY = 37.5665;
         long excludeId = 1L;
         double radiusKm = 5.0;
-        long limit = 6;
+        int limit = 6;
 
         QWellnessInfo wi = QWellnessInfo.wellnessInfo;
         NumberExpression<Double> distanceExpr = Expressions.numberTemplate(Double.class, "ST_Distance_Sphere(...)");
@@ -96,5 +96,3 @@ class WellnessInfoRepositoryCustomImplTest {
     }
 
 }
-
-//Todo: Spring Boot + TestContainer + MySQL 환경에서 통합 테스트

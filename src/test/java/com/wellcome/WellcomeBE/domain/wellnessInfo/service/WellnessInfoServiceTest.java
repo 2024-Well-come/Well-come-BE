@@ -287,6 +287,80 @@ public class WellnessInfoServiceTest {
         verifyNoInteractions(googleMapInfoService, wellnessInfoImgRepository, likedRepository, wellnessInfoService);
     }
 
+    @Test
+    void getWellnessInfoUsefulInformation_success() {
+        // given: 기본 데이터 설정
+        Long wellnessInfoId = 1L;
+        WellnessInfo wellnessInfo = WellnessInfo.builder()
+                .id(wellnessInfoId)
+                .mapX(127.0)
+                .mapY(37.5)
+                .thema(Thema.STAY)
+                .category(Category.ACCOMMODATION)
+                .sigungu(Sigungu.CHEORWON)
+                .build();
+
+        // 3km 내에서 찾은 장소가 3개뿐이라 부족 → 10km 반경으로 재조회되도록 설정
+        List<WellnessInfoNearResponse.WellnessNearbyDto> nearbyIn3Km = List.of(
+                createNearbyDto("placeId1", 1.2),
+                createNearbyDto("placeId2", 2.3),
+                createNearbyDto("placeId3", 2.9)
+        );
+
+        List<WellnessInfoNearResponse.WellnessNearbyDto> nearbyIn10Km = List.of(
+                createNearbyDto("placeId1", 1.2),
+                createNearbyDto("placeId2", 2.3),
+                createNearbyDto("placeId3", 2.9),
+                createNearbyDto("placeId4", 5.5),
+                createNearbyDto("placeId5", 8.1),
+                createNearbyDto("placeId6", 9.9)
+        );
+
+        // placeDetails 응답 모킹
+        PlaceReviewResponse placeDetailsResponse = new PlaceReviewResponse();
+        PlaceReviewResponse.PlaceResult result = new PlaceReviewResponse.PlaceResult();
+        placeDetailsResponse.setResult(result);
+
+        // 각 리포지토리 및 서비스의 동작을 정의
+        when(wellnessInfoRepository.findById(wellnessInfoId)).thenReturn(Optional.of(wellnessInfo));
+        when(wellnessInfoRepository.findNearbyWithinRadius(127.0, 37.5, wellnessInfoId, 3.0, 6))
+                .thenReturn(nearbyIn3Km); // 3km 결과
+        when(wellnessInfoRepository.findNearbyWithinRadius(127.0, 37.5, wellnessInfoId, 10.0, 6))
+                .thenReturn(nearbyIn10Km); // 10km 결과
+        when(googleMapInfoService.getPlaceDetails(any()))
+                .thenReturn(Mono.just(placeDetailsResponse)); // 장소 상세 정보 응답
+        when(articleRepository.findTop5ByWellnessInfoOrderByCreatedAt(wellnessInfo))
+                .thenReturn(List.of()); // 아티클은 없는 경우
+
+        // when: 실제 서비스 호출
+        WellnessInfoUsefulInformationResponse response = wellnessInfoApiService.getWellnessInfoUsefulInformation(wellnessInfoId);
+
+        // then: 결과 검증
+        assertNotNull(response); // 응답이 null이 아님
+        assertEquals(6, response.getNearbyList().size()); // 최종 근처 장소 6개
+        assertEquals(0, response.getArticleList().size()); // 아티클 없음
+
+        // 리포지토리 및 서비스 메서드 호출 검증
+        verify(wellnessInfoRepository).findById(wellnessInfoId);
+        verify(wellnessInfoRepository, times(2)).findNearbyWithinRadius(anyDouble(), anyDouble(), eq(wellnessInfoId), anyDouble(), eq(6));
+        verify(googleMapInfoService, times(6)).getPlaceDetails(any());
+        verify(articleRepository).findTop5ByWellnessInfoOrderByCreatedAt(wellnessInfo);
+    }
+
+    /**
+     * 모킹된 NearbyDto 생성
+     */
+    private WellnessInfoNearResponse.WellnessNearbyDto createNearbyDto(String placeId, double distance) {
+        WellnessInfoNearResponse.WellnessNearbyDto dto = mock(WellnessInfoNearResponse.WellnessNearbyDto.class);
+        lenient().when(dto.getPlaceId()).thenReturn(placeId);
+        lenient().when(dto.getDistance()).thenReturn(distance);
+        lenient().when(dto.getThema()).thenReturn(Thema.STAY);
+        lenient().when(dto.getCategory()).thenReturn(Category.ACCOMMODATION);
+
+        return dto;
+    }
+
+
 
     /**
      * 웰니스 장소 상세 조회(3) - 구글 리뷰 조회

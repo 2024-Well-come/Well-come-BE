@@ -19,7 +19,7 @@ public class WellnessInfoRepositoryCustomImpl implements WellnessInfoRepositoryC
 
     @Override
     public List<WellnessInfoNearResponse.WellnessNearbyDto> findNearbyWithinRadius(
-            Double mapX, Double mapY, Long excludeId, Double radiusKm, long limit
+            Double mapX, Double mapY, Long excludeId, Double radiusKm, int limit
     ) {
         QWellnessInfo wi = QWellnessInfo.wellnessInfo;
 
