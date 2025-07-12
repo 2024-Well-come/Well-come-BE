@@ -99,6 +99,8 @@ public class WellnessInfoImgService {
                 .queryParam("_type", "json")
                 .queryParam("contentId", wellnessInfoId)
                 .queryParam("imageYN", "Y")
+                .queryParam("numOfRows",6)
+                .queryParam("pageNo",1)
                 .queryParam("subImageYN", "Y")
                 .queryParam("serviceKey", config.getServiceKey())
                 .build(true)

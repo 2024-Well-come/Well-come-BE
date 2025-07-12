@@ -2,6 +2,7 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.repository;
 
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.request.WellnessContentIdOnly;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import org.springframework.data.domain.Page;
@@ -52,5 +53,9 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
 //    );
 
 
-    Page<WellnessInfo> findAll(Pageable pageable);
+    //Page<WellnessInfo> findAll(Pageable pageable);
+
+    @Query("SELECT new com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.request.WellnessContentIdOnly(w.contentId) FROM WellnessInfo w")
+    List<WellnessContentIdOnly> findAllContentIdOnly();
+    Optional<WellnessInfo> findByContentId(String contentId);
 }
