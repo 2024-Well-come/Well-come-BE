@@ -14,6 +14,7 @@ import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_JSON_PARSING_ERROR;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_RESPONSE_ERROR;
@@ -66,8 +68,9 @@ public class WellnessInfoImgService2 {
 
         Flux.fromIterable(wellnessList)
                 .flatMap(this::fetchData) // contentId마다 병렬 호출
-                .buffer(50) // 50개씩 저장
-                .doOnNext(wellnessInfoImgRepository::saveAll)
+                //.buffer(50) // 50개씩 저장
+                //.parallel(3)
+                .doOnNext(wellnessInfoImgRepository::save)
                 .collectList()
                 .block(); // 동기 대기
     }
@@ -83,20 +86,32 @@ public class WellnessInfoImgService2 {
                     TourImageApiResponse response = tuple.getT2();
 
                     TourImageApiResponse.Response.Body.Items items = response.getResponse().getBody().getItems();
-                    if (items == null || items.getItem() == null || items.getItem().isEmpty()) {
+                    if (items == null || items.getItem() == null || items.getItem().isEmpty() ) {
+                        log.info("📭 No images found for contentId: {}", contentId);
                         return Flux.empty();
                     }
 
-                    Optional<WellnessInfo> optionalWellness = wellnessInfoRepository.findByContentId(cid);
-                    if (optionalWellness.isEmpty()) {
-                        log.warn("WellnessInfo not found for contentId: {}", cid);
-                        return Flux.empty();
+                    try {
+                               // 문제 추적용 로그
+                        //log.info("🔍 Try to findByContentId: {}", contentId);
+                        Optional<WellnessInfo> optionalWellness = wellnessInfoRepository.findByContentId(cid);
+
+
+                        if (optionalWellness.isEmpty()) {
+                            log.warn("WellnessInfo not found for contentId: {}", cid);
+                            return Flux.empty();
+                        }
+                        WellnessInfo wellnessInfo = optionalWellness.get();
+
+                        return Flux.fromIterable(items.getItem())
+                                .map(item -> convertToEntity(item, wellnessInfo));
+
+                    } catch (IncorrectResultSizeDataAccessException e) {
+                        // 예외 발생 contentId 로깅
+                        log.error("❌ contentId {} caused multiple result error", contentId, e);
+                        throw e; // 혹은 fallback 로직 실행 가능
                     }
 
-                    WellnessInfo wellnessInfo = optionalWellness.get();
-
-                    return Flux.fromIterable(items.getItem())
-                            .map(item -> convertToEntity(item, wellnessInfo));
                 });
     }
 

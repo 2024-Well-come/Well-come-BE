@@ -26,6 +26,7 @@ public class WellnessInfo extends BaseTimeEntity {
     @Column(nullable = false)
     private String title;
 
+    @Column(unique = true)
     private String contentId; // tour4.0 PK
 
     private String parentId; //Google Map PK
