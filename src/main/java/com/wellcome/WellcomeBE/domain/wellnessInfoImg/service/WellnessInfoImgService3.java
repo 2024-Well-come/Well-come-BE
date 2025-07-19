@@ -10,14 +10,18 @@ import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.response.TourImageApiR
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 
 import java.net.URI;
@@ -70,6 +74,8 @@ public class WellnessInfoImgService3 {
 
         log.info("[메인 스레드 시작] thread={}", Thread.currentThread().getName());
 
+        List<String> failedContentIds = Collections.synchronizedList(new ArrayList<>());
+
         List<CompletableFuture<Void>> futures = wellnessList.stream()
                 .map(contentIdObj -> CompletableFuture.runAsync(() -> {
                     String contentId = contentIdObj.getContentId();
@@ -79,6 +85,7 @@ public class WellnessInfoImgService3 {
                         wellnessInfoImgRepository.saveAll(images);
                         log.info("[스레드 완료] contentId={}, 저장 건수={}", contentId, images.size());
                     } catch (Exception e) {
+                        failedContentIds.add(contentId);
                         log.error("[스레드 실패] contentId={}, error={}", contentId, e.getMessage(), e);
                     }
                 }, asyncExecutor))
@@ -87,23 +94,43 @@ public class WellnessInfoImgService3 {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
 
         long elapsed = Duration.between(start, Instant.now()).toMillis();
-        log.info("** API 호출 및 데이터 저장 완료 ** \n" +
-                "  - 총 처리 시간: {}ms \n" +
-                "  - 실제 DB 조회 수: {}건 \n" +
-                "  - 총 contentId 수: {}건", elapsed, dbLookupCount.get(),wellnessList.size());
+        log.info("** 1차 처리 완료 ** \n" +
+                        "  - 총 처리 시간: {}ms \n" +
+                        "  - 실제 DB 조회 수: {}건 \n" +
+                        "  - 총 contentId 수: {}건 \n" +
+                        "  - 실패 contentId 수: {}건",
+                elapsed, dbLookupCount.get(), wellnessList.size(), failedContentIds.size());
+
+        if (!failedContentIds.isEmpty()) {
+            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
+            Thread.sleep(3000);
+            retryFailedContentIds(failedContentIds);
+        }
     }
 
     private List<WellnessInfoImg> fetchDataAndConvert(String contentId) throws Exception {
         String uriString = webClientConfig.getTourImageApiUrl(Map.of("contentId", contentId));
         URI uri = new URI(uriString);
 
-        String responseBody = webClient.get()
-                .uri(uri)
-                .retrieve()
-                .toEntity(String.class)
-                .toFuture()
-                .get()
-                .getBody();
+        ResponseEntity<String> response;
+        try {
+            response = webClient.get()
+                    .uri(uri)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .toFuture()
+                    .get(); // 동기 블로킹
+        } catch (Exception e) {
+            throw wrapCustomException(e);
+        }
+
+        String responseBody = response.getBody();
+        MediaType contentType = response.getHeaders().getContentType();
+
+        if (!MediaType.APPLICATION_JSON.equals(contentType)) {
+            String message = errorHandler.handleXmlErrorResponse(responseBody);
+            throw new CustomException(CustomErrorCode.TOUR_API_RESPONSE_ERROR, "XML 오류 응답: " + message);
+        }
 
         JsonNode root = objectMapper.readTree(responseBody);
         JsonNode itemsNode = root.path("response").path("body").path("items").path("item");
@@ -121,7 +148,7 @@ public class WellnessInfoImgService3 {
         WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId)
                 .orElseThrow(() -> new IllegalArgumentException("No wellness info found for contentId: " + contentId));
 
-            List<WellnessInfoImg> images = new ArrayList<>();
+        List<WellnessInfoImg> images = new ArrayList<>();
         for (JsonNode node : itemsNode) {
             try {
                 TourImageApiResponse.Response.Body.Items.Item item =
@@ -133,5 +160,49 @@ public class WellnessInfoImgService3 {
         }
 
         return images;
+    }
+
+    private void retryFailedContentIds(List<String> failedContentIds) throws Exception {
+        List<String> retryFailList = Collections.synchronizedList(new ArrayList<>());
+
+        List<CompletableFuture<Void>> retryFutures = failedContentIds.stream()
+                .map(contentId -> CompletableFuture.runAsync(() -> {
+                    log.info("[재시도 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+                    try {
+                        List<WellnessInfoImg> images = fetchDataAndConvert(contentId);
+                        wellnessInfoImgRepository.saveAll(images);
+                        log.info("[재시도 성공] contentId={}, 저장 건수={}", contentId, images.size());
+                    } catch (Exception e) {
+                        retryFailList.add(contentId);
+                        log.error("[재시도 실패] contentId={}, error={}", contentId, e.getMessage(), e);
+                    }
+                }, asyncExecutor))
+                .collect(Collectors.toList());
+
+        CompletableFuture.allOf(retryFutures.toArray(new CompletableFuture[0])).get();
+
+        log.info("✅ 재시도 완료 - 성공: {}건 / 실패: {}건",
+                failedContentIds.size() - retryFailList.size(), retryFailList.size());
+
+        if (!retryFailList.isEmpty()) {
+            log.warn("🚫 최종 실패 contentId 목록: {}", retryFailList);
+        }
+    }
+
+    private CustomException wrapCustomException(Exception e) {
+        if (e instanceof URISyntaxException)
+            return new CustomException(CustomErrorCode.TOUR_API_URI_ERROR, e.getMessage());
+        if (e instanceof WebClientRequestException)
+            return new CustomException(CustomErrorCode.TOUR_API_REQUEST_ERROR, e.getMessage());
+        if (e instanceof WebClientResponseException)
+            return new CustomException(CustomErrorCode.TOUR_API_RESPONSE_ERROR, e.getMessage());
+        return new CustomException(CustomErrorCode.TOUR_API_UNKNOWN_ERROR, e.getMessage());
+    }
+
+    private <T> CompletableFuture<T> failAsFuture(Throwable ex) {
+        CompletableFuture<T> failed = new CompletableFuture<>();
+        failed.completeExceptionally(ex);
+        return failed;
+
     }
 }
