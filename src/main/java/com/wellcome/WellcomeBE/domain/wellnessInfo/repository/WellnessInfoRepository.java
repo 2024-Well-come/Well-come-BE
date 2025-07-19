@@ -1,12 +1,7 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.repository;
 
-import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.request.WellnessContentIdOnly;
-import com.wellcome.WellcomeBE.global.type.Sigungu;
-import com.wellcome.WellcomeBE.global.type.Thema;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

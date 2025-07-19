@@ -4,11 +4,11 @@ public class WellnessContentIdOnly {
 
     private final String contentId;
 
-        public WellnessContentIdOnly(String contentId) {
-            this.contentId = contentId;
-        }
+    public WellnessContentIdOnly(String contentId) {
+        this.contentId = contentId;
+    }
 
-        public String getContentId() {
-            return contentId;
-        }
+    public String getContentId() {
+        return contentId;
+    }
 }

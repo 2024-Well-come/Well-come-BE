@@ -1,11 +1,9 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfoImg.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImg;
-import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.request.WellnessContentIdOnly;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.response.TourImageApiResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -18,11 +16,9 @@ import org.locationtech.jts.io.ParseException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Flux;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,7 +40,7 @@ public class WellnessInfoImgService3 {
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private final AtomicInteger dbLookupCount = new AtomicInteger(0); // 💡 DB 조회 카운터 추가
+    //private final AtomicInteger dbLookupCount = new AtomicInteger(0); // 💡 DB 조회 카운터 추가
 
     // AsyncExecutor 주입 (ThreadPoolTaskExecutor)
     private final Executor asyncExecutor;
@@ -65,12 +61,16 @@ public class WellnessInfoImgService3 {
 
     public void fetchAndSaveTourImages() throws Exception {
         Instant start = Instant.now();
-        List<WellnessContentIdOnly> wellnessList = wellnessInfoRepository.findAllContentIdOnly();
+        List<WellnessInfo> wellnessList = wellnessInfoRepository.findAll();
+
 
         if (wellnessList == null || wellnessList.isEmpty()) {
             log.warn("Wellness 리스트가 비어 있습니다.");
             return;
         }
+        Map<String, WellnessInfo> wellnessMap = wellnessList.stream()
+                .collect(Collectors.toMap(WellnessInfo::getContentId, wi -> wi));
+
 
         log.info("[메인 스레드 시작] thread={}", Thread.currentThread().getName());
 
@@ -79,9 +79,10 @@ public class WellnessInfoImgService3 {
         List<CompletableFuture<Void>> futures = wellnessList.stream()
                 .map(contentIdObj -> CompletableFuture.runAsync(() -> {
                     String contentId = contentIdObj.getContentId();
+                    WellnessInfo wellness = wellnessMap.get(contentId);
                     log.info("[스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
                     try {
-                        List<WellnessInfoImg> images = fetchDataAndConvert(contentId);
+                        List<WellnessInfoImg> images = fetchDataAndConvert(contentId,wellness);
                         wellnessInfoImgRepository.saveAll(images);
                         log.info("[스레드 완료] contentId={}, 저장 건수={}", contentId, images.size());
                     } catch (Exception e) {
@@ -96,19 +97,19 @@ public class WellnessInfoImgService3 {
         long elapsed = Duration.between(start, Instant.now()).toMillis();
         log.info("** 1차 처리 완료 ** \n" +
                         "  - 총 처리 시간: {}ms \n" +
-                        "  - 실제 DB 조회 수: {}건 \n" +
+                        //"  - 실제 DB 조회 수: {}건 \n" +
                         "  - 총 contentId 수: {}건 \n" +
                         "  - 실패 contentId 수: {}건",
-                elapsed, dbLookupCount.get(), wellnessList.size(), failedContentIds.size());
+                elapsed, wellnessList.size(), failedContentIds.size());
 
         if (!failedContentIds.isEmpty()) {
             log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
             Thread.sleep(3000);
-            retryFailedContentIds(failedContentIds);
+            retryFailedContentIds(failedContentIds, wellnessMap);
         }
     }
 
-    private List<WellnessInfoImg> fetchDataAndConvert(String contentId) throws Exception {
+    private List<WellnessInfoImg> fetchDataAndConvert(String contentId, WellnessInfo wellness) throws Exception {
         String uriString = webClientConfig.getTourImageApiUrl(Map.of("contentId", contentId));
         URI uri = new URI(uriString);
 
@@ -142,11 +143,8 @@ public class WellnessInfoImgService3 {
 
 
         //한계값을 위한 임시입니다. 삭제하거라~
-        int currentCount = dbLookupCount.incrementAndGet();
-        log.info("[DB 조회] contentId={}, 현재까지 조회 수={}", contentId, currentCount);
-
-        WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId)
-                .orElseThrow(() -> new IllegalArgumentException("No wellness info found for contentId: " + contentId));
+        ///int currentCount = dbLookupCount.incrementAndGet();
+        //log.info("[DB 조회] contentId={}, 현재까지 조회 수={}", contentId, currentCount);
 
         List<WellnessInfoImg> images = new ArrayList<>();
         for (JsonNode node : itemsNode) {
@@ -162,14 +160,15 @@ public class WellnessInfoImgService3 {
         return images;
     }
 
-    private void retryFailedContentIds(List<String> failedContentIds) throws Exception {
-        List<String> retryFailList = Collections.synchronizedList(new ArrayList<>());
+    private void retryFailedContentIds(List<String> failedContentIds, Map<String, WellnessInfo> wellnessMap) throws Exception{
+
+    List<String> retryFailList = Collections.synchronizedList(new ArrayList<>());
 
         List<CompletableFuture<Void>> retryFutures = failedContentIds.stream()
                 .map(contentId -> CompletableFuture.runAsync(() -> {
                     log.info("[재시도 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
                     try {
-                        List<WellnessInfoImg> images = fetchDataAndConvert(contentId);
+                        List<WellnessInfoImg> images =fetchDataAndConvert(contentId, wellnessMap.get(contentId));
                         wellnessInfoImgRepository.saveAll(images);
                         log.info("[재시도 성공] contentId={}, 저장 건수={}", contentId, images.size());
                     } catch (Exception e) {
