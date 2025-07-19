@@ -26,8 +26,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_CONTENT_ID_NOT_FOUND;
 
 
 @Service
@@ -64,7 +65,7 @@ public class WellnessInfoImgService3 {
         List<WellnessInfo> wellnessList = wellnessInfoRepository.findAll();
 
 
-        if (wellnessList == null || wellnessList.isEmpty()) {
+        if (wellnessList.isEmpty()) {
             log.warn("Wellness 리스트가 비어 있습니다.");
             return;
         }
@@ -108,6 +109,23 @@ public class WellnessInfoImgService3 {
             retryFailedContentIds(failedContentIds, wellnessMap);
         }
     }
+
+    public void singleFetchAndSaveTourImages(String contentId) {
+        CompletableFuture.runAsync(() -> {
+            log.info("[단일 요청 스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+            try {
+                WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId)
+                        .orElseThrow(() -> new CustomException(WELLNESS_INFO_CONTENT_ID_NOT_FOUND));
+
+                List<WellnessInfoImg> images = fetchDataAndConvert(contentId, wellness);
+                wellnessInfoImgRepository.saveAll(images);
+                log.info("[단일 요청 스레드 완료] contentId={}, 저장 건수={}", contentId, images.size());
+            } catch (Exception e) {
+                log.error("[단일 요청 실패] contentId={}, error={}", contentId, e.getMessage(), e);
+            }
+        }, asyncExecutor);
+    }
+
 
     private List<WellnessInfoImg> fetchDataAndConvert(String contentId, WellnessInfo wellness) throws Exception {
         String uriString = webClientConfig.getTourImageApiUrl(Map.of("contentId", contentId));
@@ -198,10 +216,4 @@ public class WellnessInfoImgService3 {
         return new CustomException(CustomErrorCode.TOUR_API_UNKNOWN_ERROR, e.getMessage());
     }
 
-    private <T> CompletableFuture<T> failAsFuture(Throwable ex) {
-        CompletableFuture<T> failed = new CompletableFuture<>();
-        failed.completeExceptionally(ex);
-        return failed;
-
-    }
 }
