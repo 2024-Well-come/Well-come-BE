@@ -6,7 +6,6 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoReposi
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -32,8 +31,8 @@ public class GoogleMapInfoService {
 
 
     // 생성자 주입
-    public GoogleMapInfoService(WebClient googlePlaceInfoWebClient, RedisTemplate<String, Object> jsonRedisTemplate, WellnessInfoRepository wellnessInfoRepository) {
-        this.webClient = googlePlaceInfoWebClient;
+    public GoogleMapInfoService(@Qualifier("googlePlaceInfoApiWebClient") WebClient webClient, RedisTemplate<String, Object> jsonRedisTemplate, WellnessInfoRepository wellnessInfoRepository) {
+        this.webClient = webClient;
         this.jsonRedisTemplate = jsonRedisTemplate;
         this.wellnessInfoRepository = wellnessInfoRepository;
     }
