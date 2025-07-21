@@ -1,8 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.repository;
 
-import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.projection.ContentThumbnailProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
