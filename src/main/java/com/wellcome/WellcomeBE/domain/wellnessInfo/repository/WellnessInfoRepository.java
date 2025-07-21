@@ -56,4 +56,9 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
     @Modifying(clearAutomatically = true)
     @Query("UPDATE WellnessInfo w SET w.parentId = :parentId WHERE w.id = :id")
     int updateParentIdById(@Param("id") Long id, @Param("parentId") String parentId);
+
+    @Modifying
+    @Query("UPDATE WellnessInfo w SET w.view = w.view + 1 WHERE w.id = :id")
+    void incrementView(@Param("id") Long id);
+
 }

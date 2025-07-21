@@ -149,7 +149,7 @@ public class WellnessInfoApiService {
         WeatherResponse weatherInfo = wellnessInfoService.fetchWeatherInfo(sigungu.getNx(), sigungu.getNy());
 
         // 조회 수 추가
-        wellness.updateViewNum();
+        wellnessInfoRepository.incrementView(wellness.getId());
 
         return WellnessInfoBasicResponse.from(wellness,wellnessInfoImg,placeResult,liked, weatherInfo);
     }
