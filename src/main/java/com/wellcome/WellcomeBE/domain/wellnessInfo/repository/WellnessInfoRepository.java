@@ -1,17 +1,15 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.repository;
 
-import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
-import com.wellcome.WellcomeBE.global.type.Sigungu;
-import com.wellcome.WellcomeBE.global.type.Thema;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long>, WellnessInfoRepositoryCustom {
 
@@ -53,4 +51,9 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
 
 
     Page<WellnessInfo> findAll(Pageable pageable);
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE WellnessInfo w SET w.parentId = :parentId WHERE w.id = :id")
+    int updateParentIdById(@Param("id") Long id, @Param("parentId") String parentId);
 }

@@ -9,11 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,30 +24,27 @@ public class GoogleMapInfoService2 {
     private final Executor executorService;
 
     public GoogleMapInfoService2(WebClient googlePlaceApiWebClient,
-                                GoogleReviewApiWebClientConfig googleConfig,
-                                WellnessInfoRepository wellnessInfoRepository,
-                                 @Qualifier("asyncExecutor")Executor executorService) {
+                                 GoogleReviewApiWebClientConfig googleConfig,
+                                 WellnessInfoRepository wellnessInfoRepository,
+                                 @Qualifier("asyncExecutor") Executor executorService) {
         this.webClient = googlePlaceApiWebClient;
         this.googleConfig = googleConfig;
         this.wellnessInfoRepository = wellnessInfoRepository;
         this.executorService = executorService;
     }
 
-    // 1. 전체 병렬 처리
+    //전체 병렬 처리
     public void processWellnessInfo() {
         List<WellnessInfo> wellnessInfoList = wellnessInfoRepository.findAll();
 
         List<CompletableFuture<Void>> futures = wellnessInfoList.stream()
                 .map(wellnessInfo -> CompletableFuture
-                        .supplyAsync(() -> {
-                            log.info("[START] 처리 시작 - wellnessInfoId={} | thread={}", wellnessInfo.getId(), Thread.currentThread().getName());
-                            return processSingleWellnessInfo(wellnessInfo);
-                        }, executorService)
+                        .supplyAsync(() -> processWellnessInfoGoogleMapParentId(wellnessInfo), executorService)
                         .thenCompose(future -> future)
-                        .thenAccept(updated -> {
-                            if (updated != null) {
-                                wellnessInfoRepository.save(updated);
-                                log.info("[UPDATED] 저장 완료 - wellnessInfoId={} | thread={}", updated.getId(), Thread.currentThread().getName());
+                        .thenAccept(parentId -> {
+                            if (parentId != null) {
+                                wellnessInfoRepository.updateParentIdById(wellnessInfo.getId(), parentId);
+                                //log.info("[UPDATED] DB 업데이트 완료 - id={}, parentId={}", wellnessInfo.getId(), parentId);
                             }
                         })
                         .exceptionally(ex -> {
@@ -63,28 +57,38 @@ public class GoogleMapInfoService2 {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
-    // 2. 단건 처리
-    private CompletableFuture<WellnessInfo> processSingleWellnessInfo(WellnessInfo wellnessInfo) {
-        log.info("[API_CALL] 외부 API 호출 준비 - wellnessInfoId={} | thread={}", wellnessInfo.getId(), Thread.currentThread().getName());
+    //단건 처리 래퍼 - 업데이트 포함
+    public void processAndSaveSingleWellnessInfo(WellnessInfo wellnessInfo) {
+        processWellnessInfoGoogleMapParentId(wellnessInfo)
+                .thenAccept(parentId -> {
+                    if (parentId != null) {
+                        wellnessInfoRepository.updateParentIdById(wellnessInfo.getId(), parentId);
+                        //log.info("[SINGLE_UPDATED] DB 업데이트 완료 - id={}, parentId={}", wellnessInfo.getId(), parentId);
+                    }
+                })
+                .exceptionally(ex -> {
+                    log.error("[단일 처리 실패] id={}, error={}", wellnessInfo.getId(), ex.getMessage(), ex);
+                    return null;
+                });
+    }
+
+    //핵심 비즈니스 로직만 (API 호출-> parentId 추출)
+    private CompletableFuture<String> processWellnessInfoGoogleMapParentId(WellnessInfo wellnessInfo) {
+        //log.info("[API_CALL] 외부 API 호출 준비 - wellnessInfoId={} | thread={}", wellnessInfo.getId(), Thread.currentThread().getName());
         return getPlaceId(wellnessInfo.getAddress(), wellnessInfo.getTitle())
                 .thenApply(response -> {
-                    log.info("[API_RESPONSE] 응답 수신 완료 - wellnessInfoId={} | thread={}", wellnessInfo.getId(), Thread.currentThread().getName());
                     if (response != null && !response.getPredictions().isEmpty()) {
-                        // 외부 API로부터 parentId를 추출하고 wellnessInfo에 설정
                         String parentId = extractParentIdFromResponse(response);
-                        wellnessInfo.setParentId(parentId);
-                        return wellnessInfo;
+                        //log.info("[EXTRACT] parentId 추출 완료 - id={}, parentId={}", wellnessInfo.getId(), parentId);
+                        return parentId;
                     }
-                    log.warn("[NO_RESULT] 결과 없음 - wellnessInfoId={} | thread={}", wellnessInfo.getId(), Thread.currentThread().getName());
+                    //log.warn("[NO_RESULT] 결과 없음 - wellnessInfoId={}", wellnessInfo.getId());
                     return null;
-
                 });
     }
 
     private String extractParentIdFromResponse(PlacePredictionResponse response) {
-        String placeId = response.getPredictions().get(0).getPlace_id();
-        log.info("[EXTRACT] Place ID 추출 완료 - placeId={} | thread={}", placeId, Thread.currentThread().getName());
-        return placeId;
+        return response.getPredictions().get(0).getPlace_id();
     }
 
     // 3. 주소/타이틀 우선순위 검색
@@ -102,7 +106,6 @@ public class GoogleMapInfoService2 {
     private CompletableFuture<PlacePredictionResponse> getPlaceIdByTitle(String title) {
         Map<String, String> params = new HashMap<>();
         params.put("input", title);
-
         String uri = googleConfig.buildPlaceUri("autocomplete/json", params);
 
         return webClient.get()
@@ -116,15 +119,13 @@ public class GoogleMapInfoService2 {
     private CompletableFuture<PlacePredictionResponse> getPlaceIdByAddress(String address) {
         Map<String, String> params = new HashMap<>();
         params.put("input", address);
-
         String uri = googleConfig.buildPlaceUri("autocomplete/json", params);
 
-        log.info("[REQUEST] 주소 기반 요청 - address={} | uri={} | thread={}", address, uri, Thread.currentThread().getName());
+        log.info("[REQUEST] 주소 기반 요청 - address={} | uri={}", address, uri);
         return webClient.get()
                 .uri(URI.create(uri))
                 .retrieve()
                 .bodyToMono(PlacePredictionResponse.class)
                 .toFuture();
     }
-
 }
