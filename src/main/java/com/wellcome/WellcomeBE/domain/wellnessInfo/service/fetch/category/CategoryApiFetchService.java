@@ -1,23 +1,23 @@
-package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
+package com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.category;
 
-import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.template.WellnessInfoFetchTemplate;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.template.WellnessInfoMainSaver;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.template.WellnessInfoSaver;
 import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
 
-@Service
-public class CategoryApiFetchService extends WellnessInfoFetchTemplate<CategoryDetail> {
+class CategoryApiFetchService extends WellnessInfoFetchTemplate<CategoryDetail, WellnessInfoMainSaver> {
     private final TourInfoApiWebClientConfig webClientConfig;
     private static final int NUM_OF_ROWS_BASIC = 100;
 
     public CategoryApiFetchService(
-            WebClient webClient, WellnessInfoRepository wellnessInfoRepository,
+            WebClient webClient, WellnessInfoSaver saver,
             TourInfoApiWebClientConfig webClientConfig
     ){
-        super(webClient, wellnessInfoRepository);
+        super(webClient, saver);
         this.webClientConfig = webClientConfig;
     }
 

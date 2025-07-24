@@ -1,4 +1,4 @@
-package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
+package com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

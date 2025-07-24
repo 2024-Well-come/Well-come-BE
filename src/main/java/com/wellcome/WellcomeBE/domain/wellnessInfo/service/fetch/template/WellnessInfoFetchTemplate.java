@@ -1,11 +1,9 @@
-package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
+package com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.template;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.TourBasicApiResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +27,9 @@ import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class WellnessInfoFetchTemplate<P> {
+public abstract class WellnessInfoFetchTemplate<P, T> {
     private final WebClient webClient;
-    private final WellnessInfoRepository wellnessInfoRepository;
+    private final WellnessInfoSaver<T> saver;
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String GANGWONDO_AREACODE = "32";
@@ -104,10 +102,10 @@ public abstract class WellnessInfoFetchTemplate<P> {
 
                     // DTO -> Entity 변환
                     List<TourBasicApiResponse.Response.Body.Items.Item> itemList = items.getItem();
-                    List<WellnessInfo> entities = itemList.stream()
+                    List<T> entities = itemList.stream()
                             .map(item -> {
                                 try {
-                                    return item.toEntity();
+                                    return saver.convertEntity(item);
                                 } catch (ParseException e) {
                                     logConvertError(label, currentPage, e);
                                     return null;
@@ -118,7 +116,7 @@ public abstract class WellnessInfoFetchTemplate<P> {
 
                     // 데이터 DB 저장
                     if(!entities.isEmpty()) {
-                        wellnessInfoRepository.saveAll(entities);
+                        saver.saveAll(entities);
                         savedCount += entities.size();
                         logPageSaved(label, page, savedCount);
                     }

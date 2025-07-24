@@ -3,8 +3,9 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.controller;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoApiService;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService2;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoService;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup.WellnessInfoService2;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup.WellnessInfoService;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.update.WellnessInfoTempService;
 import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ public class WellnessInfoController {
     private final WellnessInfoService wellnessInfoService;
     private final WellnessInfoApiService wellnessInfoApiService;
     private final WellnessInfoService2 wellnessInfoService2;
+    private final WellnessInfoTempService wellnessInfoTempService;
 
     // 한국관광공사_국문 API 호출 및 데이터 저장 (기존: WebFlux)
     @GetMapping("/getTourBasicApiData-webflux")
@@ -37,6 +39,13 @@ public class WellnessInfoController {
     @GetMapping("/getTourBasicApiData")
     public void fetchAndSaveTourInfo(){
         wellnessInfoService2.fetchAllData();
+        wellnessInfoService2.uploadThumbnailImgToS3();
+    }
+
+    // 웰니스 정보 업데이트 (추가 및 삭제된 데이터 반영)
+    @GetMapping("/getTourBasicApiData-update")
+    public void updateTourInfo(){
+        wellnessInfoTempService.updateTourInfo();
     }
 
     // 웰니스 장소 추천 목록 (썸네일 이미지 URL은 S3에 업로드된 URL을 가져온다.)

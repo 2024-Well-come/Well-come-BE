@@ -1,7 +1,10 @@
-package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
+package com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.category.CategoryApiMainService;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.keyword.KeywordApiMainService;
 import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.RequiredArgsConstructor;
@@ -10,9 +13,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.wellcome.WellcomeBE.global.type.Keyword.KEYWORDS;
 
@@ -21,10 +25,10 @@ import static com.wellcome.WellcomeBE.global.type.Keyword.KEYWORDS;
 @Slf4j
 public class WellnessInfoService2 {
 
-    @Qualifier("categoryApiFetchService")
-    private final WellnessInfoFetchTemplate<CategoryDetail> categoryApiFetchService;
-    @Qualifier("keywordApiFetchService")
-    private final WellnessInfoFetchTemplate<String> keywordApiFetchService;
+    @Qualifier("categoryApiMainService")
+    private final CategoryApiMainService categoryApiMainService;
+    @Qualifier("keywordApiMainService")
+    private final KeywordApiMainService keywordApiMainService;
 
     private final WellnessInfoRepository wellnessInfoRepository;
     private final S3Service s3Service;
@@ -39,7 +43,7 @@ public class WellnessInfoService2 {
         log.info("<< 카테고리별 API 호출 시작 >>");
         List<CompletableFuture<Integer>> categoryFutures = new ArrayList<>();
         for (CategoryDetail category : CategoryDetail.CATEGORY_PARAM_LIST) {
-            categoryFutures.add(categoryApiFetchService.fetchAndSave(category));
+            categoryFutures.add(categoryApiMainService.fetchAndSave(category));
         }
         CompletableFuture.allOf(categoryFutures.toArray(new CompletableFuture[0])).join(); //모든 카테고리 작업 완료 대기
         log.info("<< 카테고리별 API 호출 완료 >>");
@@ -58,7 +62,7 @@ public class WellnessInfoService2 {
         log.info("<< 키워드별 API 호출 시작 >>");
         List<CompletableFuture<Integer>> keywordFutures = new ArrayList<>();
         for(String keyword : KEYWORDS){
-            keywordFutures.add(keywordApiFetchService.fetchAndSave(keyword));
+            keywordFutures.add(keywordApiMainService.fetchAndSave(keyword));
         }
         CompletableFuture.allOf(keywordFutures.toArray(new CompletableFuture[0])).join(); //모든 키워드 작업 완료 대기
         log.info("<< 키워드별 API 호출 완료 >>");
@@ -73,10 +77,10 @@ public class WellnessInfoService2 {
                 })
                 .sum();
 
-        // 썸네일 이미지 URL -> S3에 업로드 후 thumbnailUrl 컬럼 업데이트
-        log.info("<< 썸네일 이미지 S3에 업로드 시작 >>");
-        uploadThumbnailImgToS3();
-        log.info("<< 썸네일 이미지 S3에 업로드 완료 >>");
+//        // 썸네일 이미지 URL -> S3에 업로드 후 thumbnailUrl 컬럼 업데이트
+//        log.info("<< 썸네일 이미지 S3에 업로드 시작 >>");
+//        uploadThumbnailImgToS3();
+//        log.info("<< 썸네일 이미지 S3에 업로드 완료 >>");
 
         long end = System.currentTimeMillis();
         int totalSavedCount = categorySavedCount + keywordSavedCount;
@@ -88,17 +92,50 @@ public class WellnessInfoService2 {
 
     // 이미 저장된 웰니스 정보에 대해, 썸네일 이미지 S3에 업로드 후 컬럼(thumbnailUrl) 업데이트
     @Transactional
-    public void uploadThumbnailImgToS3(){
+    public void uploadThumbnailImgToS3() {
+        log.info("<< 썸네일 이미지 S3에 업로드 시작 >>");
+        long start = System.currentTimeMillis();
+
         List<WellnessInfo> hasThumbnailUrlWellnessInfoList = wellnessInfoRepository.findByOriginalThumbnailUrlNotNull();
-
-        hasThumbnailUrlWellnessInfoList.forEach(wellnessInfo -> {
-            String originalUrl = wellnessInfo.getOriginalThumbnailUrl();
-
-            if(originalUrl != null && !originalUrl.trim().isEmpty()){
-                String s3Url = s3Service.uploadImgFromUrl(originalUrl, wellnessInfo.getContentId());
-                wellnessInfo.updateThumbnailUrl(s3Url);
-            }
+        hasThumbnailUrlWellnessInfoList.forEach(w -> {
+            String s3Url = processThumbnailImg(w.getContentId(), w.getOriginalThumbnailUrl());
+            w.updateThumbnailUrl(s3Url);
         });
+
+        long end = System.currentTimeMillis();
+        log.info("<< 썸네일 이미지 S3에 업로드 완료 >>");
+
+        log.info("** 썸네일 이미지 S3에 업로드 완료 ** \n" +
+                "  - 총 처리 시간: {}ms",
+                end - start);
+    }
+
+    @Transactional
+    public Map<String, String> uploadThumbnailImgToS3ByContentId(Map<String, WellnessInfoTemp> newData) {
+        return newData.entrySet().stream()
+                .filter(entry -> {
+                    String originalUrl = entry.getValue().getOriginalThumbnailUrl();
+                    return originalUrl != null && !originalUrl.trim().isEmpty();
+                })
+                .flatMap(entry -> {
+                    String contentId = entry.getKey();
+                    String originalUrl = entry.getValue().getOriginalThumbnailUrl();
+
+                    String thumbnailUrl = processThumbnailImg(contentId, originalUrl);
+                    if (thumbnailUrl != null && !thumbnailUrl.isBlank()) {
+                        return Stream.of(Map.entry(contentId, thumbnailUrl));
+                    }else{
+                        return Stream.empty();
+                    }
+                })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private String processThumbnailImg(String contentId, String originalUrl){
+        if (originalUrl != null && !originalUrl.trim().isEmpty()) {
+            return s3Service.uploadImgFromUrl(originalUrl, contentId);
+        }
+        return null;
     }
 
 }

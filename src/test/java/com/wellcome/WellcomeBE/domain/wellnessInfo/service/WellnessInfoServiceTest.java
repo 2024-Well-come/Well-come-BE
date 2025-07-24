@@ -15,6 +15,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoGoog
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup.WellnessInfoService;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Category;

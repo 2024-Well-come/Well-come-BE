@@ -1,0 +1,88 @@
+
+Execute DDL :
+
+    
+    drop table if exists article cascade 
+
+Execution Time: 1 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists community cascade 
+
+Execution Time: 1 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists community_img cascade 
+
+Execution Time: 0 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists liked cascade 
+
+Execution Time: 1 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists member cascade 
+
+Execution Time: 0 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists slow_query_log cascade 
+
+Execution Time: 0 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists support cascade 
+
+Execution Time: 0 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists trip_plan cascade 
+
+Execution Time: 0 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists trip_plan_place cascade 
+
+Execution Time: 0 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists wellness_info cascade 
+
+Execution Time: 0 ms
+----------------------------------------------------------------------------------------------------
+
+Execute DDL :
+
+    
+    drop table if exists wellness_info_img cascade 
+
+Execution Time: 0 ms
+----------------------------------------------------------------------------------------------------

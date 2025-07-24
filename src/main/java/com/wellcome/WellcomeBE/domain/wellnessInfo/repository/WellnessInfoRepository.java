@@ -7,11 +7,13 @@ import com.wellcome.WellcomeBE.global.type.Thema;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long> {
 
@@ -23,7 +25,8 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
                 "CASE WHEN l.id IS NOT NULL THEN TRUE ELSE FALSE END " +
             "FROM WellnessInfo w " +
             "LEFT JOIN Liked l ON l.wellnessInfo = w AND l.member = :member " +
-            "WHERE (:themaList IS NULL OR w.thema IN :themaList) " +
+            "WHERE w.isDeleted = false " + //삭제되지 않은 데이터만 조회
+            "AND (:themaList IS NULL OR w.thema IN :themaList) " +
             "AND (:sigunguList IS NULL OR w.sigungu IN :sigunguList) " +
             "ORDER BY " +
                 "(CASE " +
@@ -99,4 +102,14 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
 
 
     Page<WellnessInfo> findAll(Pageable pageable);
+
+    @Query("SELECT w.contentId FROM WellnessInfo w")
+    List<String> findAllContentId();
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE WellnessInfo w " +
+            "SET w.isDeleted = true " +
+            "WHERE w.contentId IN :contentIds")
+    int bulkUpdateIsDeleted(@Param("contentIds") Set<String> contentIds);
+
 }
