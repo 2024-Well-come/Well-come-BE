@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,6 +33,7 @@ public class WellnessInfoService2 {
 
     private final WellnessInfoRepository wellnessInfoRepository;
     private final S3Service s3Service;
+    private final Executor asyncExecutor;
 
     // 한국관광공사 API 호출 및 데이터 저장 로직 실행
     public void fetchAllData() {
@@ -91,16 +93,26 @@ public class WellnessInfoService2 {
     }
 
     // 이미 저장된 웰니스 정보에 대해, 썸네일 이미지 S3에 업로드 후 컬럼(thumbnailUrl) 업데이트
-    @Transactional
     public void uploadThumbnailImgToS3() {
         log.info("<< 썸네일 이미지 S3에 업로드 시작 >>");
         long start = System.currentTimeMillis();
 
         List<WellnessInfo> hasThumbnailUrlWellnessInfoList = wellnessInfoRepository.findByOriginalThumbnailUrlNotNull();
-        hasThumbnailUrlWellnessInfoList.forEach(w -> {
-            String s3Url = processThumbnailImg(w.getContentId(), w.getOriginalThumbnailUrl());
-            w.updateThumbnailUrl(s3Url);
-        });
+
+        List<CompletableFuture<Void>> futures = hasThumbnailUrlWellnessInfoList.stream()
+                .map(w -> CompletableFuture.runAsync(() -> {
+                    //log.info("[비동기 시작] contentId={}, thread={}", w.getContentId(), Thread.currentThread().getName());
+                    String s3Url = processThumbnailImg(w.getContentId(), w.getOriginalThumbnailUrl());
+                    if (s3Url != null && !s3Url.isBlank()) {
+                        w.updateThumbnailUrl(s3Url);
+                    }
+                    //log.info("[비동기 완료] contentId={}, thread={}", w.getContentId(), Thread.currentThread().getName());
+                }, asyncExecutor))
+                .collect(Collectors.toList());
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        updateThumbnailUrl(hasThumbnailUrlWellnessInfoList);
 
         long end = System.currentTimeMillis();
         log.info("<< 썸네일 이미지 S3에 업로드 완료 >>");
@@ -108,6 +120,11 @@ public class WellnessInfoService2 {
         log.info("** 썸네일 이미지 S3에 업로드 완료 ** \n" +
                 "  - 총 처리 시간: {}ms",
                 end - start);
+    }
+
+    @Transactional
+    private void updateThumbnailUrl(List<WellnessInfo> wellnessInfoList){
+        wellnessInfoRepository.saveAll(wellnessInfoList);
     }
 
     public String processThumbnailImg(String contentId, String originalUrl){
