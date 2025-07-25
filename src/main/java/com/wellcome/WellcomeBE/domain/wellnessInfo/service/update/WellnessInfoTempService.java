@@ -2,6 +2,7 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.service.update;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoTempData;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoTempRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.category.CategoryApiTempService;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,7 @@ public class WellnessInfoTempService {
     private final WellnessInfoRepository wellnessInfoRepository;
     private final WellnessInfoTempRepository tempWellnessInfoRepository;
     private final WellnessInfoService2 wellnessInfoService2;
+    private final Executor asyncExecutor;
 
     @Transactional
     public void updateTourInfo(){
@@ -51,8 +54,9 @@ public class WellnessInfoTempService {
         List<String> newContentIds = tempWellnessInfoRepository.findAllContentId();
 
         // i) 새로 추가된 데이터가 있을 경우
-        // - 새로운 WellnessInfoTemp 정보로 WellnessInfo 데이터 생성
-        // - 썸네일 이미지 S3 업로드, 상세 사진 불러오기, parentId 값 채우기
+        // - 썸네일 이미지 S3 업로드, parentId 값 채우기 (preparedData)
+        // - preparedData + WellnessInfoTemp -> WellnessInfo 데이터 생성
+        // - 상세사진 불러와서 저장
         Set<String> addedIds = new HashSet<>(newContentIds);
         addedIds.removeAll(contentIds);
         System.out.println("✔ addedIds: " + addedIds.size() + "건");
@@ -138,36 +142,66 @@ public class WellnessInfoTempService {
                         (existing, duplicate) -> duplicate
                 ));
 
-        // 썸네일 이미지 S3에 업로드
-        Map<String, String> thumbnailUrls = wellnessInfoService2.uploadThumbnailImgToS3ByContentId(newData);
+        // 썸네일 이미지 S3에 업로드 및 parentId 값 찾기
+        List<WellnessInfoTempData> preparedData = prepareWellnessInfoData(newData);
 
-        // 상세 사진 저장
-        // todo 업데이트 필요
+        // 새로운 WellnessInfo 데이터 생성 및 저장
+        saveAddedWellnessInfos(preparedData, newData);
 
-        // parentId 값 채우기
-        // todo 임시로 parentId=null로 설정, 업데이트 필요
+        // todo 상세사진 저장
+    }
 
-        // 새로운 WellnessInfo 데이터 생성
-        List<WellnessInfo> wellnessInfos = newData.entrySet().stream()
+    // 썸네일 이미지 S3 업로드 및 parentId 값 찾기
+    private List<WellnessInfoTempData> prepareWellnessInfoData(Map<String, WellnessInfoTemp> newData){
+        List<CompletableFuture<WellnessInfoTempData>> futures = newData.entrySet().stream()
                 .map(entry -> {
                     String contentId = entry.getKey();
                     WellnessInfoTemp temp = entry.getValue();
-                    String thumbnailUrl = thumbnailUrls.get(contentId);
-                    //String parentId = parentIds.get(contentId);
-                    //return WellnessInfo.of(temp, thumbnailUrl, parentId);
+
+                    // 썸네일 이미지 업로드
+                    CompletableFuture<String> thumbnailUrlFuture = CompletableFuture.supplyAsync(() -> {
+                        //log.info("[썸네일 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+                        return wellnessInfoService2.processThumbnailImg(contentId, temp.getOriginalThumbnailUrl());
+                    }, asyncExecutor);
+
+                    // parentId todo 임시로 null 설정, 업데이트 필요
+                    CompletableFuture<String> parentIdFuture = CompletableFuture.completedFuture(null);
+
+                    // 두 비동기 작업 병합
+                    return thumbnailUrlFuture.thenCombine(parentIdFuture,
+                            (thumbnailUrl, parentId) -> {
+                                //log.info("[모두 완료] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+                                return new WellnessInfoTempData(contentId, thumbnailUrl, parentId);
+                            });
+                })
+                .collect(Collectors.toList());
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    private void saveAddedWellnessInfos(List<WellnessInfoTempData> preparedData, Map<String, WellnessInfoTemp> newData){
+        List<WellnessInfo> wellnessInfos = preparedData.stream()
+                .map(data -> {
+                    WellnessInfoTemp temp = newData.get(data.getContentId());
                     try {
-                        return WellnessInfo.of(temp, thumbnailUrl, null);
+                        return WellnessInfo.of(temp, data.getThumbnailUrl(), data.getParentId());
                     } catch (ParseException e) {
-                        throw new RuntimeException(e);
+                        return null;
                     }
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        log.info("➕ 저장 예정 데이터: {}건", wellnessInfos.size());
+
         wellnessInfoRepository.saveAll(wellnessInfos);
     }
 
     // 삭제된 데이터 처리
+    @Transactional
     private void processDeletedContentIds(Set<String> deletedIds){
 
         // deletedIds의 WellnessInfo isDeleted 컬럼 true로 업데이트
@@ -175,9 +209,9 @@ public class WellnessInfoTempService {
 
         /**
          * 추가 작업
-         * - WellnessInfo isDeleted 컬럼 추가
+         * - WellnessInfo isDeleted 컬럼 추가 (ok)
          * - 웰니스 목록 조회에서는 isDeleted = false인 값들 중 조회되도록 수정 (todo querydsl 코드에 추가 반영 필요)
-         * - 웰니스 정보 상세 조회 시 isDelete = true일 경우, opendetail에서 영업종료 표시 대신 '폐점됨' 으로 보이도록 수정
+         * - 웰니스 정보 상세 조회 시 isDelete = true일 경우, opendetail에서 영업종료 표시 대신 '폐점됨' 으로 보이도록 수정 (ok)
          */
     }
 }

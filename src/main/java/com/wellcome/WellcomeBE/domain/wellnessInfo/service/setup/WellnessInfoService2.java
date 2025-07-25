@@ -110,28 +110,7 @@ public class WellnessInfoService2 {
                 end - start);
     }
 
-    @Transactional
-    public Map<String, String> uploadThumbnailImgToS3ByContentId(Map<String, WellnessInfoTemp> newData) {
-        return newData.entrySet().stream()
-                .filter(entry -> {
-                    String originalUrl = entry.getValue().getOriginalThumbnailUrl();
-                    return originalUrl != null && !originalUrl.trim().isEmpty();
-                })
-                .flatMap(entry -> {
-                    String contentId = entry.getKey();
-                    String originalUrl = entry.getValue().getOriginalThumbnailUrl();
-
-                    String thumbnailUrl = processThumbnailImg(contentId, originalUrl);
-                    if (thumbnailUrl != null && !thumbnailUrl.isBlank()) {
-                        return Stream.of(Map.entry(contentId, thumbnailUrl));
-                    }else{
-                        return Stream.empty();
-                    }
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private String processThumbnailImg(String contentId, String originalUrl){
+    public String processThumbnailImg(String contentId, String originalUrl){
         if (originalUrl != null && !originalUrl.trim().isEmpty()) {
             return s3Service.uploadImgFromUrl(originalUrl, contentId);
         }
