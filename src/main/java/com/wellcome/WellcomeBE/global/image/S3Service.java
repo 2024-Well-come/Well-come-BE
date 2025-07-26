@@ -3,7 +3,6 @@ package com.wellcome.WellcomeBE.global.image;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
@@ -18,7 +17,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.UUID;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.IMG_UPLOAD_ERROR;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_IMG_S3_UPLOAD_FAILED;
 
 @Service
@@ -41,28 +39,7 @@ public class S3Service {
         file.delete();
     }
 
-//    public String uploadImgFile(MultipartFile multipartFile) throws IOException {
-//        ObjectMetadata metadata = new ObjectMetadata();
-//        metadata.setContentLength(multipartFile.getSize());
-//        metadata.setContentType(multipartFile.getContentType());
-//
-//        // 'UUID.확장자' 형태의 파일명으로 이미지 업로드
-//        String originalFileName = multipartFile.getOriginalFilename();
-//        String fileExtension =  originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
-//
-//        String folderPath = "community-images/";
-//        String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
-//
-//        try (InputStream inputStream = multipartFile.getInputStream()){
-//            amazonS3.putObject(new PutObjectRequest(bucketName, fileName, inputStream, metadata)
-//                    .withCannedAcl(CannedAccessControlList.PublicRead));
-//        } catch (Exception e){
-//            log.error("AWS S3 uploadImgFile Error: {}", e.getMessage());
-//            throw new CustomException(IMG_UPLOAD_ERROR);
-//        }
-//
-//        return amazonS3.getUrl(bucketName, fileName).toString();
-//    }
+
 
     public String uploadImgFile(MultipartFile multipartFile) throws IOException {
         File file = multiPartFileToFile(multipartFile);
@@ -142,15 +119,16 @@ public class S3Service {
     private String getMimeType(String url){
         if (url != null && url.lastIndexOf(".") != -1) {
             String ext = url.substring(url.lastIndexOf(".") + 1).toLowerCase();
-            switch (ext){
-                case "jpg": case "jpeg": case "JPG":
+            switch (ext) {
+                case "jpg", "jpeg", "JPG" -> {
                     return "image/jpeg";
-
-                case "png":
+                }
+                case "png" -> {
                     return "image/png";
-
-                case "bmp":
+                }
+                case "bmp" -> {
                     return "image/bmp";
+                }
             }
         }
         return null;
