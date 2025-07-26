@@ -44,7 +44,7 @@ public class TripPlanService {
     private final CommunityRepository communityRepository;
     private final TokenProvider tokenProvider;
     private final GoogleMapInfoService googleMapInfoService;
-
+    private static final int TRIP_PLAN_LIST_PAGE_SIZE = 10;
     public void createTripPlan(TripPlanCreateRequest request){
 
         TripPlan tripPlan = TripPlan.builder()
@@ -60,7 +60,6 @@ public class TripPlanService {
 
     @Transactional(readOnly = true)
     public TripPlanResponse.TripPlanBriefResponse getTripPlanList(){
-        //List<TripPlan> result = tripPlanRepository.findByMember(tokenProvider.getMember());
         List<TripPlan> result =tripPlanRepository.findByMemberAndStatus(tokenProvider.getMember(), TripPlan.Status.ACTIVE);
         List<TripPlanResponse.TripPlanPlaceItem> planPlaceItems = result.stream().map(TripPlanResponse.TripPlanPlaceItem::from).collect(Collectors.toList());
         return TripPlanResponse.TripPlanBriefResponse.builder().tripPlanList(planPlaceItems).build();
@@ -68,7 +67,7 @@ public class TripPlanService {
 
     @Transactional(readOnly = true)
     public TripPlanResponse.TripPlanListResponse getTripPlans(String sort, int page){
-        PageRequest pageRequest = PageRequest.of(page,10);
+        PageRequest pageRequest = PageRequest.of(page,TRIP_PLAN_LIST_PAGE_SIZE);
         Page<TripPlan> tripPlans;
         if ("upcoming".equalsIgnoreCase(sort)) {
             tripPlans = tripPlanRepository.findUpcomingPlansByMember(tokenProvider.getMember(),pageRequest);

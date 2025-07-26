@@ -98,7 +98,7 @@ public class CommunityService {
     /**
      * 이미지 저장
      */
-    private void saveImgList(Community community, List<MultipartFile> imgFileList){
+    protected void saveImgList(Community community, List<MultipartFile> imgFileList){
         // 이미지 개수 제한 확인
         if(imgFileList.size() > MAX_IMG_COUNT){
             throw new CustomException(IMG_LIMIT_EXCEEDED);
@@ -165,25 +165,23 @@ public class CommunityService {
     public ReviewPostDetailResponse getReviewPostDetail(Long communityId){
         // 사용자 인증
         Member currentMember = tokenProvider.getMember();
+        // 커뮤니티 유효성 검증
         Community community = communityRepository.findById(communityId).orElseThrow(() -> new CustomException(COMMUNITY_NOT_FOUND));
 
         // 커뮤니티에 대한 지원 여부 확인
         boolean isSupport = supportRepository.existsByCommunityAndMember(community, currentMember);
 
-        // 게시 이미지 목록을 가져옵니다.
+        // 게시글 이미지 목록을 가져옵니다.
         List<String> postImgs = community.getCommunityImgs().stream()
                 .map(CommunityImg::getImgUrl) // 이미지 URL 추출
                 .toList();
 
-        // TODO: 쿼리 DSL 적용 필수!!
         // WellnessInfo 및 TripPlanPlace와 연결된 Support, Liked 정보를 조회
-        List<Object[]> wellnessInfoWithTripPlanPlaceSupportAndLiked = wellnessInfoRepository.findWellnessInfoWithSupportAndLikedByCommunityId(communityId, currentMember);
+        List<ReviewPostDetailResponse.ReviewWellnessInfoItem> reviewWellnessInfoItems =
+                wellnessInfoRepository.findWellnessInfoWithSupportAndLikedByCommunityId(communityId, currentMember);
 
-        // Object[] 배열을 ReviewWellnessInfoItem으로 변환
-        List<ReviewPostDetailResponse.ReviewWellnessInfoItem> reviewWellnessInfoItems = wellnessInfoWithTripPlanPlaceSupportAndLiked.stream()
-                .map(ReviewPostDetailResponse.ReviewWellnessInfoItem::from)
-                .collect(Collectors.toList());
-        return  ReviewPostDetailResponse.from(community,isSupport,postImgs,reviewWellnessInfoItems);
+        return ReviewPostDetailResponse.from(community, isSupport, postImgs, reviewWellnessInfoItems);
+
 
     }
 
