@@ -139,6 +139,7 @@ public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom 
                 .leftJoin(l).on(liked.wellnessInfo.eq(w)
                         .and(l.member.eq(member)))
                 .where(
+                        w.isDeleted.isFalse(),
                         themaIn(themaList),
                         sigunguIn(sigunguList)
                 )
@@ -154,6 +155,7 @@ public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom 
                 .leftJoin(l).on(liked.wellnessInfo.eq(w)
                         .and(l.member.eq(member)))
                 .where(
+                        w.isDeleted.isFalse(),
                         themaIn(themaList),
                         sigunguIn(sigunguList)
                 );

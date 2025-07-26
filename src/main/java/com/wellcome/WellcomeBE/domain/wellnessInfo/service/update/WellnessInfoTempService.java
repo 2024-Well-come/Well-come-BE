@@ -210,12 +210,5 @@ public class WellnessInfoTempService {
 
         // deletedIds의 WellnessInfo isDeleted 컬럼 true로 업데이트
         wellnessInfoRepository.bulkUpdateIsDeleted(deletedIds);
-
-        /**
-         * 추가 작업
-         * - WellnessInfo isDeleted 컬럼 추가 (ok)
-         * - 웰니스 목록 조회에서는 isDeleted = false인 값들 중 조회되도록 수정 (Todo querydsl 코드에 추가 반영 필요)
-         * - 웰니스 정보 상세 조회 시 isDelete = true일 경우, opendetail에서 영업종료 표시 대신 '폐점됨' 으로 보이도록 수정 (ok)
-         */
     }
 }
