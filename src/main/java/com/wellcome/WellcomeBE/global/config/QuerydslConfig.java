@@ -1,4 +1,4 @@
-package com.wellcome.WellcomeBE;
+package com.wellcome.WellcomeBE.global.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
