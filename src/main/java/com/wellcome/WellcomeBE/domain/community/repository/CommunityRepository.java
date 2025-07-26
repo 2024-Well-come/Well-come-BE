@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface CommunityRepository extends JpaRepository<Community, Long> {
+public interface CommunityRepository extends JpaRepository<Community, Long>, CommunityRepositoryCustom {
 
     Optional<Community> findByTripPlan(TripPlan tripPlan);
     @Query("SELECT c.tripPlan.id FROM Community c WHERE c.tripPlan.id IN :tripPlanIdList")
@@ -20,12 +20,12 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
 
     Page<Community> findByPostTypeOrderByCreatedAtDesc(Pageable pageable, Community.PostType tripPlan);
 
-    @Query("SELECT c FROM Community c " +
-            "LEFT JOIN Support s ON c.id = s.community.id " +
-            "WHERE c.postType = :postType " +
-            "GROUP BY c.id " +
-            "ORDER BY COUNT(s.id) DESC, c.createdAt DESC")
-    Page<Community> findByPostTypeOrderBySupportCount(Pageable pageable, @Param("postType") Community.PostType type);
+//    @Query("SELECT c FROM Community c " +
+//            "LEFT JOIN Support s ON c.id = s.community.id " +
+//            "WHERE c.postType = :postType " +
+//            "GROUP BY c.id " +
+//            "ORDER BY COUNT(s.id) DESC, c.createdAt DESC")
+//    Page<Community> findByPostTypeOrderBySupportCount(Pageable pageable, @Param("postType") Community.PostType type);
 
     List<Community> findByTripPlanInOrderByCreatedAtDesc(Pageable pageable, List<TripPlan> tripPlanList);
 

@@ -238,8 +238,8 @@ class TripPlanPlaceServiceTest {
         Long planId = 99L;
         TripPlanPlaceCreateRequest request = mock(TripPlanPlaceCreateRequest.class);
         WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
-        when(wellnessInfoRepository.findById(wellnessId)).thenReturn(Optional.of(wellnessInfo));
-        when(tripPlanRepository.findById(planId)).thenReturn(Optional.empty());
+        when(request.getWellnessInfoId()).thenReturn(wellnessId);
+        when(wellnessInfoRepository.findById(wellnessId)).thenReturn(Optional.empty());
 
         // when
         CustomException exception = assertThrows(CustomException.class, () ->

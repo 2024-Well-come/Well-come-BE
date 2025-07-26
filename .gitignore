@@ -2,6 +2,9 @@
 application-local.yaml
 application-prod.yaml
 
+# Generated Q classes for Querydsl
+src/main/generated/
+
 HELP.md
 .gradle
 build/

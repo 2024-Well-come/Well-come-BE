@@ -94,10 +94,10 @@ public class WellnessInfoController {
 
     //v1
     // 웰니스 장소 상세 조회(2) - 주변 추전 장소
-    @GetMapping("/api/wellness-info/{wellnessInfoId}/nearby-places")
-    public ResponseEntity<WellnessInfoNearResponse>getSurroundingPlaces(@PathVariable Long wellnessInfoId){
-        return ResponseEntity.ok(wellnessInfoApiService.getSurroundingWellnessInfo(wellnessInfoId));
-    }
+//    @GetMapping("/api/wellness-info/{wellnessInfoId}/nearby-places")
+//    public ResponseEntity<WellnessInfoNearResponse>getSurroundingPlaces(@PathVariable Long wellnessInfoId){
+//        return ResponseEntity.ok(wellnessInfoApiService.getSurroundingWellnessInfo(wellnessInfoId));
+//    }
     // 웰니스 장소 상세 조회(5) - 아티클 조회
     @GetMapping("/api/wellness-info/{wellnessInfoId}/articles")
     public ResponseEntity<WellnessInfoArticleResponse> getWellnessIngoArticles(
