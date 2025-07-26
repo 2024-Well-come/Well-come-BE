@@ -6,10 +6,9 @@ import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
+import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService2;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
-import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
@@ -44,7 +43,7 @@ public class WellnessInfoApiService {
 
     private final WellnessInfoRepository wellnessInfoRepository;
     private final TokenProvider tokenProvider;
-    private final GoogleMapInfoService googleMapInfoService;
+    private final GoogleMapInfoService2 googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
     private final WellnessInfoService wellnessInfoService;

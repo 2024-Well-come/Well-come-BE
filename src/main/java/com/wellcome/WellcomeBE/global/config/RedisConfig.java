@@ -3,9 +3,12 @@ package com.wellcome.WellcomeBE.global.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -24,16 +27,6 @@ public class RedisConfig {
         this.redisPort = redisPort;
     }
 
-//    @Bean
-//    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
-//        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-//        redisTemplate.setConnectionFactory(redisConnectionFactory);
-//        redisTemplate.setKeySerializer(new StringRedisSerializer());
-//        redisTemplate.setValueSerializer(new StringRedisSerializer()); //String 직렬화 설정
-//        //redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // JSON 직렬화를 위한 설정
-//        return redisTemplate;
-//    }
-
     // 문자열 저장용 RedisTemplate
     @Bean(name = "strRedisTemplate")
     public RedisTemplate<String, String> strRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
@@ -44,7 +37,7 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    // 객체 저장용 RedisTemplate
+    //TODO 객체 저장용 RedisTemplate 리액티브 적용 이후 삭제 예정
     @Bean(name = "jsonRedisTemplate")
     public RedisTemplate<String, Object> jsonRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
@@ -52,6 +45,17 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // JSON 직렬화
         return redisTemplate;
+    }
+
+    // 객체 저장용 ReactiveRedisTemplate
+    @Bean(name = "reactiveJsonRedisTemplate")
+    public ReactiveRedisTemplate<String, Object> reactiveJsonRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        RedisSerializationContext<String, Object> context = RedisSerializationContext
+                .<String, Object>newSerializationContext(new StringRedisSerializer())
+                .value(new GenericJackson2JsonRedisSerializer())
+                .build();
+
+        return new ReactiveRedisTemplate<>(factory, context);
     }
 
 }

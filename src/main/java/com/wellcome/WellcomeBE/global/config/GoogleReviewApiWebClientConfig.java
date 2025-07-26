@@ -48,9 +48,6 @@ public class GoogleReviewApiWebClientConfig {
                 .build();
     }
 
-    /**
-     * ✅ (Optional) Separate WebClient bean for flexibility
-     */
     @Bean(name = "googlePlaceInfoApiWebClient")
     public WebClient googlePlaceInfoWebClient() {
         return WebClient.builder()
@@ -70,7 +67,7 @@ public class GoogleReviewApiWebClientConfig {
         additionalParams.forEach(uriBuilder::queryParam);
 
         String uri = uriBuilder.encode().toUriString();
-        log.debug("[GoogleMap URI] {}", uri);
+        //log.debug("[GoogleMap URI] {}", uri);
         return uri;
     }
 

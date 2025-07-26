@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class GoogleMapInfoController {
 
-    private final GoogleMapInfoService googlePlaceService;
+    private final GoogleMapInfoService2 googlePlaceService;
     private final GoogleMapInfoService2 googlePlaceService2;
 
     @GetMapping("/{place}/details")
