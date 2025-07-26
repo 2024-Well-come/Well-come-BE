@@ -8,10 +8,10 @@ import jakarta.persistence.EntityManager;
 
 import java.util.List;
 
-public class ArticleRepositoryCustomImpl implements ArticleRepositoryCustom{
+public class ArticleRepositoryImpl implements ArticleRepositoryCustom{
 
     private final JPAQueryFactory queryFactory;
-    public ArticleRepositoryCustomImpl(EntityManager em) {
+    public ArticleRepositoryImpl(EntityManager em) {
         this.queryFactory = new JPAQueryFactory(em);
     }
 

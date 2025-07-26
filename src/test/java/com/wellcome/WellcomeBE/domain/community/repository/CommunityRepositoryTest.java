@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.community.repository;
 
-import com.wellcome.WellcomeBE.QuerydslConfig;
+import com.wellcome.WellcomeBE.NativeSqlCreatorTestConfig;
+import com.wellcome.WellcomeBE.global.config.QuerydslConfig;
 import com.wellcome.WellcomeBE.domain.community.Community;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
@@ -27,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
-@Import(QuerydslConfig.class)
+@Import({QuerydslConfig.class, NativeSqlCreatorTestConfig.class})
 public class CommunityRepositoryTest {
 
     @Autowired

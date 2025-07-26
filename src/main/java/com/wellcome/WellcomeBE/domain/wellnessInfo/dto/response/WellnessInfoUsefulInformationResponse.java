@@ -36,7 +36,7 @@ public class WellnessInfoUsefulInformationResponse {
         private String thema;
         private String radius;
 
-        public static WellnessNearbyDto form(WellnessInfo wellnessInfo, PlaceReviewResponse.PlaceResult placeDetails, double distance ) {
+        public static WellnessNearbyDto form(WellnessInfoNearResponse.WellnessNearbyDto wellnessInfo, PlaceReviewResponse.PlaceResult placeDetails, double distance ) {
             // 구글맵 API 정보 (평점, 평점 수, 영업 상황)
             return WellnessNearbyDto.builder()
                     .wellnessInfoId(wellnessInfo.getId())

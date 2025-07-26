@@ -5,26 +5,23 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.wellcome.WellcomeBE.domain.community.QCommunity;
+import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostDetailResponse;
 import com.wellcome.WellcomeBE.domain.like.QLiked;
 import com.wellcome.WellcomeBE.domain.member.Member;
+import com.wellcome.WellcomeBE.domain.support.QSupport;
+import com.wellcome.WellcomeBE.domain.tripPlan.QTripPlan;
+import com.wellcome.WellcomeBE.domain.tripPlanPlace.QTripPlanPlace;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.QWellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNearResponse;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
-import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.CollectionUtils;
 
-
-
-import com.wellcome.WellcomeBE.domain.community.QCommunity;
-import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostDetailResponse;
-
-import com.wellcome.WellcomeBE.domain.support.QSupport;
-import com.wellcome.WellcomeBE.domain.tripPlan.QTripPlan;
-import com.wellcome.WellcomeBE.domain.tripPlanPlace.QTripPlanPlace;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.QWellnessInfo;
 import java.util.List;
 
 import static com.wellcome.WellcomeBE.domain.like.QLiked.liked;
@@ -32,17 +29,48 @@ import static com.wellcome.WellcomeBE.domain.support.QSupport.support;
 import static com.wellcome.WellcomeBE.domain.tripPlanPlace.QTripPlanPlace.tripPlanPlace;
 import static com.wellcome.WellcomeBE.domain.wellnessInfo.QWellnessInfo.wellnessInfo;
 
-
-
 public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
-    private final QWellnessInfo w =wellnessInfo;
-    private final QLiked l =liked;
+    private final NativeSqlCreator nativeSqlCreator;
+    private final QWellnessInfo w = wellnessInfo;
+    private final QLiked l = liked;
 
+    public WellnessInfoRepositoryImpl(JPAQueryFactory queryFactory, NativeSqlCreator nativeSqlCreator) {
+        this.queryFactory = queryFactory;
+        this.nativeSqlCreator = nativeSqlCreator;
+    }
 
-    public WellnessInfoRepositoryImpl(EntityManager em) {
-        this.queryFactory = new JPAQueryFactory(em);
+    @Override
+    public List<WellnessInfoNearResponse.WellnessNearbyDto> findNearbyWithinRadius(
+            Double mapX, Double mapY, Long excludeId, Double radiusKm, int limit
+    ) {
+        QWellnessInfo wi = QWellnessInfo.wellnessInfo;
+
+        NumberExpression<Double> distanceExpr = nativeSqlCreator.createCalcDistanceSQL(
+                mapX, mapY, wi.mapX, wi.mapY
+        );
+
+        return queryFactory
+                .select(Projections.constructor(WellnessInfoNearResponse.WellnessNearbyDto.class,
+                        wi.id,
+                        wi.thumbnailUrl,
+                        wi.title,
+                        wi.category,
+                        wi.mapX,
+                        wi.mapY,
+                        wi.thema,
+                        wi.parentId,
+                        distanceExpr.as("distance")
+                ))
+                .from(wi)
+                .where(
+                        wi.id.ne(excludeId),
+                        distanceExpr.loe(radiusKm * 1000)
+                )
+                .orderBy(distanceExpr.asc())
+                .limit(limit)
+                .fetch();
     }
 
     @Override
