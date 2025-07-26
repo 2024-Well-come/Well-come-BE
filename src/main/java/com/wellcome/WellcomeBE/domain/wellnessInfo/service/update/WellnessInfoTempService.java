@@ -1,5 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.service.update;
 
+import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService2;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoTempData;
@@ -41,6 +42,7 @@ public class WellnessInfoTempService {
     private final WellnessInfoTempRepository tempWellnessInfoRepository;
     private final WellnessInfoService2 wellnessInfoService2;
     private final Executor asyncExecutor;
+    private final GoogleMapInfoService2 googleMapInfoService2;
 
     @Transactional
     public void updateTourInfo(){
@@ -159,13 +161,12 @@ public class WellnessInfoTempService {
                     WellnessInfoTemp temp = entry.getValue();
 
                     // 썸네일 이미지 업로드
-                    CompletableFuture<String> thumbnailUrlFuture = CompletableFuture.supplyAsync(() -> {
-                        //log.info("[썸네일 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
-                        return wellnessInfoService2.processThumbnailImg(contentId, temp.getOriginalThumbnailUrl());
-                    }, asyncExecutor);
+                    CompletableFuture<String> thumbnailUrlFuture = CompletableFuture.supplyAsync(
+                            () -> wellnessInfoService2.processThumbnailImg(contentId, temp.getOriginalThumbnailUrl()),
+                            asyncExecutor);
 
-                    // parentId todo 임시로 null 설정, 업데이트 필요
-                    CompletableFuture<String> parentIdFuture = CompletableFuture.completedFuture(null);
+                    // parentId 값 찾기
+                    CompletableFuture<String> parentIdFuture = googleMapInfoService2.getParentIdByGoogleMap(temp.getAddress(), temp.getTitle());
 
                     // 두 비동기 작업 병합
                     return thumbnailUrlFuture.thenCombine(parentIdFuture,

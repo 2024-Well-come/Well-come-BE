@@ -57,17 +57,12 @@ public class GoogleMapInfoService2 {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
-    //단건 처리 래퍼 - 업데이트 포함
-    public void processAndSaveSingleWellnessInfo(WellnessInfo wellnessInfo) {
-        processWellnessInfoGoogleMapParentId(wellnessInfo)
-                .thenAccept(parentId -> {
-                    if (parentId != null) {
-                        wellnessInfoRepository.updateParentIdById(wellnessInfo.getId(), parentId);
-                        //log.info("[SINGLE_UPDATED] DB 업데이트 완료 - id={}, parentId={}", wellnessInfo.getId(), parentId);
+    public CompletableFuture<String> getParentIdByGoogleMap(String address, String title) {
+        return getPlaceId(address, title)
+                .thenApply(response -> {
+                    if (response != null && !response.getPredictions().isEmpty()) {
+                        return extractParentIdFromResponse(response);
                     }
-                })
-                .exceptionally(ex -> {
-                    log.error("[단일 처리 실패] id={}, error={}", wellnessInfo.getId(), ex.getMessage(), ex);
                     return null;
                 });
     }
