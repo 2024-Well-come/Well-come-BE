@@ -24,4 +24,7 @@ public class WellnessInfoImg extends BaseTimeEntity {
     @Column(nullable = false, unique = true, length = 512)
     private String imgUrl;
 
+    private String imgName;
+    private String contentid;
+
 }

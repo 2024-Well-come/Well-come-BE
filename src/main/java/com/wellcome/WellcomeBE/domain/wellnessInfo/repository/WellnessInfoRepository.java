@@ -3,6 +3,7 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.repository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.request.WellnessContentIdOnly;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -10,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long>, WellnessInfoRepositoryCustom{
@@ -108,4 +110,9 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
             "WHERE w.contentId IN :contentIds")
     int bulkUpdateIsDeleted(@Param("contentIds") Set<String> contentIds);
 
+    //Page<WellnessInfo> findAll(Pageable pageable);
+
+    @Query("SELECT new com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.request.WellnessContentIdOnly(w.contentId) FROM WellnessInfo w")
+    List<WellnessContentIdOnly> findAllContentIdOnly();
+    Optional<WellnessInfo> findByContentId(String contentId);
 }

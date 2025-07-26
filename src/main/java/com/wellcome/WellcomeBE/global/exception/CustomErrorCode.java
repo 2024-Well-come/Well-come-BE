@@ -25,7 +25,7 @@ public enum CustomErrorCode {
     TOUR_API_UNKNOWN_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2007, "한국관광공사 API 호출 중 알 수 없는 오류가 발생했습니다."),
 
     // 구글맵 API (3xxx)
-
+    GOOGLE_PARENT_ID_NOT_FOUND(HttpStatus.NOT_FOUND,3001,"해당 parentId의 정보가 없습니다."),
 
     // Member (4xxx)
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 멤버를 찾을 수 없습니다."),
@@ -33,6 +33,7 @@ public enum CustomErrorCode {
 
     // WellnessInfo (5xxx)
     WELLNESS_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, 5001,"해당하는 웰니스 정보를 찾을 수 없습니다."),
+    WELLNESS_INFO_CONTENT_ID_NOT_FOUND(HttpStatus.NOT_FOUND,3001,"웰니스 정보에 해당 contentId의 정보가 없습니다."),
 
     // TripPlan (6xxx)
     TRIP_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 6001,"해당하는 여행 폴더를 찾을 수 없습니다."),
