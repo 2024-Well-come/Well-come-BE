@@ -9,6 +9,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoTempRe
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.category.CategoryApiTempService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.keyword.KeywordApiTempService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup.WellnessInfoService2;
+import com.wellcome.WellcomeBE.domain.wellnessInfoImg.service.WellnessInfoImgService3;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class WellnessInfoTempService {
     private final WellnessInfoService2 wellnessInfoService2;
     private final Executor asyncExecutor;
     private final GoogleMapInfoService2 googleMapInfoService2;
+    private final WellnessInfoImgService3 wellnessInfoImgService3;
 
     @Transactional
     public void updateTourInfo(){
@@ -150,7 +152,8 @@ public class WellnessInfoTempService {
         // 새로운 WellnessInfo 데이터 생성 및 저장
         saveAddedWellnessInfos(preparedData, newData);
 
-        // todo 상세사진 저장
+        // 상세사진 저장
+        addedIds.forEach(contentId -> wellnessInfoImgService3.singleFetchAndSaveTourImages(contentId));
     }
 
     // 썸네일 이미지 S3 업로드 및 parentId 값 찾기
@@ -211,7 +214,7 @@ public class WellnessInfoTempService {
         /**
          * 추가 작업
          * - WellnessInfo isDeleted 컬럼 추가 (ok)
-         * - 웰니스 목록 조회에서는 isDeleted = false인 값들 중 조회되도록 수정 (todo querydsl 코드에 추가 반영 필요)
+         * - 웰니스 목록 조회에서는 isDeleted = false인 값들 중 조회되도록 수정 (Todo querydsl 코드에 추가 반영 필요)
          * - 웰니스 정보 상세 조회 시 isDelete = true일 경우, opendetail에서 영업종료 표시 대신 '폐점됨' 으로 보이도록 수정 (ok)
          */
     }

@@ -13,6 +13,7 @@ import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -118,14 +119,33 @@ public class WellnessInfoImgService3 {
                         .orElseThrow(() -> new CustomException(WELLNESS_INFO_CONTENT_ID_NOT_FOUND));
 
                 List<WellnessInfoImg> images = fetchDataAndConvert(contentId, wellness);
-                wellnessInfoImgRepository.saveAll(images);
-                log.info("[단일 요청 스레드 완료] contentId={}, 저장 건수={}", contentId, images.size());
+
+                List<WellnessInfoImg> duplicateAttempts = new ArrayList<>();
+                List<WellnessInfoImg> successInserts = new ArrayList<>();
+
+                for (WellnessInfoImg img : images) {
+                    try {
+                        wellnessInfoImgRepository.save(img);
+                        successInserts.add(img);
+                    } catch (DataIntegrityViolationException e) {
+                        // unique 제약 위반 등으로 insert 실패 → 건너뛰기
+                        duplicateAttempts.add(img);
+                        log.warn("[중복 삽입 시도] contentId={}, imgUrl={}, imgName={}",
+                                contentId, img.getImgUrl(), img.getImgName());
+                    } catch (Exception e) {
+                        log.error("[기타 저장 실패] contentId={}, imgUrl={}, error={}",
+                                contentId, img.getImgUrl(), e.getMessage());
+                    }
+                }
+
+                log.info("[단일 요청 스레드 완료] contentId={}, 성공 {}건, 중복 {}건",
+                        contentId, successInserts.size(), duplicateAttempts.size());
+
             } catch (Exception e) {
                 log.error("[단일 요청 실패] contentId={}, error={}", contentId, e.getMessage(), e);
             }
         }, asyncExecutor);
     }
-
 
     private List<WellnessInfoImg> fetchDataAndConvert(String contentId, WellnessInfo wellness) throws Exception {
         String uriString = webClientConfig.getTourImageApiUrl(Map.of("contentId", contentId));
