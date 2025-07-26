@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.tripPlanPlace.repository;
 
-import com.wellcome.WellcomeBE.QuerydslConfig;
+import com.wellcome.WellcomeBE.NativeSqlCreatorTestConfig;
+import com.wellcome.WellcomeBE.global.config.QuerydslConfig;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
@@ -32,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
-@Import(QuerydslConfig.class)
+@Import({QuerydslConfig.class, NativeSqlCreatorTestConfig.class})
 public class TripPlanPlaceRepositoryTest {
 
     @Autowired
