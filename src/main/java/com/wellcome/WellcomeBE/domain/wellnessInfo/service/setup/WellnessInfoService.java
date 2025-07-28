@@ -16,13 +16,11 @@ import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -261,7 +259,7 @@ public class WellnessInfoService {
 //
 //        return convertToEntity(item, s3Url);
 //    }
-
+//
 //    private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item, String s3ThumbnailUrl){
 //        try {
 //            return item.toEntity(s3ThumbnailUrl);

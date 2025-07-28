@@ -8,9 +8,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.time.LocalDate;
 
 /**
  * 여행 폴더 상세 조회 Response DTO
@@ -91,8 +91,6 @@ public class TripPlanDetailResponse {
                     rating = placeDetails.getRating();
                     ratingNum = placeDetails.getUser_ratings_total();
 
-                    //OpeningHoursUtils.OpenStatus openStatus = OpeningHoursUtils.getOpenStatus(placeDetails);
-                    //isOpen = openStatus.getIsOpen();
                 }
 
                 return SavedWellnessInfoItem.builder()
@@ -101,7 +99,6 @@ public class TripPlanDetailResponse {
                         .title(wellnessInfo.getTitle())
                         .rating(rating)
                         .ratingNum(ratingNum)
-                        //.isOpen(isOpen)
                         .thema(wellnessInfo.getThema().getName())
                         .address(wellnessInfo.getAddress())
                         .mapX(wellnessInfo.getMapX())

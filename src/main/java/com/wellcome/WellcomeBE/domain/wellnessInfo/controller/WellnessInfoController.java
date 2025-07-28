@@ -6,7 +6,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.service.WellnessInfoApiServic
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup.WellnessInfoService2;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup.WellnessInfoService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.update.WellnessInfoTempService;
-import com.wellcome.WellcomeBE.global.type.ImgSavedType;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +35,10 @@ public class WellnessInfoController {
                         "  - 총 처리 시간: {}ms", end - start);
     }
 
+    // 한국관광공사_국문 API 썸네일 이미지 S3에 저장
+    @PostMapping("/uploadThumbnail")
+    public void uploadThumbnailImgToS3() { wellnessInfoService.uploadThumbnailImgToS3(); }
+
     // 한국관광공사_국문 API 호출 및 데이터 저장 (변경: @Async)
     @GetMapping("/getTourBasicApiData")
     public void fetchAndSaveTourInfo(){
@@ -54,7 +58,7 @@ public class WellnessInfoController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestBody WellnessInfoListRequest request
     ){
-        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoList(page, request, ImgSavedType.S3));
+        return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoList(page, request));
     }
 
     // 웰니스 장소 상세 조회(1) - 기본 정보 조회
@@ -85,25 +89,18 @@ public class WellnessInfoController {
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoReviewPosts(wellnessInfoId));
     }
 
-    
-    // 현재 날씨 정보 조회 (강원도 날씨 테스트용)
-    @GetMapping("/api/weather-info")
-    public ResponseEntity<WeatherResponse> getWeatherInfo() {
-        return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo(73, 134)); //강원도
-    }
-
-    //v1
-    // 웰니스 장소 상세 조회(2) - 주변 추전 장소
-//    @GetMapping("/api/wellness-info/{wellnessInfoId}/nearby-places")
-//    public ResponseEntity<WellnessInfoNearResponse>getSurroundingPlaces(@PathVariable Long wellnessInfoId){
-//        return ResponseEntity.ok(wellnessInfoApiService.getSurroundingWellnessInfo(wellnessInfoId));
-//    }
     // 웰니스 장소 상세 조회(5) - 아티클 조회
     @GetMapping("/api/wellness-info/{wellnessInfoId}/articles")
     public ResponseEntity<WellnessInfoArticleResponse> getWellnessIngoArticles(
             @PathVariable("wellnessInfoId") Long wellnessInfoId
     ){
         return ResponseEntity.ok(wellnessInfoApiService.getWellnessInfoArticle(wellnessInfoId));
+    }
+
+    // 현재 날씨 정보 조회 (강원도 날씨 테스트용)
+    @GetMapping("/api/weather-info")
+    public ResponseEntity<WeatherResponse> getWeatherInfo() {
+        return ResponseEntity.ok(wellnessInfoService.fetchWeatherInfo(73, 134)); //강원도
     }
 
 }
