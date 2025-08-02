@@ -114,36 +114,63 @@ public class WellnessInfoImgService3 {
     public void singleFetchAndSaveTourImages(String contentId) {
         CompletableFuture.runAsync(() -> {
             log.info("[단일 요청 스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
-            try {
-                WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId)
-                        .orElseThrow(() -> new CustomException(WELLNESS_INFO_CONTENT_ID_NOT_FOUND));
 
-                List<WellnessInfoImg> images = fetchDataAndConvert(contentId, wellness);
+            WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId)
+                    .orElseThrow(() -> new CustomException(WELLNESS_INFO_CONTENT_ID_NOT_FOUND));
 
-                List<WellnessInfoImg> duplicateAttempts = new ArrayList<>();
-                List<WellnessInfoImg> successInserts = new ArrayList<>();
+            List<WellnessInfoImg> images = null;
 
-                for (WellnessInfoImg img : images) {
-                    try {
-                        wellnessInfoImgRepository.save(img);
-                        successInserts.add(img);
-                    } catch (DataIntegrityViolationException e) {
-                        // unique 제약 위반 등으로 insert 실패 → 건너뛰기
-                        duplicateAttempts.add(img);
-                        log.warn("[중복 삽입 시도] contentId={}, imgUrl={}, imgName={}",
-                                contentId, img.getImgUrl(), img.getImgName());
-                    } catch (Exception e) {
-                        log.error("[기타 저장 실패] contentId={}, imgUrl={}, error={}",
-                                contentId, img.getImgUrl(), e.getMessage());
+            int maxAttempts = 2;
+            int attempt = 0;
+
+            // 상세 이미지 API 호출
+            while(attempt < maxAttempts){
+                try {
+                    images = fetchDataAndConvert(contentId, wellness);
+                    break;
+                } catch (Exception e) { //오류가 발생할 경우 1회 재시도
+                    attempt++;
+                    if(attempt < maxAttempts){
+                        log.error("[단일 요청 실패 - 3초 후 재시도 예정] contentId={}, error={}", contentId, e.getMessage(), e);
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            log.error("[재시도 대기 중 인터럽트 발생] contentId={}", contentId);
+                        }
+                    }else{
+                        log.error("[단일 요청 최종 실패] contentId={}, error={}", contentId, e.getMessage(), e);
+                        return;
                     }
                 }
-
-                log.info("[단일 요청 스레드 완료] contentId={}, 성공 {}건, 중복 {}건",
-                        contentId, successInserts.size(), duplicateAttempts.size());
-
-            } catch (Exception e) {
-                log.error("[단일 요청 실패] contentId={}, error={}", contentId, e.getMessage(), e);
             }
+
+            if(images.isEmpty()){
+                log.info("[단일 요청 스레드 완료] contentId={}, 저장할 데이터 없음");
+                return;
+            }
+
+            // 상세 이미지 저장
+            List<WellnessInfoImg> duplicateAttempts = new ArrayList<>();
+            List<WellnessInfoImg> successInserts = new ArrayList<>();
+
+            for (WellnessInfoImg img : images) {
+                try {
+                    wellnessInfoImgRepository.save(img);
+                    successInserts.add(img);
+                } catch (DataIntegrityViolationException e) {
+                    // unique 제약 위반 등으로 insert 실패 → 건너뛰기
+                    duplicateAttempts.add(img);
+                    log.warn("[중복 삽입 시도] contentId={}, imgUrl={}, imgName={}",
+                            contentId, img.getImgUrl(), img.getImgName());
+                } catch (Exception e) {
+                    log.error("[기타 저장 실패] contentId={}, imgUrl={}, error={}",
+                            contentId, img.getImgUrl(), e.getMessage());
+                }
+            }
+
+            log.info("[단일 요청 스레드 완료] contentId={}, 성공 {}건, 중복 {}건",
+                    contentId, successInserts.size(), duplicateAttempts.size());
         }, asyncExecutor);
     }
 

@@ -40,4 +40,6 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
     @Query("SELECT new com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.request.WellnessContentIdOnly(w.contentId) FROM WellnessInfo w")
     List<WellnessContentIdOnly> findAllContentIdOnly();
     Optional<WellnessInfo> findByContentId(String contentId);
+
+    List<WellnessInfo> findByContentIdIn(Set<String> contentIds);
 }

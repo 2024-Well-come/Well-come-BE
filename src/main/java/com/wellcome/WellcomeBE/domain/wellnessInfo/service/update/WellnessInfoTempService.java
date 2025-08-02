@@ -169,7 +169,8 @@ public class WellnessInfoTempService {
                             asyncExecutor);
 
                     // parentId 값 찾기
-                    CompletableFuture<String> parentIdFuture = googleMapInfoService2.getParentIdByGoogleMap(temp.getAddress(), temp.getTitle());
+                    CompletableFuture<String> parentIdFuture = CompletableFuture.completedFuture(null); //todo parentId 처리 로직 추가 필요
+                    //CompletableFuture<String> parentIdFuture = googleMapInfoService2.getParentIdByGoogleMap(temp.getAddress(), temp.getTitle());
 
                     // 두 비동기 작업 병합
                     return thumbnailUrlFuture.thenCombine(parentIdFuture,

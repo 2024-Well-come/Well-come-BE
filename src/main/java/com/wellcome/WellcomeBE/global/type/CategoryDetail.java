@@ -26,11 +26,11 @@ public class CategoryDetail {
 
             // 축제/공연/행사
             new CategoryDetail("A02", "A0207"), // 축제
-            new CategoryDetail("A02", "A0208", "A02080100"), // 공연/행사 - 전통공연
+            new CategoryDetail("A02", "A0208", "A02080100") // 공연/행사 - 전통공연
 
             // 숙박
-            new CategoryDetail("B02", "B0201", "B02011200"), // 홈스테이
-            new CategoryDetail("B02", "B0201", "B02011600") // 한옥
+            //new CategoryDetail("B02", "B0201", "B02011200"), // 홈스테이
+            //new CategoryDetail("B02", "B0201", "B02011600") // 한옥
             // TODO 웰니스 프로그램 있는 곳 개별 추가 필요
 
             // 음식점
