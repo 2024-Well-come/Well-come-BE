@@ -31,24 +31,31 @@ public class S3Service {
     private String bucketName;
 
     public String uploadDetailImageFromUrl(String imageUrl, String contentId) {
-        try (InputStream inputStream = new URL(imageUrl).openStream()) {
+        try {
+            // 파일 확장자 및 경로 세팅
             String fileExtension = getFileExtension(imageUrl);
             String folderPath = "detail-images/" + contentId + "/";
             String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
 
-            ObjectMetadata metadata = new ObjectMetadata();
+            // contentLength 확인용 Connection
             URLConnection connection = new URL(imageUrl).openConnection();
             int contentLength = connection.getContentLength();
-            if (contentLength > 0) metadata.setContentLength(contentLength);
 
-            metadata.setContentType(getMimeType(fileExtension));
-            amazonS3.putObject(new PutObjectRequest(bucketName, fileName, inputStream, metadata));
+            // 다시 stream 열기 (같은 URL이지만 새롭게 열어야 안정적)
+            try (InputStream inputStream = new URL(imageUrl).openStream()) {
+                ObjectMetadata metadata = new ObjectMetadata();
+                if (contentLength > 0) metadata.setContentLength(contentLength);
+                metadata.setContentType(getMimeType(fileExtension));
 
-            return amazonS3.getUrl(bucketName, fileName).toString();
-        } catch (FileNotFoundException e){
-        log.warn("FileNotFoundException 발생: imgUrl: {}, contentId: {}", imageUrl, contentId);
-        return null;
-        } catch (IOException e){
+                amazonS3.putObject(new PutObjectRequest(bucketName, fileName, inputStream, metadata));
+
+                return amazonS3.getUrl(bucketName, fileName).toString();
+            }
+
+        } catch (FileNotFoundException e) {
+            log.warn("FileNotFoundException 발생: imgUrl: {}, contentId: {}", imageUrl, contentId);
+            return null;
+        } catch (IOException e) {
             log.error("IOException 발생: {}", e.getMessage());
             throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
         } catch (AmazonServiceException e) {
@@ -59,6 +66,7 @@ public class S3Service {
             throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
         }
     }
+
 
     private String getFileExtension(String url) {
         int lastDot = url.lastIndexOf('.');

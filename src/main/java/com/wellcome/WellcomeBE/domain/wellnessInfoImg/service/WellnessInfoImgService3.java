@@ -78,7 +78,7 @@ public class WellnessInfoImgService3 {
                 .collect(Collectors.toMap(WellnessInfo::getContentId, wi -> wi));
 
 
-        log.info("[메인 스레드 시작] thread={}", Thread.currentThread().getName());
+        //log.info("[메인 스레드 시작] thread={}", Thread.currentThread().getName());
 
         List<String> failedContentIds = Collections.synchronizedList(new ArrayList<>());
 
@@ -86,11 +86,11 @@ public class WellnessInfoImgService3 {
                 .map(contentIdObj -> CompletableFuture.runAsync(() -> {
                     String contentId = contentIdObj.getContentId();
                     WellnessInfo wellness = wellnessMap.get(contentId);
-                    log.info("[스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+                    //log.info("[스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
                     try {
                         List<WellnessInfoImg> images = fetchDataAndConvert(contentId,wellness);
                         wellnessInfoImgRepository.saveAll(images);
-                        log.info("[스레드 완료] contentId={}, 저장 건수={}", contentId, images.size());
+                        //log.info("[스레드 완료] contentId={}, 저장 건수={}", contentId, images.size());
                     } catch (Exception e) {
                         failedContentIds.add(contentId);
                         log.error("[스레드 실패] contentId={}, error={}", contentId, e.getMessage(), e);
@@ -119,8 +119,8 @@ public class WellnessInfoImgService3 {
         CompletableFuture.runAsync(() -> {
             log.info("[단일 요청 스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
             try {
-                WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId)
-                        .orElseThrow(() -> new CustomException(WELLNESS_INFO_CONTENT_ID_NOT_FOUND));
+                WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId).orElseThrow(() -> new CustomException(WELLNESS_INFO_CONTENT_ID_NOT_FOUND));
+
 
                 List<WellnessInfoImg> images = fetchDataAndConvert(contentId, wellness);
                 wellnessInfoImgRepository.saveAll(images);
