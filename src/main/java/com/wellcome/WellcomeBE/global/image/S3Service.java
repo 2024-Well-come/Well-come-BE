@@ -3,7 +3,6 @@ package com.wellcome.WellcomeBE.global.image;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.util.IOUtils;
@@ -19,7 +18,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.UUID;
 
-import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.IMG_UPLOAD_ERROR;
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_IMG_S3_UPLOAD_FAILED;
 
 @Service
@@ -32,15 +30,42 @@ public class S3Service {
     @Value("${cloud.aws.s3.bucketName}")
     private String bucketName;
 
-    /**
-     * MultipartFile
-     */
-    public void uploadFile(MultipartFile multipartFile) throws IOException {
-        File file = multiPartFileToFile(multipartFile);
-        String fileName = System.currentTimeMillis() + "_" + multipartFile.getOriginalFilename();
-        amazonS3.putObject(new PutObjectRequest(bucketName, fileName, file));
-        file.delete();
+    public String uploadDetailImageFromUrl(String imageUrl, String contentId) {
+        try (InputStream inputStream = new URL(imageUrl).openStream()) {
+            String fileExtension = getFileExtension(imageUrl);
+            String folderPath = "detail-images/" + contentId + "/";
+            String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
+
+            ObjectMetadata metadata = new ObjectMetadata();
+            URLConnection connection = new URL(imageUrl).openConnection();
+            int contentLength = connection.getContentLength();
+            if (contentLength > 0) metadata.setContentLength(contentLength);
+
+            metadata.setContentType(getMimeType(fileExtension));
+            amazonS3.putObject(new PutObjectRequest(bucketName, fileName, inputStream, metadata));
+
+            return amazonS3.getUrl(bucketName, fileName).toString();
+        } catch (FileNotFoundException e){
+        log.warn("FileNotFoundException 발생: imgUrl: {}, contentId: {}", imageUrl, contentId);
+        return null;
+        } catch (IOException e){
+            log.error("IOException 발생: {}", e.getMessage());
+            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
+        } catch (AmazonServiceException e) {
+            log.error("AWS S3 Service 오류 발생: {}", e.getMessage());
+            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
+        } catch (AmazonClientException e) {
+            log.error("AWS S3 Client 오류 발생: {}", e.getMessage());
+            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
+        }
     }
+
+    private String getFileExtension(String url) {
+        int lastDot = url.lastIndexOf('.');
+        return (lastDot != -1) ? url.substring(lastDot + 1).toLowerCase() : "jpg";
+    }
+
+
 
 //    public String uploadImgFile(MultipartFile multipartFile) throws IOException {
 //        ObjectMetadata metadata = new ObjectMetadata();
