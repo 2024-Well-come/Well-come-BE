@@ -236,10 +236,6 @@ public class WellnessInfoService {
         }
     }
 
-//    private Mono<TourBasicApiResponse> handleXmlResponse(String responseBody) {
-//        String errorMessage = errorHandler.handleXmlErrorResponse(responseBody);
-//        return Mono.error(new CustomException(TOUR_API_RESPONSE_ERROR, TOUR_API_RESPONSE_ERROR.getMessage() + ": " + errorMessage));
-//    }
 
     // 썸네일 이미지가 있을 경우 S3에 업로드
     private WellnessInfo processImgByItem(TourBasicApiResponse.Response.Body.Items.Item item) {
