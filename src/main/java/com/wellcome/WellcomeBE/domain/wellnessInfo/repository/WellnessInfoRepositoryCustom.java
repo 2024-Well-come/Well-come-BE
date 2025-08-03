@@ -1,6 +1,7 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.repository;
 
 import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostDetailResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNearResponse;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
@@ -11,8 +12,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface WellnessInfoRepositoryCustom {
+    List<WellnessInfoNearResponse.WellnessNearbyDto> findNearbyWithinRadius(Double mapX, Double mapY, Long excludeId, Double radiusKm, int limit);
 
-    public List<ReviewPostDetailResponse.ReviewWellnessInfoItem> findWellnessInfoWithSupportAndLikedByCommunityId(Long communityId, Member member);
+    List<ReviewPostDetailResponse.ReviewWellnessInfoItem> findWellnessInfoWithSupportAndLikedByCommunityId(Long communityId, Member member);
 
     Page<WellnessInfoWithLiked> findWellnessInfoByThemaAndSigunguWithWeight(
             Pageable pageable,

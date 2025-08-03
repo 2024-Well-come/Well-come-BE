@@ -1,18 +1,21 @@
 package com.wellcome.WellcomeBE.domain.Article.repository;
 
+import com.wellcome.WellcomeBE.NativeSqlCreatorTestConfig;
+import com.wellcome.WellcomeBE.global.config.QuerydslConfig;
 import com.wellcome.WellcomeBE.domain.Article.Article;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@Import({QuerydslConfig.class, NativeSqlCreatorTestConfig.class})
 class ArticleRepositoryTest {
 
 
