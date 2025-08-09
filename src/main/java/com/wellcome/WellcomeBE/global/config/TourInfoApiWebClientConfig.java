@@ -1,16 +1,18 @@
 package com.wellcome.WellcomeBE.global.config;
 
-import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.response.TourImageApiResponse;
+import io.netty.channel.ChannelOption;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
-import java.net.URI;
+import java.time.Duration;
 import java.util.Map;
+
 @Configuration
 @Slf4j
 public class TourInfoApiWebClientConfig {
@@ -24,7 +26,12 @@ public class TourInfoApiWebClientConfig {
     // WebClient 생성
     @Bean
     public WebClient webClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000) //연결 타임아웃
+                .responseTimeout(Duration.ofMillis(5000)); //응답 타임아웃
+
         return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
 

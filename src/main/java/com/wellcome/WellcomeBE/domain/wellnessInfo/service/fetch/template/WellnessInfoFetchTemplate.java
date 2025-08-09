@@ -223,7 +223,7 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
         log.info("[시작] '{}' 에 대한 API 호출 및 데이터 저장", label);
     }
     private void logRetry(String label, int page, int attempt, Exception e) {
-        log.warn("[재시도] '{}': page={}, attempt={}/{}, error={}", label, page, attempt, retryLimit, e.getMessage());
+        log.warn("[재시도 {}/{}] '{}': page={}, causeType={}, error={}", attempt, retryLimit, label, page, e.getClass().getSimpleName(), e.getMessage());
     }
     private void logError(String label, int page, Throwable e) {
         log.error("[API 호출 실패] '{}': page={}, error={}", label, page, e.getMessage(), e);
