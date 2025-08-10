@@ -21,8 +21,7 @@ public class WellnessInfoImg extends BaseTimeEntity {
     @JoinColumn(name = "wellness_info_id", nullable = false)
     private WellnessInfo wellnessInfo;
 
-    @Lob
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 512)
     private String imgUrl;
 
 }

@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long>, WellnessInfoRepositoryCustom{
 
-    List<WellnessInfo> findByThumbnailUrlNotNull();
+    List<WellnessInfo> findByOriginalThumbnailUrlNotNull();
 
     //TODO 병렬 스레드 이후 삭제할 로직입니다.
     Page<WellnessInfo> findAll(Pageable pageable);
