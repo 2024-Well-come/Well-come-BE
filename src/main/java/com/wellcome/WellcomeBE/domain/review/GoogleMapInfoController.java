@@ -10,7 +10,8 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class GoogleMapInfoController {
 
-    private final GoogleMapInfoService googlePlaceService;
+    private final GoogleMapInfoService2 googlePlaceService;
+    private final GoogleMapInfoService2 googlePlaceService2;
 
     @GetMapping("/{place}/details")
     public Mono<PlaceReviewResponse> getPlaceDetails(@PathVariable String place) {
@@ -19,6 +20,6 @@ public class GoogleMapInfoController {
 
     @GetMapping("/place/id")
     public void getPlacePlaceId(){
-        googlePlaceService.processWellnessInfo();
+        googlePlaceService2.processWellnessInfo();
     }
 }

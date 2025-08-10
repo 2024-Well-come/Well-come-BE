@@ -77,9 +77,6 @@ public class WellnessInfo extends BaseTimeEntity {
     public void setParentId(String parentId){
         this.parentId = parentId;
     }
-    public void updateViewNum(){
-        this.view++;
-    }
 
     public void updateThumbnailUrl(String s3ThumbnailUrl){
         this.thumbnailUrl = s3ThumbnailUrl;
