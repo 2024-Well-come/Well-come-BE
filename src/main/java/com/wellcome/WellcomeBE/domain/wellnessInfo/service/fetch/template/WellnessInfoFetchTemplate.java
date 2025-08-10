@@ -54,6 +54,8 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
         logStart(label);
         log.info("[비동기 스레드 확인] '{}', thread='{}'", label, Thread.currentThread().getName());
 
+        Throwable fatalError = null;
+
         while (hasNext) {
             TourBasicApiResponse response = null;
             boolean success = false;
@@ -72,16 +74,21 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
                             continue;
                         }
                         logError(label, page, ce);
+                        fatalError = ce;
                     } else {
                         logError(label, page, cause);
+                        fatalError = cause;
                     }
                     break;
                 } catch (InterruptedException e) {
                     logError(label, page, e);
                     Thread.currentThread().interrupt();
+                    fatalError = e;
                     break;
                 }
             }
+
+            if (fatalError != null) break;
 
             if(!success){
                 failedPages.add(page);
@@ -132,6 +139,11 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
         }
 
         logComplete(label, savedCount, failedPages);
+
+        if (fatalError != null) {
+            return failAsFuture(fatalError);
+        }
+
         return CompletableFuture.completedFuture(savedCount);
     }
 

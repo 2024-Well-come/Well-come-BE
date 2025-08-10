@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.CompletableFuture;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -48,8 +50,8 @@ public class WellnessInfoController {
 
     // 웰니스 정보 업데이트 (추가 및 삭제된 데이터 반영)
     @GetMapping("/getTourBasicApiData-update")
-    public void updateTourInfo(){
-        wellnessInfoTempService.updateTourInfo();
+    public CompletableFuture<Void> updateTourInfo(){
+        return wellnessInfoTempService.updateTourInfo();
     }
 
     // 웰니스 장소 추천 목록 (썸네일 이미지 URL은 S3에 업로드된 URL을 가져온다.)

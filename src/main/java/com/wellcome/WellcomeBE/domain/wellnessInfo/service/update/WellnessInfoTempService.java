@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,13 +47,95 @@ public class WellnessInfoTempService {
     private final GoogleMapInfoService2 googleMapInfoService2;
     private final WellnessInfoImgService3 wellnessInfoImgService3;
 
-    @Transactional
-    public void updateTourInfo(){
+    public CompletableFuture<Void> updateTourInfo(){
         log.info("❗ WellnessInfo 데이터 업데이트 시작");
 
         // 새로운 API 호출 및 데이터 저장
-        fetchAllNewData();
+        return fetchAllNewData()
+                .thenRun(this::processChangedData) // API 호출 성공 시에만 추가/삭제된 데이터 처리 수행
+                .whenComplete((v, ex) -> {
+                    if (ex == null) {
+                        log.info("❗ WellnessInfo 데이터 업데이트 완료");
+                    } else {
+                        log.error("❌ WellnessInfo 데이터 업데이트 실패: error={}", ex.getMessage());
+                    }
+                });
+    }
 
+    // 새롭게 한국관광공사 API 호출한 후, WellnessInfoTemp 테이블에 임시 저장
+    private CompletableFuture<Void> fetchAllNewData(){
+        log.info("[메인 스레드 확인] thread={}", Thread.currentThread().getName());
+
+        long start = System.currentTimeMillis();
+
+        // WellnessInfoTemp 초기화
+        tempWellnessInfoRepository.truncateTable();
+
+        // 카테고리별 API 호출
+        log.info("<< 카테고리별 API 호출 시작 >>");
+        List<CompletableFuture<Integer>> categoryFutures = new ArrayList<>();
+        for (CategoryDetail category : CategoryDetail.CATEGORY_PARAM_LIST_TEST) {
+            categoryFutures.add(categoryApiTempService.fetchAndSave(category));
+        }
+
+        CompletableFuture<Integer> categoryFailFast = sumOrFirstFail(categoryFutures)
+                .whenComplete((cnt, ex) -> {
+                    if (ex == null) {
+                        log.info("<< 카테고리별 API 호출 완료 >>");
+                    } else {
+                        log.error("<< 카테고리별 API 호출 중단: 실패 감지 >>");
+                    }
+                });
+
+        // 카테고리 API 호출 성공 시, 키워드 API 호출
+        return categoryFailFast.thenCompose(categorySavedCount -> {
+            List<CompletableFuture<Integer>> keywordFutures = new ArrayList<>();
+            for (String keyword : KEYWORDS_TEST) {
+                keywordFutures.add(keywordApiTempService.fetchAndSave(keyword));
+            }
+
+            CompletableFuture<Integer> keywordFailFast = sumOrFirstFail(keywordFutures)
+                    .whenComplete((cnt, ex) -> {
+                        if (ex == null) {
+                            log.info("<< 키워드별 API 호출 완료 >>");
+                        } else {
+                            log.error("<< 키워드별 API 호출 중단: 실패 감지 >>");
+                        }
+                    });
+
+            // 키워드 API 호출까지 성공 시, 최종 저장 건수 & 실행 시간 로그 남기기
+            return keywordFailFast.thenAccept(keywordSavedCount -> {
+                long end = System.currentTimeMillis();
+                int total = categorySavedCount + keywordSavedCount;
+                log.info("** API 호출 및 데이터 저장 완료 **\n" +
+                                "  - 총 처리 시간: {}ms\n" +
+                                "  - 총 데이터 수: {}건 (카테고리 API: {}건, 키워드 API: {}건)",
+                        (end - start), total, categorySavedCount, keywordSavedCount);
+            });
+        });
+    }
+
+    // 모든 Future 성공 시 결과를 합산하여 반환, 첫번째 실패가 감지되면 즉시 예외 반환
+    private CompletableFuture<Integer> sumOrFirstFail(List<CompletableFuture<Integer>> futures) {
+        CompletableFuture<Integer> allSuccess =
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                        .thenApply(v -> futures.stream().mapToInt(CompletableFuture::join).sum());
+
+        CompletableFuture<Integer> firstFailure = new CompletableFuture<>();
+        for (CompletableFuture<Integer> f : futures) {
+            f.whenComplete((r, ex) -> {
+                if (ex != null) {
+                    Throwable cause = (ex instanceof CompletionException) ? ex.getCause() : ex;
+                    firstFailure.completeExceptionally(cause);
+                }
+            });
+        }
+
+        return allSuccess.applyToEither(firstFailure, Function.identity());
+    }
+
+    @Transactional
+    private void processChangedData() {
         // 기존 DB의 contentId와 새로운 DB의 contentId 비교하여 추가된/삭제된 데이터 찾기
         List<String> contentIds = wellnessInfoRepository.findAllContentId();
         List<String> newContentIds = tempWellnessInfoRepository.findAllContentId();
@@ -75,68 +158,10 @@ public class WellnessInfoTempService {
         if(!deletedIds.isEmpty()){
             processDeletedContentIds(deletedIds);
         }
-
-        log.info("❗ WellnessInfo 데이터 업데이트 종료");
-    }
-
-    // 새롭게 한국관광공사 API 호출한 후, WellnessInfoTemp 테이블에 임시 저장
-    private void fetchAllNewData(){
-        log.info("[메인 스레드 확인] thread={}", Thread.currentThread().getName());
-
-        long start = System.currentTimeMillis();
-
-        // WellnessInfoTemp 초기화
-        tempWellnessInfoRepository.truncateTable();
-
-        // 카테고리별 API 호출
-        log.info("<< 카테고리별 API 호출 시작 >>");
-        List<CompletableFuture<Integer>> categoryFutures = new ArrayList<>();
-        for (CategoryDetail category : CategoryDetail.CATEGORY_PARAM_LIST_TEST) {
-            categoryFutures.add(categoryApiTempService.fetchAndSave(category));
-        }
-        CompletableFuture.allOf(categoryFutures.toArray(new CompletableFuture[0])).join(); //모든 카테고리 작업 완료 대기
-        log.info("<< 카테고리별 API 호출 완료 >>");
-
-        int categorySavedCount = categoryFutures.stream()
-                .mapToInt(future -> {
-                    try {
-                        return future.get();
-                    } catch (Exception e){
-                        return 0;
-                    }
-                })
-                .sum();
-
-        // 키워드별 API 호출
-        log.info("<< 키워드별 API 호출 시작 >>");
-        List<CompletableFuture<Integer>> keywordFutures = new ArrayList<>();
-        for(String keyword : KEYWORDS_TEST){
-            keywordFutures.add(keywordApiTempService.fetchAndSave(keyword));
-        }
-        CompletableFuture.allOf(keywordFutures.toArray(new CompletableFuture[0])).join(); //모든 키워드 작업 완료 대기
-        log.info("<< 키워드별 API 호출 완료 >>");
-
-        int keywordSavedCount = keywordFutures.stream()
-                .mapToInt(future -> {
-                    try {
-                        return future.get();
-                    } catch (Exception e){
-                        return 0;
-                    }
-                })
-                .sum();
-
-        long end = System.currentTimeMillis();
-        int totalSavedCount = categorySavedCount + keywordSavedCount;
-        log.info("** API 호출 및 데이터 저장 완료 ** \n" +
-                        "  - 총 처리 시간: {}ms \n" +
-                        "  - 총 데이터 수: {}건 (카테고리 API: {}건, 키워드 API: {}건)",
-                (end - start), totalSavedCount, categorySavedCount, keywordSavedCount);
     }
 
     // 추가된 데이터 처리
     private void processAddedContentIds(Set<String> addedIds){
-        
         // addedIds에 대한 WellnessInfoTemp 데이터 가져오기
         List<WellnessInfoTemp> wellnessInfoTemps = tempWellnessInfoRepository.findByContentIdIn(addedIds);
         Map<String, WellnessInfoTemp> newData = wellnessInfoTemps.stream()
@@ -208,7 +233,6 @@ public class WellnessInfoTempService {
     // 삭제된 데이터 처리
     @Transactional
     private void processDeletedContentIds(Set<String> deletedIds){
-
         // deletedIds의 WellnessInfo isDeleted 컬럼 true로 업데이트
         wellnessInfoRepository.bulkUpdateIsDeleted(deletedIds);
     }
