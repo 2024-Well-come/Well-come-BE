@@ -19,7 +19,6 @@ import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.image.S3Service;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
-import com.wellcome.WellcomeBE.global.type.Thema;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -84,8 +83,7 @@ class CommunityServiceTest {
     @BeforeEach
     void setUp(){
         member = mock(Member.class);
-        when(tokenProvider.getMember()).thenReturn(member);
-
+        lenient().when(tokenProvider.getMember()).thenReturn(member);
     }
 
     @Test
@@ -93,23 +91,42 @@ class CommunityServiceTest {
         //given
         Long communityId = 1L;
         Community community = Mockito.mock(Community.class);
-        when(communityRepository.findById(communityId)).thenReturn(Optional.of(community)); // 커뮤니티 조회 성공
+        when(communityRepository.findById(communityId)).thenReturn(Optional.of(community));
         when(community.getMember()).thenReturn(member);
 
-        wellnessInfo = Mockito.mock(WellnessInfo.class);
-        when(wellnessInfo.getThema()).thenReturn(Thema.STAY);
-
+        // 이미지
         String imgUrl = "https://Test_Mock_Images";
-        java.util.List<CommunityImg> imgList = List.of(CommunityImg.create(community,imgUrl));
+        List<CommunityImg> imgList = List.of(CommunityImg.create(community, imgUrl));
         when(community.getCommunityImgs()).thenReturn(imgList);
 
+        // WellnessInfo DTO mock 데이터 생성
+        ReviewPostDetailResponse.ReviewWellnessInfoItem item1 = ReviewPostDetailResponse.ReviewWellnessInfoItem.builder()
+                .wellnessInfoId(1L)
+                .thumbnailUrl("https://img1.jpg")
+                .title("웰니스 A")
+                .thema("STAY")
+                .address("서울 강남구")
+                .review("좋았어요")
+                .rating(5)
+                .isLiked(true)
+                .isSupport(false)
+                .build();
 
-        List<Object[]> mockWellnessInfo = List.of(
-                new Object[]{wellnessInfo, mock(TripPlanPlace.class), true, false}, // 지원한 경우
-                new Object[]{wellnessInfo, mock(TripPlanPlace.class), false, false} // 지원하지 않은 경우
-        );
+        ReviewPostDetailResponse.ReviewWellnessInfoItem item2 = ReviewPostDetailResponse.ReviewWellnessInfoItem.builder()
+                .wellnessInfoId(2L)
+                .thumbnailUrl("https://img2.jpg")
+                .title("웰니스 B")
+                .thema("STAY")
+                .address("서울 종로구")
+                .review("괜찮았어요")
+                .rating(4)
+                .isLiked(false)
+                .isSupport(false)
+                .build();
+
+        List<ReviewPostDetailResponse.ReviewWellnessInfoItem> mockWellnessInfoItems = List.of(item1, item2);
         when(wellnessInfoRepository.findWellnessInfoWithSupportAndLikedByCommunityId(communityId, member))
-                .thenReturn(mockWellnessInfo);
+                .thenReturn(mockWellnessInfoItems);
 
 
         //when
@@ -147,24 +164,37 @@ class CommunityServiceTest {
 
     @Test
     void getReviewPostDetail_커뮤니티_첨부된_이미지_없음() {
+        // given
         Long communityId = 1L;
         Community mockCommunity = Mockito.mock(Community.class);
         when(communityRepository.findById(communityId)).thenReturn(Optional.of(mockCommunity));
         when(mockCommunity.getMember()).thenReturn(member);
 
-        wellnessInfo = Mockito.mock(WellnessInfo.class);
-        when(wellnessInfo.getThema()).thenReturn(Thema.STAY);
+        // 이미지 없는 상황
+        when(mockCommunity.getCommunityImgs()).thenReturn(Collections.emptyList());
 
-        Object[] wellnessInfoData = new Object[]{wellnessInfo, mock(TripPlanPlace.class), false, true};
-        List<Object[]> mockWellnessInfo = Arrays.asList(new Object[][]{wellnessInfoData});
+        // WellnessInfo DTO mock 데이터 생성
+        ReviewPostDetailResponse.ReviewWellnessInfoItem item = ReviewPostDetailResponse.ReviewWellnessInfoItem.builder()
+                .wellnessInfoId(1L)
+                .thumbnailUrl("https://mock-thumbnail.jpg")
+                .title("웰니스 장소")
+                .thema("STAY")
+                .address("서울시 강남구")
+                .review("편안했어요")
+                .rating(4)
+                .isLiked(true)
+                .isSupport(false)
+                .build();
+
+        List<ReviewPostDetailResponse.ReviewWellnessInfoItem> mockWellnessInfoItems = List.of(item);
 
         when(supportRepository.existsByCommunityAndMember(mockCommunity, member)).thenReturn(true);
-        when(mockCommunity.getCommunityImgs()).thenReturn(Collections.emptyList()); // 빈 리스트 반환
         when(wellnessInfoRepository.findWellnessInfoWithSupportAndLikedByCommunityId(communityId, member))
-                .thenReturn(mockWellnessInfo);
+                .thenReturn(mockWellnessInfoItems);
 
         // when
         ReviewPostDetailResponse response = communityService.getReviewPostDetail(communityId);
+
 
         // then
         assertNotNull(response.getPostImgs());

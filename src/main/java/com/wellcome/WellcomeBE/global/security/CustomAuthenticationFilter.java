@@ -30,7 +30,8 @@ public class CustomAuthenticationFilter extends GenericFilterBean {
             "/api/oauth2/kakao/refresh",
             "/api/oauth2/kakao/login",
             "/api/oauth2/kakao",
-            "/api/home"
+            "/api/home",
+            "/actuator/prometheus"
     );
 
     @Override

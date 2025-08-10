@@ -2,7 +2,6 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
-import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.Builder;

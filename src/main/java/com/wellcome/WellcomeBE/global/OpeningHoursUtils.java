@@ -21,7 +21,6 @@ public class OpeningHoursUtils {
         LocalTime now = LocalTime.now(ZoneId.of("Asia/Seoul")).withSecond(0).withNano(0); // 한국 표준시(KST)를 기준으로 현재 시간 가져오기
         String openDetail = "정보 없음";
         Boolean isOpen = false;
-//        log.info("한국시간: {}", now);
 
         if (placeResult.getOpening_hours() != null) {
             openDetail = getOpenDetail(placeResult.getOpening_hours().getWeekday_text(), today);
@@ -74,8 +73,6 @@ public class OpeningHoursUtils {
                         ? LocalTime.parse(period.getClose().getTime(), TIME_FORMATTER)
                         : LocalTime.MAX; // 23:59로 설정하여 당일 자정까지로 간주
 
-//                log.info("시작: {}", openTime);
-//                log.info("끝: {}", closeTime);
 
                 // 현재 시간이 openTime과 closeTime 사이에 있는지 확인
                 if (!now.isBefore(openTime) && !now.isAfter(closeTime)) {

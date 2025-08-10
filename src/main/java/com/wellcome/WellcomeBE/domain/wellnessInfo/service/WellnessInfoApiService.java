@@ -9,9 +9,9 @@ import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
-import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -19,7 +19,6 @@ import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImg
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
-import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_NOT_FOUND;
@@ -58,7 +60,7 @@ public class WellnessInfoApiService {
      * - 로그인 가정
      */
     @Transactional
-    public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request, ImgSavedType savedType) {
+    public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request) {
 
         // 사용자 정보 조회
         Member member = tokenProvider.getMember();
@@ -83,7 +85,7 @@ public class WellnessInfoApiService {
 
         // 웰니스 정보 목록 조회
         Pageable pageable = PageRequest.of(page, 10);
-        Page<Object[]> data = wellnessInfoRepository.findWellnessInfoByThemaAndSigunguWithWeight(
+        Page<WellnessInfoWithLiked> data = wellnessInfoRepository.findWellnessInfoByThemaAndSigunguWithWeight(
                 pageable,
                 member,
                 sortedThemaList.isEmpty() ? null : sortedThemaList, sigunguList,
@@ -93,9 +95,12 @@ public class WellnessInfoApiService {
         List<Thema> searchedThemaList = wellnessInfoRepository.findDistinctThema(themaList);
         List<Sigungu> searchedSigunguList = wellnessInfoRepository.findDistinctSigungu(sigunguList);
 
-        List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = data.stream()
-                .map(objects -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from((WellnessInfo) objects[0], (Boolean) objects[1], savedType))
+        List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = data.getContent().stream()
+                .map(dto -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from(
+                        dto.getWellnessInfo(), dto.isLiked())
+                )
                 .collect(Collectors.toList());
+
         WellnessInfoResponse.WellnessInfoList WellnessInfoList = WellnessInfoResponse.WellnessInfoList.from(
                 data.getTotalElements(), data.getNumber(),
                 data.hasPrevious(), data.hasNext(),
@@ -185,20 +190,28 @@ public class WellnessInfoApiService {
         WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
                 .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
 
-        Double mapX = wellnessInfo.getMapX();
-        Double mapY = wellnessInfo.getMapY();
-        Double radius = 10.0; // 예시로 10km 설정
+        Double baseX = wellnessInfo.getMapX();
+        Double baseY = wellnessInfo.getMapY();
 
-        List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
+
+        // 반경 3km 이내 조회
+        List<WellnessInfoNearResponse.WellnessNearbyDto> nearbyWellness = wellnessInfoRepository
+                .findNearbyWithinRadius(baseX, baseY, wellnessInfoId, 3.0, 6);
+
+        // 부족할 경우 반경 10km 재조회
+        if (nearbyWellness.size() < 6) {
+            nearbyWellness = wellnessInfoRepository
+                    .findNearbyWithinRadius(baseX, baseY, wellnessInfoId, 10.0, 6);
+        }
 
 
         List<WellnessInfoUsefulInformationResponse.WellnessNearbyDto> wellnessNearbyDtoList = nearbyWellness.stream()
                 .map(place -> {
                     PlaceReviewResponse.PlaceResult placeResult = null;
-                    if (place.getParentId() != null) {
-                        placeResult = googleMapInfoService.getPlaceDetails(place.getParentId()).block().getResult();
+                    if (place.getPlaceId() != null) {
+                        placeResult = googleMapInfoService.getPlaceDetails(place.getPlaceId()).block().getResult();
                     }
-                    double distance = calculateDistance(mapY, mapX, place.getMapY(), place.getMapX());
+                    double distance = place.getDistance();
 
                     return WellnessInfoUsefulInformationResponse.WellnessNearbyDto.form(place, placeResult, distance);
                 })
@@ -209,16 +222,6 @@ public class WellnessInfoApiService {
         return WellnessInfoUsefulInformationResponse.from(wellnessNearbyDtoList,top5Article);
     }
 
-    private static double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
-        final int R = 6371; // 지구의 반지름 (km)
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // km 단위로 변환
-    }
 
     /**
      * 웰니스 장소 상세 조회(4) - 후기 게시글 조회
@@ -244,34 +247,34 @@ public class WellnessInfoApiService {
     }
 
 
-    /**
-     * v1
-     * [FEAT] 웰니스 장소 상세 조회(2) - 주변 장소 추천
-     */
-    public WellnessInfoNearResponse getSurroundingWellnessInfo(Long wellnessInfoId) {
-        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
-                .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
-
-        Double mapX = wellnessInfo.getMapX();
-        Double mapY = wellnessInfo.getMapY();
-        Double radius = 10.0; // 예시로 10km 설정
-
-        List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
-
-
-        List<WellnessInfoNearResponse.WellnessNearItem> wellnessNearbyDtoList = nearbyWellness.stream()
-                .map(place -> {
-                    PlaceReviewResponse.PlaceResult placeResult = null;
-                    if (place.getParentId() != null) {
-                        placeResult = googleMapInfoService.getPlaceDetails(place.getParentId()).block().getResult();
-                    }
-                    double distance = calculateDistance(mapY, mapX, place.getMapY(), place.getMapX());
-
-                    return WellnessInfoNearResponse.WellnessNearItem.form(place, placeResult, distance);
-                })
-                .collect(Collectors.toList());
-        return WellnessInfoNearResponse.from(wellnessNearbyDtoList);
-    }
+//    /**
+//     * v1
+//     * [FEAT] 웰니스 장소 상세 조회(2) - 주변 장소 추천
+//     */
+//    public WellnessInfoNearResponse getSurroundingWellnessInfo(Long wellnessInfoId) {
+//        WellnessInfo wellnessInfo = wellnessInfoRepository.findById(wellnessInfoId)
+//                .orElseThrow(() -> new CustomException(CustomErrorCode.WELLNESS_INFO_NOT_FOUND));
+//
+//        Double mapX = wellnessInfo.getMapX();
+//        Double mapY = wellnessInfo.getMapY();
+//        Double radius = 10.0; // 예시로 10km 설정
+//
+//        List<WellnessInfo> nearbyWellness = wellnessInfoRepository.findTop6NearbyWellnessInfo(mapX, mapY, wellnessInfoId, radius);
+//
+//
+//        List<WellnessInfoNearResponse.WellnessNearItem> wellnessNearbyDtoList = nearbyWellness.stream()
+//                .map(place -> {
+//                    PlaceReviewResponse.PlaceResult placeResult = null;
+//                    if (place.getParentId() != null) {
+//                        placeResult = googleMapInfoService.getPlaceDetails(place.getParentId()).block().getResult();
+//                    }
+//                    double distance = calculateDistance(mapY, mapX, place.getMapY(), place.getMapX());
+//
+//                    return WellnessInfoNearResponse.WellnessNearItem.form(place, placeResult, distance);
+//                })
+//                .collect(Collectors.toList());
+//        return WellnessInfoNearResponse.from(wellnessNearbyDtoList);
+//    }
 
     /**
      * v2
