@@ -17,9 +17,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long> , Articl
     @Query("SELECT a FROM Article a WHERE a.createdAt >= :startDate ORDER BY a.view DESC")
     List<Article> findTopArticles(LocalDateTime startDate, Pageable pageable);
 
-    // 랜덤으로 5개 아티클 가져오는 쿼리
-//    @Query(value = "SELECT * FROM Article ORDER BY RANDOM() LIMIT 5", nativeQuery = true)
-//    List<Article> findRandomArticles();
 
     @Query("SELECT a FROM Article a ORDER BY a.createdAt DESC")
     Page<Article> findAllArticleByCreatedAt(Pageable pageable);

@@ -20,13 +20,6 @@ public interface CommunityRepository extends JpaRepository<Community, Long>, Com
 
     Page<Community> findByPostTypeOrderByCreatedAtDesc(Pageable pageable, Community.PostType tripPlan);
 
-//    @Query("SELECT c FROM Community c " +
-//            "LEFT JOIN Support s ON c.id = s.community.id " +
-//            "WHERE c.postType = :postType " +
-//            "GROUP BY c.id " +
-//            "ORDER BY COUNT(s.id) DESC, c.createdAt DESC")
-//    Page<Community> findByPostTypeOrderBySupportCount(Pageable pageable, @Param("postType") Community.PostType type);
-
     List<Community> findByTripPlanInOrderByCreatedAtDesc(Pageable pageable, List<TripPlan> tripPlanList);
 
     Optional<Community> findById(Long communityId);

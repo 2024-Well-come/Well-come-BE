@@ -19,7 +19,6 @@ import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
 import com.wellcome.WellcomeBE.global.type.Category;
-import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import org.junit.jupiter.api.Test;
@@ -120,7 +119,7 @@ public class WellnessInfoServiceTest {
         when(wellnessInfoRepository.findDistinctSigungu(sigunguList)).thenReturn(sigunguList);
 
         // when
-        WellnessInfoResponse response = wellnessInfoApiService.getWellnessInfoList(page, request, ImgSavedType.S3);
+        WellnessInfoResponse response = wellnessInfoApiService.getWellnessInfoList(page, request);
 
         // then
         verify(likedRepository, times(1)).findThemaByMemberOrderByLikedCount(member);
@@ -463,7 +462,7 @@ public class WellnessInfoServiceTest {
     void getWellnessInfoReviewPosts_후기_게시글_정상_조회(){
         // given
         long wellnessInfoId = 1000L;
-        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);;
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
         when(wellnessInfoRepository.findById(wellnessInfoId))
                 .thenReturn(Optional.of(wellnessInfo));
 
@@ -495,7 +494,7 @@ public class WellnessInfoServiceTest {
     void getWellnessInfoReviewPosts_해당_웰니스_정보를_포함한_여행폴더가_없는경우(){
         // given
         long wellnessInfoId = 1000L;
-        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);;
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
         when(wellnessInfoRepository.findById(wellnessInfoId))
                 .thenReturn(Optional.of(wellnessInfo));
 
@@ -518,7 +517,7 @@ public class WellnessInfoServiceTest {
     void getWellnessInfoReviewPosts_해당_웰니스_정보가_포함된_여행폴더의_후기가_작성되지_않은경우(){
         // given
         long wellnessInfoId = 1000L;
-        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);;
+        WellnessInfo wellnessInfo = Mockito.mock(WellnessInfo.class);
         when(wellnessInfoRepository.findById(wellnessInfoId))
                 .thenReturn(Optional.of(wellnessInfo));
 

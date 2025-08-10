@@ -36,11 +36,11 @@ public class Community extends BaseTimeEntity {
     @Column(name = "content", columnDefinition = "TEXT",nullable = false)
     private String content;
 
-    //@Builder.Default
+    @Builder.Default
     @Column(nullable = false)
     private Long view = 0L;
 
-    //@Builder.Default
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PostType postType = PostType.TRIP_PLAN;

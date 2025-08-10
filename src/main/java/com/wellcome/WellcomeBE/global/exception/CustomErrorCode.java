@@ -16,13 +16,16 @@ public enum CustomErrorCode {
     INVALID_VALUE(HttpStatus.BAD_REQUEST, 1002, "잘못된 입력값입니다."),
 
     // 한국관광공사 API (2xxx)
-    TOUR_API_RESPONSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2001, "한국관광공사 API 호출 오류"),
+    TOUR_API_RESPONSE_ERROR(HttpStatus.BAD_GATEWAY, 2001, "한국관광공사 API 응답 오류가 발생했습니다."),
     TOUR_API_XML_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2002, "XML 파싱 중 오류가 발생했습니다."),
     TOUR_API_JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2003, "JSON 파싱 중 오류가 발생했습니다."),
     TOUR_API_IMG_S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 2004, "한국관광공사 API 이미지 S3 업로드 오류가 발생했습니다."),
+    TOUR_API_URI_ERROR(HttpStatus.BAD_REQUEST, 2005, "잘못된 URI 구성입니다."),
+    TOUR_API_REQUEST_ERROR(HttpStatus.GATEWAY_TIMEOUT, 2006, "한국관광공사 API 요청에 실패했습니다."),
+    TOUR_API_UNKNOWN_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 2007, "한국관광공사 API 호출 중 알 수 없는 오류가 발생했습니다."),
 
     // 구글맵 API (3xxx)
-
+    GOOGLE_PARENT_ID_NOT_FOUND(HttpStatus.NOT_FOUND,3001,"해당 parentId의 정보가 없습니다."),
 
     // Member (4xxx)
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 멤버를 찾을 수 없습니다."),
@@ -30,6 +33,7 @@ public enum CustomErrorCode {
 
     // WellnessInfo (5xxx)
     WELLNESS_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, 5001,"해당하는 웰니스 정보를 찾을 수 없습니다."),
+    WELLNESS_INFO_CONTENT_ID_NOT_FOUND(HttpStatus.NOT_FOUND,3001,"웰니스 정보에 해당 contentId의 정보가 없습니다."),
 
     // TripPlan (6xxx)
     TRIP_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 6001,"해당하는 여행 폴더를 찾을 수 없습니다."),
@@ -65,9 +69,14 @@ public enum CustomErrorCode {
     ARTICLE_NOT_FOUND(NOT_FOUND,110001,"해당하는 아티클이 존재하지 않습니다."),
   
 
-    // 기상청 단기예보 API (11xxx)
-    WEATHER_API_RESPONSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 11001, "기상청 단기예보 API 응답값이 없습니다."),
-  
+    // 기상청 단기예보 API (12xxx)
+    WEATHER_API_URI_ERROR(HttpStatus.BAD_REQUEST, 12001, "날씨 API 요청 URI 구성이 잘못되었습니다."),
+    WEATHER_API_CLIENT_ERROR(HttpStatus.BAD_REQUEST, 12002, "날씨 API에 잘못된 요청을 전송했습니다."),
+    WEATHER_API_SERVER_ERROR(HttpStatus.BAD_GATEWAY, 12003, "날씨 API 서버 내부 오류가 발생했습니다."),
+    WEATHER_API_NO_RESPONSE(HttpStatus.BAD_GATEWAY, 12004, "날씨 API 응답이 없습니다."),
+    WEATHER_API_NO_DATA(HttpStatus.NOT_FOUND, 12005, "날씨 데이터가 존재하지 않습니다."),
+    WEATHER_API_UNKNOWN_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 12006, "날씨 API 처리 중 알 수 없는 오류가 발생했습니다."),
+
     ;
 
     private final HttpStatus httpStatus;
