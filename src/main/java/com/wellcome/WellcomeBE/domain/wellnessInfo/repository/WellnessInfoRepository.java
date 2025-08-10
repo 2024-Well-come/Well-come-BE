@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long>, WellnessInfoRepositoryCustom{
 
-    List<WellnessInfo> findByThumbnailUrlNotNull();
+    List<WellnessInfo> findByOriginalThumbnailUrlNotNull();
 
     @Query("SELECT new com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.request.WellnessContentIdOnly(w.contentId) FROM WellnessInfo w")
     List<WellnessContentIdOnly> findAllContentIdOnly();
