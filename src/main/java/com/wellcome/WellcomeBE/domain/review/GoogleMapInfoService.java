@@ -1,21 +1,18 @@
 package com.wellcome.WellcomeBE.domain.review;
 
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -54,10 +51,10 @@ public class GoogleMapInfoService {
     }
 
     // 단일 wellnessInfo에 대해 외부 API 호출 및 parentId 저장 (비동기 처리)
-    public CompletableFuture<WellnessInfo> processSingleWellnessInfo(WellnessInfo wellnessInfo) {
+    private CompletableFuture<WellnessInfo> processSingleWellnessInfo(WellnessInfo wellnessInfo) {
         return getPlaceId(wellnessInfo.getAddress(), wellnessInfo.getTitle())
                 .map(placePredictionResponse -> {
-                    // 외부 API로부터 parentId를 추출하고 wellnessInfo에 설정
+                    // 외부 API로부터 placePredictionResponsearentId를 추출하고 wellnessInfo에 설정
                     String parentId = extractParentIdFromResponse(placePredictionResponse);
                     wellnessInfo.setParentId(parentId);
                     return wellnessInfo;
@@ -106,6 +103,7 @@ public class GoogleMapInfoService {
                 .bodyToMono(PlacePredictionResponse.class);
     }
 
+
     /** 리뷰 조회 기능
      * https://maps.googleapis.com/maps/api/place/details/json?fields=name,rating,formatted_phone_number,opening_hours,reviews&place_id= &key=YOUR_API_KEY
      */
@@ -134,3 +132,4 @@ public class GoogleMapInfoService {
     }
 
 }
+

@@ -3,16 +3,16 @@ package com.wellcome.WellcomeBE.domain.wellnessInfoImg.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImg;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.response.TourImageApiResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
+import com.wellcome.WellcomeBE.global.image.S3Service;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.io.ParseException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +26,10 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_CONTENT_ID_NOT_FOUND;
 
@@ -46,19 +48,22 @@ public class WellnessInfoImgService3 {
 
     // AsyncExecutor 주입 (ThreadPoolTaskExecutor)
     private final Executor asyncExecutor;
+    private final S3Service s3Uploader;
 
     public WellnessInfoImgService3(
             WebClient webClient,
             WellnessInfoRepository wellnessInfoRepository,
             TourInfoApiWebClientConfig webClientConfig,
             WellnessInfoImgRepository wellnessInfoImgRepository,
-            Executor asyncExecutor
+            Executor asyncExecutor,
+            S3Service s3Uploader
     ) {
         this.webClient = webClient;
         this.wellnessInfoRepository = wellnessInfoRepository;
         this.webClientConfig = webClientConfig;
         this.wellnessInfoImgRepository = wellnessInfoImgRepository;
         this.asyncExecutor = asyncExecutor;
+        this.s3Uploader = s3Uploader;
     }
 
     public void fetchAndSaveTourImages() throws Exception {
@@ -74,7 +79,7 @@ public class WellnessInfoImgService3 {
                 .collect(Collectors.toMap(WellnessInfo::getContentId, wi -> wi));
 
 
-        log.info("[메인 스레드 시작] thread={}", Thread.currentThread().getName());
+        //log.info("[메인 스레드 시작] thread={}", Thread.currentThread().getName());
 
         List<String> failedContentIds = Collections.synchronizedList(new ArrayList<>());
 
@@ -82,11 +87,11 @@ public class WellnessInfoImgService3 {
                 .map(contentIdObj -> CompletableFuture.runAsync(() -> {
                     String contentId = contentIdObj.getContentId();
                     WellnessInfo wellness = wellnessMap.get(contentId);
-                    log.info("[스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+                    //log.info("[스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
                     try {
                         List<WellnessInfoImg> images = fetchDataAndConvert(contentId,wellness);
                         wellnessInfoImgRepository.saveAll(images);
-                        log.info("[스레드 완료] contentId={}, 저장 건수={}", contentId, images.size());
+                        //log.info("[스레드 완료] contentId={}, 저장 건수={}", contentId, images.size());
                     } catch (Exception e) {
                         failedContentIds.add(contentId);
                         log.error("[스레드 실패] contentId={}, error={}", contentId, e.getMessage(), e);
@@ -206,23 +211,36 @@ public class WellnessInfoImgService3 {
             return Collections.emptyList();
         }
 
+        // 🔄 성능 고려: 병렬 처리로 이미지 S3 업로드
+        return StreamSupport.stream(itemsNode.spliterator(), true)
+                .map(node -> {
+                    try {
+                        // DTO 변환
+                        TourImageApiResponse.Response.Body.Items.Item item =
+                                objectMapper.treeToValue(node, TourImageApiResponse.Response.Body.Items.Item.class);
 
-        //한계값을 위한 임시입니다. 삭제하거라~
-        ///int currentCount = dbLookupCount.incrementAndGet();
-        //log.info("[DB 조회] contentId={}, 현재까지 조회 수={}", contentId, currentCount);
+                        // S3 업로드 (외부 이미지 URL을 -> 내부 S3로)
+                        String s3Url = s3Uploader.uploadDetailImageFromUrl(item.getSmallimageurl(), "wellness");
 
-        List<WellnessInfoImg> images = new ArrayList<>();
-        for (JsonNode node : itemsNode) {
-            try {
-                TourImageApiResponse.Response.Body.Items.Item item =
-                        objectMapper.treeToValue(node, TourImageApiResponse.Response.Body.Items.Item.class);
-                images.add(item.toEntity(wellness));
-            } catch (ParseException e) {
-                log.warn("[엔티티 변환 실패] contentId={}, error={}", contentId, e.getMessage());
-            }
-        }
+                        if (s3Url == null) {
+                            log.warn("[업로드 실패] contentId={}, imgUrl={}", item.getContentid(), item.getSmallimageurl());
+                            return null; // 이후 filter로 null 제거
+                        }
+                        // 엔티티 생성
+                        return WellnessInfoImg.builder()
+                                .imgUrl(s3Url)                     // S3 URL 저장
+                                .imgName(item.getImgname())       // 외부 API 값 사용
+                                .contentid(item.getContentid())
+                                .wellnessInfo(wellness)
+                                .build();
 
-        return images;
+                    } catch (Exception e) {
+                        log.warn("[이미지 처리 실패] contentId={}, error={}", contentId, e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList(); // JDK 16+ 또는 collect(Collectors.toList())
     }
 
     private void retryFailedContentIds(List<String> failedContentIds, Map<String, WellnessInfo> wellnessMap) throws Exception{

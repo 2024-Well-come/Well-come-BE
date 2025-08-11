@@ -7,29 +7,33 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-
 import java.net.URI;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import reactor.core.publisher.Mono;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@Qualifier("jsonRedisTemplate")
 public class GoogleMapInfoService2 {
 
     private final WebClient webClient;
     private final GoogleReviewApiWebClientConfig googleConfig;
     private final WellnessInfoRepository wellnessInfoRepository;
+    private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final Executor executorService;
 
     public GoogleMapInfoService2(WebClient googlePlaceApiWebClient,
                                  GoogleReviewApiWebClientConfig googleConfig,
                                  WellnessInfoRepository wellnessInfoRepository,
+                                 @Qualifier("reactiveJsonRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate,
                                  @Qualifier("asyncExecutor") Executor executorService) {
         this.webClient = googlePlaceApiWebClient;
         this.googleConfig = googleConfig;
         this.wellnessInfoRepository = wellnessInfoRepository;
+        this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.executorService = executorService;
     }
 
@@ -63,6 +67,21 @@ public class GoogleMapInfoService2 {
                     if (response != null && !response.getPredictions().isEmpty()) {
                         return extractParentIdFromResponse(response);
                     }
+                    return null;
+                });
+    }
+
+    //단건 처리 래퍼 - 업데이트 포함
+    public void processAndSaveSingleWellnessInfo(WellnessInfo wellnessInfo) {
+        processWellnessInfoGoogleMapParentId(wellnessInfo)
+                .thenAccept(parentId -> {
+                    if (parentId != null) {
+                        wellnessInfoRepository.updateParentIdById(wellnessInfo.getId(), parentId);
+                        //log.info("[SINGLE_UPDATED] DB 업데이트 완료 - id={}, parentId={}", wellnessInfo.getId(), parentId);
+                    }
+                })
+                .exceptionally(ex -> {
+                    log.error("[단일 처리 실패] id={}, error={}", wellnessInfo.getId(), ex.getMessage(), ex);
                     return null;
                 });
     }
@@ -123,4 +142,36 @@ public class GoogleMapInfoService2 {
                 .bodyToMono(PlacePredictionResponse.class)
                 .toFuture();
     }
+    /** 리뷰 조회 기능
+     * https://maps.googleapis.com/maps/api/place/details/json?fields=name,rating,formatted_phone_number,opening_hours,reviews&place_id= &key=YOUR_API_KEY
+     */
+    public Mono<PlaceReviewResponse> getPlaceDetails(String placeId) {
+        return reactiveRedisTemplate.opsForValue()
+                .get(placeId)
+                .cast(PlaceReviewResponse.class)
+                //.doOnNext(cached -> log.info(" Redis Cache HIT for placeId: {}", placeId))
+                .switchIfEmpty(
+                        fetchAndCachePlaceDetails(placeId)
+                );
+    }
+
+    private Mono<PlaceReviewResponse> fetchAndCachePlaceDetails(String placeId) {
+        Map<String, String> params = Map.of(
+                "fields", "name,rating,formatted_phone_number,opening_hours,website,user_ratings_total,reviews",
+                "place_id", placeId
+        );
+
+        String uri = googleConfig.buildPlaceUri("details/json", params);
+
+        return webClient.get()
+                .uri(URI.create(uri))
+                .retrieve()
+                .bodyToMono(PlaceReviewResponse.class)
+                .flatMap(response ->
+                        reactiveRedisTemplate.opsForValue()
+                                .set(placeId, response, Duration.ofDays(7))
+                                .thenReturn(response)  // 캐시 저장 완료 후 원본 반환
+                );
+    }
+
 }

@@ -247,27 +247,6 @@ public class WellnessInfoService {
         }
     }
 
-//    // 썸네일 이미지가 있을 경우 S3에 업로드
-//    private WellnessInfo processImgByItem(TourBasicApiResponse.Response.Body.Items.Item item) {
-//        String originalUrl = item.getFirstimage2();
-//        String s3Url = null;
-//
-//        // 이미지 URL이 있는 경우 S3에 업로드
-//        if (originalUrl != null && !originalUrl.trim().isEmpty()) {
-//            s3Url = s3Service.uploadImgFromUrl(originalUrl, item.getContentid());
-//        }
-//
-//        return convertToEntity(item, s3Url);
-//    }
-//
-//    private WellnessInfo convertToEntity(TourBasicApiResponse.Response.Body.Items.Item item, String s3ThumbnailUrl){
-//        try {
-//            return item.toEntity(s3ThumbnailUrl);
-//        } catch (ParseException e) {
-//            throw new RuntimeException("Failed to convert item to entity: ", e);
-//        }
-//    }
-
     /**
      * 이미 저장된 웰니스 정보에 대해, 썸네일 이미지 S3에 업로드 후 컬럼(thumbnailUrl) 업데이트
      * - originalThumbnailUrl: API에서 제공하는 썸네일 이미지 URL

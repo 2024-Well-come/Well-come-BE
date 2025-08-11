@@ -5,7 +5,7 @@ import com.wellcome.WellcomeBE.domain.like.dto.response.LikedResponse;
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
 import com.wellcome.WellcomeBE.domain.member.repository.MemberRepository;
-import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
+import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService2;
 import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -37,7 +37,7 @@ public class LikedService {
     private final TokenProvider tokenProvider;
     private final LikedRepository likedRepository;
     private final WellnessInfoRepository wellnessInfoRepository;
-    private final GoogleMapInfoService googleMapInfoService;
+    private final GoogleMapInfoService2 googleMapInfoService;
 
     private static final int LIKE_LIST_PAGE_SIZE = 10;
 

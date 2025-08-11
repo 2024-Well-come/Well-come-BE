@@ -70,7 +70,7 @@ public class GoogleReviewApiWebClientConfig {
         additionalParams.forEach(uriBuilder::queryParam);
 
         String uri = uriBuilder.encode().toUriString();
-        log.debug("[GoogleMap URI] {}", uri);
+        //log.debug("[GoogleMap URI] {}", uri);
         return uri;
     }
 

@@ -18,11 +18,6 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
 
     List<WellnessInfo> findByOriginalThumbnailUrlNotNull();
 
-    List<WellnessInfo> findByThumbnailUrlNotNull();
-
-    //TODO 병렬 스레드 이후 삭제할 로직입니다.
-    Page<WellnessInfo> findAll(Pageable pageable);
-
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query("UPDATE WellnessInfo w SET w.parentId = :parentId WHERE w.id = :id")
@@ -41,5 +36,11 @@ public interface WellnessInfoRepository extends JpaRepository<WellnessInfo, Long
     List<WellnessContentIdOnly> findAllContentIdOnly();
     Optional<WellnessInfo> findByContentId(String contentId);
 
-    List<WellnessInfo> findByContentIdIn(Set<String> contentIds);
+    //TODO 병렬 스레드 이후 삭제할 로직입니다.
+    Page<WellnessInfo> findAll(Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE WellnessInfo w SET w.view = w.view + 1 WHERE w.id = :id")
+    void incrementView(@Param("id") Long id);
+
 }
