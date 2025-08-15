@@ -20,7 +20,8 @@ public class TourInfoApiWebClientConfig {
     @Value("${tour_api.key}")
     private String apiKey;
 
-    private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService1/";
+    //private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService1/";
+    private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService2/";
     private static final String WEATHER_API_BASE_URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst";
 
     // WebClient 생성
@@ -44,20 +45,20 @@ public class TourInfoApiWebClientConfig {
                 .queryParam("serviceKey", apiKey)
                 .queryParam("MobileOS", "AND")
                 .queryParam("MobileApp", "Wellcome")
-                .queryParam("_type", "json")
-                .queryParam("listYN", "Y");
+                .queryParam("_type", "json");
+                //.queryParam("listYN", "Y");
     }
 
     // 지역기반관광정보조회
     public String getTourBasicApiUrl(Map<String, String> additionalParams) {
-        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("areaBasedList1");
+        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("areaBasedList2");
         additionalParams.forEach(uriBuilder::queryParam);
         return uriBuilder.build(true).toUriString();
     }
 
     // 키워드검색조회
     public String getTourSearchApiUrl(Map<String, String> additionalParams) {
-        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("searchKeyword1");
+        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("searchKeyword2");
         additionalParams.forEach(uriBuilder::queryParam);
         return uriBuilder.build(true).toUriString();
     }
@@ -86,7 +87,7 @@ public class TourInfoApiWebClientConfig {
 
     // wellness 별 이미지 요청
     public String getTourImageApiUrl(Map<String, String> additionalParams) {
-        UriComponentsBuilder uriBuilder = buildTourImageApiCommonUrl("detailImage1");
+        UriComponentsBuilder uriBuilder = buildTourImageApiCommonUrl("detailImage2");
         additionalParams.forEach(uriBuilder::queryParam);
         return uriBuilder.build(false).toUriString();
     }

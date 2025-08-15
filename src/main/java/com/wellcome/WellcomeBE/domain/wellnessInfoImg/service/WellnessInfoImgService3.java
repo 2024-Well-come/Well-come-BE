@@ -110,8 +110,8 @@ public class WellnessInfoImgService3 {
                 elapsed, wellnessList.size(), failedContentIds.size());
 
         if (!failedContentIds.isEmpty()) {
-            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
-            Thread.sleep(3000);
+            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (6초 후)", failedContentIds.size());
+            Thread.sleep(6000);
             retryFailedContentIds(failedContentIds, wellnessMap);
         }
     }

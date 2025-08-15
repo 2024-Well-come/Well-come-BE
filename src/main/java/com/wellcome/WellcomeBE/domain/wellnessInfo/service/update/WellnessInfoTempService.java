@@ -9,6 +9,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoTempRe
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.category.CategoryApiTempService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.keyword.KeywordApiTempService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup.WellnessInfoService2;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.utils.CompletableFutureUtils;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.service.WellnessInfoImgService3;
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -47,15 +47,15 @@ public class WellnessInfoTempService {
     private final GoogleMapInfoService2 googleMapInfoService2;
     private final WellnessInfoImgService3 wellnessInfoImgService3;
 
-    public CompletableFuture<Void> updateTourInfo(){
-        log.info("❗ WellnessInfo 데이터 업데이트 시작");
+    public CompletableFuture<Void> updateWellnessInfo(){
+        log.info("📈 WellnessInfo 데이터 업데이트 시작");
 
         // 새로운 API 호출 및 데이터 저장
         return fetchAllNewData()
                 .thenRun(this::processChangedData) // API 호출 성공 시에만 추가/삭제된 데이터 처리 수행
                 .whenComplete((v, ex) -> {
                     if (ex == null) {
-                        log.info("❗ WellnessInfo 데이터 업데이트 완료");
+                        log.info("📈 WellnessInfo 데이터 업데이트 완료");
                     } else {
                         log.error("❌ WellnessInfo 데이터 업데이트 실패: error={}", ex.getMessage());
                     }
@@ -69,7 +69,10 @@ public class WellnessInfoTempService {
         long start = System.currentTimeMillis();
 
         // WellnessInfoTemp 초기화
-        tempWellnessInfoRepository.truncateTable();
+        truncateWellnessInfoTemp();
+        //tempWellnessInfoRepository.truncateTable();
+
+        log.info("truncate the wellnessinfo temp table");
 
         // 카테고리별 API 호출
         log.info("<< 카테고리별 API 호출 시작 >>");
@@ -78,7 +81,7 @@ public class WellnessInfoTempService {
             categoryFutures.add(categoryApiTempService.fetchAndSave(category));
         }
 
-        CompletableFuture<Integer> categoryFailFast = sumOrFirstFail(categoryFutures)
+        CompletableFuture<Integer> categoryFailFast = CompletableFutureUtils.sumOrFirstFail(categoryFutures)
                 .whenComplete((cnt, ex) -> {
                     if (ex == null) {
                         log.info("<< 카테고리별 API 호출 완료 >>");
@@ -94,7 +97,7 @@ public class WellnessInfoTempService {
                 keywordFutures.add(keywordApiTempService.fetchAndSave(keyword));
             }
 
-            CompletableFuture<Integer> keywordFailFast = sumOrFirstFail(keywordFutures)
+            CompletableFuture<Integer> keywordFailFast = CompletableFutureUtils.sumOrFirstFail(keywordFutures)
                     .whenComplete((cnt, ex) -> {
                         if (ex == null) {
                             log.info("<< 키워드별 API 호출 완료 >>");
@@ -115,23 +118,10 @@ public class WellnessInfoTempService {
         });
     }
 
-    // 모든 Future 성공 시 결과를 합산하여 반환, 첫번째 실패가 감지되면 즉시 예외 반환
-    private CompletableFuture<Integer> sumOrFirstFail(List<CompletableFuture<Integer>> futures) {
-        CompletableFuture<Integer> allSuccess =
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                        .thenApply(v -> futures.stream().mapToInt(CompletableFuture::join).sum());
-
-        CompletableFuture<Integer> firstFailure = new CompletableFuture<>();
-        for (CompletableFuture<Integer> f : futures) {
-            f.whenComplete((r, ex) -> {
-                if (ex != null) {
-                    Throwable cause = (ex instanceof CompletionException) ? ex.getCause() : ex;
-                    firstFailure.completeExceptionally(cause);
-                }
-            });
-        }
-
-        return allSuccess.applyToEither(firstFailure, Function.identity());
+    @Transactional
+    public void truncateWellnessInfoTemp(){
+        //tempWellnessInfoRepository.truncateTable();
+        tempWellnessInfoRepository.deleteAllInBatch();
     }
 
     @Transactional

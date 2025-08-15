@@ -161,6 +161,7 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
         // API 호출
         try {
             URI uri = new URI(uriString);
+            log.info("API 요청 URI: {}", uri);
             return webClient.get()
                     .uri(uri)
                     .retrieve()

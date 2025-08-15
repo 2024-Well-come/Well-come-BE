@@ -43,15 +43,14 @@ public class WellnessInfoController {
 
     // 한국관광공사_국문 API 호출 및 데이터 저장 (변경: @Async)
     @GetMapping("/getTourBasicApiData")
-    public void fetchAndSaveTourInfo(){
-        wellnessInfoService2.fetchAllData();
-        wellnessInfoService2.uploadThumbnailImgToS3();
+    public CompletableFuture<Void> fetchAndSaveTourInfo(){
+        return wellnessInfoService2.setUpWellnessInfo();
     }
 
     // 웰니스 정보 업데이트 (추가 및 삭제된 데이터 반영)
     @GetMapping("/getTourBasicApiData-update")
     public CompletableFuture<Void> updateTourInfo(){
-        return wellnessInfoTempService.updateTourInfo();
+        return wellnessInfoTempService.updateWellnessInfo();
     }
 
     // 웰니스 장소 추천 목록 (썸네일 이미지 URL은 S3에 업로드된 URL을 가져온다.)
