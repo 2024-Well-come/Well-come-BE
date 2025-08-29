@@ -157,7 +157,9 @@ public class WellnessInfoTempService {
         wellnessInfoUpdateOps.saveAddedWellnessInfos(preparedData, newData);
 
         // 상세사진 저장
-        addedIds.forEach(contentId -> wellnessInfoImgService3.singleFetchAndSaveTourImages(contentId));
+        Set<String> targetIds = new HashSet<>(addedIds);
+        targetIds.addAll(wellnessInfoRepository.findContentIdsWithoutDetailImg());
+        targetIds.forEach(contentId -> wellnessInfoImgService3.singleFetchAndSaveTourImages(contentId));
     }
 
     // 썸네일 이미지 S3 업로드 및 parentId 값 찾기
