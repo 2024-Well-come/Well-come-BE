@@ -1,7 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.service.update;
 
 import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService2;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoTempData;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -14,10 +13,8 @@ import com.wellcome.WellcomeBE.domain.wellnessInfoImg.service.WellnessInfoImgSer
 import com.wellcome.WellcomeBE.global.type.CategoryDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.io.ParseException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -46,13 +43,14 @@ public class WellnessInfoTempService {
     private final Executor asyncExecutor;
     private final GoogleMapInfoService2 googleMapInfoService2;
     private final WellnessInfoImgService3 wellnessInfoImgService3;
+    private final WellnessInfoTempUpdateService wellnessInfoUpdateOps;
 
     public CompletableFuture<Void> updateWellnessInfo(){
         log.info("📈 WellnessInfo 데이터 업데이트 시작");
 
         // 새로운 API 호출 및 데이터 저장
         return fetchAllNewData()
-                .thenRun(this::processChangedData) // API 호출 성공 시에만 추가/삭제된 데이터 처리 수행
+                .thenRunAsync(() -> processChangedData(), asyncExecutor)
                 .whenComplete((v, ex) -> {
                     if (ex == null) {
                         log.info("📈 WellnessInfo 데이터 업데이트 완료");
@@ -69,10 +67,7 @@ public class WellnessInfoTempService {
         long start = System.currentTimeMillis();
 
         // WellnessInfoTemp 초기화
-        truncateWellnessInfoTemp();
-        //tempWellnessInfoRepository.truncateTable();
-
-        log.info("truncate the wellnessinfo temp table");
+        wellnessInfoUpdateOps.truncateWellnessInfoTemp();
 
         // 카테고리별 API 호출
         log.info("<< 카테고리별 API 호출 시작 >>");
@@ -118,13 +113,7 @@ public class WellnessInfoTempService {
         });
     }
 
-    @Transactional
-    public void truncateWellnessInfoTemp(){
-        //tempWellnessInfoRepository.truncateTable();
-        tempWellnessInfoRepository.deleteAllInBatch();
-    }
-
-    @Transactional
+    // 추가/삭제된 데이터 처리
     private void processChangedData() {
         // 기존 DB의 contentId와 새로운 DB의 contentId 비교하여 추가된/삭제된 데이터 찾기
         List<String> contentIds = wellnessInfoRepository.findAllContentId();
@@ -136,7 +125,7 @@ public class WellnessInfoTempService {
         // - 상세사진 불러와서 저장
         Set<String> addedIds = new HashSet<>(newContentIds);
         addedIds.removeAll(contentIds);
-        System.out.println("✔ addedIds: " + addedIds.size() + "건");
+        log.info("✔ addedIds: " + addedIds.size() + "건");
         if(!addedIds.isEmpty()){
             processAddedContentIds(addedIds);
         }
@@ -144,9 +133,9 @@ public class WellnessInfoTempService {
         // ii) 삭제된 데이터가 있을 경우
         Set<String> deletedIds = new HashSet<>(contentIds);
         deletedIds.removeAll(newContentIds);
-        System.out.println("✔ deletedIds: " + deletedIds.size() + "건");
+        log.info("✔ deletedIds: " + deletedIds.size() + "건");
         if(!deletedIds.isEmpty()){
-            processDeletedContentIds(deletedIds);
+            wellnessInfoUpdateOps.processDeletedContentIds(deletedIds);
         }
     }
 
@@ -165,7 +154,7 @@ public class WellnessInfoTempService {
         List<WellnessInfoTempData> preparedData = prepareWellnessInfoData(newData);
 
         // 새로운 WellnessInfo 데이터 생성 및 저장
-        saveAddedWellnessInfos(preparedData, newData);
+        wellnessInfoUpdateOps.saveAddedWellnessInfos(preparedData, newData);
 
         // 상세사진 저장
         addedIds.forEach(contentId -> wellnessInfoImgService3.singleFetchAndSaveTourImages(contentId));
@@ -205,27 +194,4 @@ public class WellnessInfoTempService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    private void saveAddedWellnessInfos(List<WellnessInfoTempData> preparedData, Map<String, WellnessInfoTemp> newData){
-        List<WellnessInfo> wellnessInfos = preparedData.stream()
-                .map(data -> {
-                    WellnessInfoTemp temp = newData.get(data.getContentId());
-                    try {
-                        return WellnessInfo.of(temp, data.getThumbnailUrl(), data.getParentId());
-                    } catch (ParseException e) {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        wellnessInfoRepository.saveAll(wellnessInfos);
-    }
-
-    // 삭제된 데이터 처리
-    @Transactional
-    private void processDeletedContentIds(Set<String> deletedIds){
-        // deletedIds의 WellnessInfo isDeleted 컬럼 true로 업데이트
-        wellnessInfoRepository.bulkUpdateIsDeleted(deletedIds);
-    }
 }
