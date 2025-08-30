@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.netty.http.client.HttpClient;
 
+import reactor.netty.http.client.HttpClient;
 import java.time.Duration;
 import java.util.Map;
 
@@ -20,7 +20,6 @@ public class TourInfoApiWebClientConfig {
     @Value("${tour_api.key}")
     private String apiKey;
 
-    //private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService1/";
     private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService2/";
     private static final String WEATHER_API_BASE_URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst";
 
@@ -80,7 +79,6 @@ public class TourInfoApiWebClientConfig {
                 .queryParam("imageYN", "Y")
                 .queryParam("numOfRows",6)
                 .queryParam("pageNo",1)
-                .queryParam("subImageYN", "Y")
                 .queryParam("serviceKey",apiKey);
 
     }

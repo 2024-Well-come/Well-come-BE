@@ -7,6 +7,7 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoReposi
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImg;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.response.TourImageApiResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
+import com.wellcome.WellcomeBE.global.RetryWithBackoff;
 import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
@@ -49,6 +50,7 @@ public class WellnessInfoImgService3 {
     // AsyncExecutor 주입 (ThreadPoolTaskExecutor)
     private final Executor asyncExecutor;
     private final S3Service s3Uploader;
+    private final RetryWithBackoff retryWithBackoff;
 
     public WellnessInfoImgService3(
             WebClient webClient,
@@ -56,7 +58,8 @@ public class WellnessInfoImgService3 {
             TourInfoApiWebClientConfig webClientConfig,
             WellnessInfoImgRepository wellnessInfoImgRepository,
             Executor asyncExecutor,
-            S3Service s3Uploader
+            S3Service s3Uploader,
+            RetryWithBackoff retryWithBackoff
     ) {
         this.webClient = webClient;
         this.wellnessInfoRepository = wellnessInfoRepository;
@@ -64,6 +67,7 @@ public class WellnessInfoImgService3 {
         this.wellnessInfoImgRepository = wellnessInfoImgRepository;
         this.asyncExecutor = asyncExecutor;
         this.s3Uploader = s3Uploader;
+        this.retryWithBackoff = retryWithBackoff;
     }
 
     public void fetchAndSaveTourImages() throws Exception {
@@ -110,8 +114,7 @@ public class WellnessInfoImgService3 {
                 elapsed, wellnessList.size(), failedContentIds.size());
 
         if (!failedContentIds.isEmpty()) {
-            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (6초 후)", failedContentIds.size());
-            Thread.sleep(6000);
+            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
             retryFailedContentIds(failedContentIds, wellnessMap);
         }
     }
@@ -194,6 +197,10 @@ public class WellnessInfoImgService3 {
         } catch (Exception e) {
             throw wrapCustomException(e);
         }
+        //  uriString 확인용 로그
+         log.info("[API 호출 URI] contentId={}, uri={}", contentId, uriString);
+
+
 
         String responseBody = response.getBody();
         MediaType contentType = response.getHeaders().getContentType();
@@ -230,7 +237,7 @@ public class WellnessInfoImgService3 {
                         return WellnessInfoImg.builder()
                                 .imgUrl(s3Url)                     // S3 URL 저장
                                 .imgName(item.getImgname())       // 외부 API 값 사용
-                                .contentid(item.getContentid())
+                                .contentId(item.getContentid())
                                 .wellnessInfo(wellness)
                                 .build();
 
@@ -243,15 +250,19 @@ public class WellnessInfoImgService3 {
                 .toList(); // JDK 16+ 또는 collect(Collectors.toList())
     }
 
-    private void retryFailedContentIds(List<String> failedContentIds, Map<String, WellnessInfo> wellnessMap) throws Exception{
-
-    List<String> retryFailList = Collections.synchronizedList(new ArrayList<>());
+    private void retryFailedContentIds(List<String> failedContentIds, Map<String, WellnessInfo> wellnessMap) throws Exception {
+        List<String> retryFailList = Collections.synchronizedList(new ArrayList<>());
 
         List<CompletableFuture<Void>> retryFutures = failedContentIds.stream()
                 .map(contentId -> CompletableFuture.runAsync(() -> {
                     log.info("[재시도 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
                     try {
-                        List<WellnessInfoImg> images =fetchDataAndConvert(contentId, wellnessMap.get(contentId));
+                        // 지수 백오프 적용
+                        List<WellnessInfoImg> images = retryWithBackoff.execute(() ->
+                                        fetchDataAndConvert(contentId, wellnessMap.get(contentId)),
+                                3,   // 최대 3회 재시도
+                                1000 // 초기 1초 대기
+                        );
                         wellnessInfoImgRepository.saveAll(images);
                         log.info("[재시도 성공] contentId={}, 저장 건수={}", contentId, images.size());
                     } catch (Exception e) {
@@ -270,6 +281,7 @@ public class WellnessInfoImgService3 {
             log.warn("🚫 최종 실패 contentId 목록: {}", retryFailList);
         }
     }
+
 
     private CustomException wrapCustomException(Exception e) {
         if (e instanceof URISyntaxException)

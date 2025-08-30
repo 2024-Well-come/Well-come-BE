@@ -64,7 +64,7 @@ public class TourImageApiResponse {
                                 .wellnessInfo(wellnessInfo)
                                 .imgUrl(smallimageurl)
                                 .imgName(imgname)
-                                .contentid(contentid)
+                                .contentId(contentid)
                                 .build();
                     }
                 }
