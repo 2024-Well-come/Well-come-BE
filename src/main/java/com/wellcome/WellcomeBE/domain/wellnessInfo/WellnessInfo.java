@@ -34,13 +34,10 @@ public class WellnessInfo extends BaseTimeEntity {
     private String tel;
 
     @Column(columnDefinition = "TEXT")
-    private String originalThumbnailUrl; // Tour API 제공 이미지를 S3에 업로드 후 생성되는 객체 URL
+    private String originalThumbnailUrl; // Tour API 제공 이미지 URL
 
     @Column(columnDefinition = "TEXT")
-    private String thumbnailUrl; // Tour API 제공 이미지 URL
-
-    @Column(columnDefinition = "TEXT")
-    private String s3ThumbnailUrl; // Tour API 제공 이미지를 S3에 업로드 후 생성되는 객체 URL(업데이트용)
+    private String thumbnailUrl; // Tour API 제공 이미지를 S3에 업로드 후 생성되는 객체 URL
 
     // 분류
     @Enumerated(EnumType.STRING)
@@ -80,12 +77,9 @@ public class WellnessInfo extends BaseTimeEntity {
     public void setParentId(String parentId){
         this.parentId = parentId;
     }
-    public void updateViewNum(){
-        this.view++;
-    }
 
-    public void updateS3ThumbnailUrl(String s3ThumbnailUrl){
-        this.s3ThumbnailUrl = s3ThumbnailUrl;
+    public void updateThumbnailUrl(String s3ThumbnailUrl){
+        this.thumbnailUrl = s3ThumbnailUrl;
     }
 
 }

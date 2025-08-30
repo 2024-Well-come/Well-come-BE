@@ -81,8 +81,6 @@ public class TripPlanControllerTest {
                 .name("Test Plan")
                 .tripStartDate(null)
                 .tripEndDate(null)
-//                .tripStartDate(LocalDate.parse("2025.04.01", formatter))
-//                .tripEndDate(LocalDate.parse("2025.04.10", formatter))
                 .build();
 
         // TripPlanService의 메소드 호출에 대한 mock 설정

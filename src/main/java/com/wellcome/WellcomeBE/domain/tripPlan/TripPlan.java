@@ -37,12 +37,13 @@ public class TripPlan extends BaseTimeEntity {
     @Builder.Default
     private Boolean isActive = true; // 후기 작성 활성화 여부
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 10)
     protected Status status = Status.ACTIVE; // 폴더 삭제 여부
 
     public enum Status {
-        ACTIVE, INACTIVE;
+        ACTIVE, INACTIVE
     }
 
     public void updateTitle(String title) {
