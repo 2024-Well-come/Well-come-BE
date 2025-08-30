@@ -1,15 +1,12 @@
 package com.wellcome.WellcomeBE.global.config;
 
-import com.wellcome.WellcomeBE.domain.wellnessInfoImg.dto.response.TourImageApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Mono;
 
-import java.net.URI;
 import java.util.Map;
 @Configuration
 @Slf4j
@@ -18,7 +15,7 @@ public class TourInfoApiWebClientConfig {
     @Value("${tour_api.key}")
     private String apiKey;
 
-    private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService1/";
+    private static final String TOUR_API_BASE_URL = "http://apis.data.go.kr/B551011/KorService2/";
     private static final String WEATHER_API_BASE_URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst";
 
     // WebClient 생성
@@ -72,14 +69,13 @@ public class TourInfoApiWebClientConfig {
                 .queryParam("imageYN", "Y")
                 .queryParam("numOfRows",6)
                 .queryParam("pageNo",1)
-                .queryParam("subImageYN", "Y")
                 .queryParam("serviceKey",apiKey);
 
     }
 
     // wellness 별 이미지 요청
     public String getTourImageApiUrl(Map<String, String> additionalParams) {
-        UriComponentsBuilder uriBuilder = buildTourImageApiCommonUrl("detailImage1");
+        UriComponentsBuilder uriBuilder = buildTourImageApiCommonUrl("detailImage2");
         additionalParams.forEach(uriBuilder::queryParam);
         return uriBuilder.build(false).toUriString();
     }
