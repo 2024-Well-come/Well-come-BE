@@ -20,6 +20,9 @@ public class TourApiErrorHandler {
     // XML 에러 처리
     public String handleXmlErrorResponse(String xmlResponse) {
         try {
+            // XML 원문 로그로 출력 (디버깅 목적)
+            log.error("[TourAPI XML 오류 응답 원문] body={}", xmlResponse);
+
             // XML 파서를 위한 DocumentBuilderFactory 생성
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -39,17 +42,18 @@ public class TourApiErrorHandler {
 
             // 추출된 노드의 값 반환, Custom Exception 처리
             String reasonCode = returnReasonCodeNode != null ? returnReasonCodeNode.getTextContent() : null;
-            if(reasonCode != null){
+            if (reasonCode != null) {
                 return getErrorMessage(reasonCode);
-            }else{
-                log.error("XML 파싱 중 오류 발생: returnReasonCode 태그를 찾을 수 없습니다.");
+            } else {
+                log.error("[TourAPI XML 파싱 오류] returnReasonCode 태그 없음. body={}", xmlResponse);
                 throw new CustomException(TOUR_API_XML_PARSING_ERROR);
             }
-        } catch (Exception e){
-            log.error("XML 파싱 중 오류 발생: ", e.getMessage());
+        } catch (Exception e) {
+            log.error("[TourAPI XML 파싱 중 예외 발생] body={}, error={}", xmlResponse, e.getMessage(), e);
             throw new CustomException(TOUR_API_XML_PARSING_ERROR);
         }
     }
+
 
     // 에러 코드 <-> 에러 메세지 매핑
     public String getErrorMessage(String reasonCode){
