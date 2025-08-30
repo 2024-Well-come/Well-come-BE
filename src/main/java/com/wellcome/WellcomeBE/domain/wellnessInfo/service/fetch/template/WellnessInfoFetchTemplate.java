@@ -1,11 +1,9 @@
-package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
+package com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.template;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.TourBasicApiResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.exception.TourApiErrorHandler;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +27,9 @@ import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.*;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class WellnessInfoFetchTemplate<P> {
+public abstract class WellnessInfoFetchTemplate<P, T> {
     private final WebClient webClient;
-    private final WellnessInfoRepository wellnessInfoRepository;
+    private final WellnessInfoSaver<T> saver;
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String GANGWONDO_AREACODE = "32";
@@ -56,6 +54,8 @@ public abstract class WellnessInfoFetchTemplate<P> {
         logStart(label);
         log.info("[비동기 스레드 확인] '{}', thread='{}'", label, Thread.currentThread().getName());
 
+        Throwable fatalError = null;
+
         while (hasNext) {
             TourBasicApiResponse response = null;
             boolean success = false;
@@ -74,16 +74,21 @@ public abstract class WellnessInfoFetchTemplate<P> {
                             continue;
                         }
                         logError(label, page, ce);
+                        fatalError = ce;
                     } else {
                         logError(label, page, cause);
+                        fatalError = cause;
                     }
                     break;
                 } catch (InterruptedException e) {
                     logError(label, page, e);
                     Thread.currentThread().interrupt();
+                    fatalError = e;
                     break;
                 }
             }
+
+            if (fatalError != null) break;
 
             if(!success){
                 failedPages.add(page);
@@ -104,10 +109,10 @@ public abstract class WellnessInfoFetchTemplate<P> {
 
                     // DTO -> Entity 변환
                     List<TourBasicApiResponse.Response.Body.Items.Item> itemList = items.getItem();
-                    List<WellnessInfo> entities = itemList.stream()
+                    List<T> entities = itemList.stream()
                             .map(item -> {
                                 try {
-                                    return item.toEntity();
+                                    return saver.convertEntity(item);
                                 } catch (ParseException e) {
                                     logConvertError(label, currentPage, e);
                                     return null;
@@ -118,7 +123,7 @@ public abstract class WellnessInfoFetchTemplate<P> {
 
                     // 데이터 DB 저장
                     if(!entities.isEmpty()) {
-                        wellnessInfoRepository.saveAll(entities);
+                        saver.saveAll(entities);
                         savedCount += entities.size();
                         logPageSaved(label, page, savedCount);
                     }
@@ -134,6 +139,11 @@ public abstract class WellnessInfoFetchTemplate<P> {
         }
 
         logComplete(label, savedCount, failedPages);
+
+        if (fatalError != null) {
+            return failAsFuture(fatalError);
+        }
+
         return CompletableFuture.completedFuture(savedCount);
     }
 
@@ -151,6 +161,7 @@ public abstract class WellnessInfoFetchTemplate<P> {
         // API 호출
         try {
             URI uri = new URI(uriString);
+            log.info("API 요청 URI: {}", uri);
             return webClient.get()
                     .uri(uri)
                     .retrieve()
@@ -225,7 +236,7 @@ public abstract class WellnessInfoFetchTemplate<P> {
         log.info("[시작] '{}' 에 대한 API 호출 및 데이터 저장", label);
     }
     private void logRetry(String label, int page, int attempt, Exception e) {
-        log.warn("[재시도] '{}': page={}, attempt={}/{}, error={}", label, page, attempt, retryLimit, e.getMessage());
+        log.warn("[재시도 {}/{}] '{}': page={}, causeType={}, error={}", attempt, retryLimit, label, page, e.getClass().getSimpleName(), e.getMessage());
     }
     private void logError(String label, int page, Throwable e) {
         log.error("[API 호출 실패] '{}': page={}, error={}", label, page, e.getMessage(), e);

@@ -22,7 +22,7 @@ public class WellnessInfoImgController {
 //      wellnessInfoImgService.fetchAndSaveTourImg(page);
 //   }
    @GetMapping("/getTourImgApiData")
-   public void fetchAndSaveTourImage()throws Exception {
+   public void fetchAndSaveTourImage() throws Exception {
       wellnessInfoImgService3.fetchAndSaveTourImages();
    }
 }

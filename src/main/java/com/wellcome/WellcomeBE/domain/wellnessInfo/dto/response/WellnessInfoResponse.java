@@ -78,18 +78,11 @@ public class WellnessInfoResponse {
             private Double mapY;
 
             public static WellnessInfoItem from (
-                    WellnessInfo wellnessInfo, boolean isLiked, ImgSavedType savedType
+                    WellnessInfo wellnessInfo, boolean isLiked
             ){
-                String thumbnailUrl = null;
-                if(savedType == ImgSavedType.ORIGINAL){
-                    thumbnailUrl = wellnessInfo.getOriginalThumbnailUrl();
-                }else if(savedType == ImgSavedType.S3){
-                    thumbnailUrl = wellnessInfo.getThumbnailUrl();
-                }
-
                 return WellnessInfoItem.builder()
                         .wellnessInfoId(wellnessInfo.getId())
-                        .thumbnailUrl(thumbnailUrl)
+                        .thumbnailUrl(wellnessInfo.getThumbnailUrl())
                         .isLiked(isLiked)
                         .thema(wellnessInfo.getThema().getName())
                         .title(wellnessInfo.getTitle())
@@ -101,5 +94,4 @@ public class WellnessInfoResponse {
             }
         }
     }
-
 }

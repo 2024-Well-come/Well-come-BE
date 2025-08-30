@@ -15,6 +15,7 @@ import com.wellcome.WellcomeBE.domain.tripPlanPlace.QTripPlanPlace;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.QWellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.WellnessInfoNearResponse;
+import com.wellcome.WellcomeBE.domain.wellnessInfoImg.QWellnessInfoImg;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import org.springframework.data.domain.Page;
@@ -22,18 +23,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import static com.wellcome.WellcomeBE.domain.like.QLiked.liked;
 import static com.wellcome.WellcomeBE.domain.support.QSupport.support;
 import static com.wellcome.WellcomeBE.domain.tripPlanPlace.QTripPlanPlace.tripPlanPlace;
 import static com.wellcome.WellcomeBE.domain.wellnessInfo.QWellnessInfo.wellnessInfo;
+import static com.wellcome.WellcomeBE.domain.wellnessInfoImg.QWellnessInfoImg.wellnessInfoImg;
 
 public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final NativeSqlCreator nativeSqlCreator;
     private final QWellnessInfo w = wellnessInfo;
+    private final QWellnessInfoImg wi = wellnessInfoImg;
     private final QLiked l = liked;
 
     public WellnessInfoRepositoryImpl(JPAQueryFactory queryFactory, NativeSqlCreator nativeSqlCreator) {
@@ -139,6 +144,7 @@ public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom 
                 .leftJoin(l).on(liked.wellnessInfo.eq(w)
                         .and(l.member.eq(member)))
                 .where(
+                        w.isDeleted.isFalse(),
                         themaIn(themaList),
                         sigunguIn(sigunguList)
                 )
@@ -154,6 +160,7 @@ public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom 
                 .leftJoin(l).on(liked.wellnessInfo.eq(w)
                         .and(l.member.eq(member)))
                 .where(
+                        w.isDeleted.isFalse(),
                         themaIn(themaList),
                         sigunguIn(sigunguList)
                 );
@@ -179,6 +186,21 @@ public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom 
                 .select(w.sigungu).distinct()
                 .from(w)
                 .where(sigunguIn(sigunguList))
+                .fetch();
+    }
+
+    @Override
+    public List<String> findContentIdsWithoutDetailImg() {
+        LocalDateTime since = LocalDateTime.now(ZoneId.of("Asia/Seoul")).minusDays(3);
+
+        return queryFactory
+                .select(w.contentId)
+                .from(w)
+                .leftJoin(wi).on(wi.wellnessInfo.id.eq(w.id))
+                .where(
+                        wi.wellnessInfoImgId.isNull(),
+                        w.createdAt.goe(since)
+                )
                 .fetch();
     }
 

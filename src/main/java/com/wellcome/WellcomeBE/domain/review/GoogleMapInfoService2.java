@@ -5,12 +5,11 @@ import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoReposi
 import com.wellcome.WellcomeBE.global.config.GoogleReviewApiWebClientConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
-
 import java.net.URI;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -60,6 +59,16 @@ public class GoogleMapInfoService2 {
                 .collect(Collectors.toList());
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    }
+
+    public CompletableFuture<String> getParentIdByGoogleMap(String address, String title) {
+        return getPlaceId(address, title)
+                .thenApply(response -> {
+                    if (response != null && !response.getPredictions().isEmpty()) {
+                        return extractParentIdFromResponse(response);
+                    }
+                    return null;
+                });
     }
 
     //단건 처리 래퍼 - 업데이트 포함
@@ -164,4 +173,5 @@ public class GoogleMapInfoService2 {
                                 .thenReturn(response)  // 캐시 저장 완료 후 원본 반환
                 );
     }
+
 }

@@ -1,13 +1,18 @@
 package com.wellcome.WellcomeBE.global.config;
 
+import io.netty.channel.ChannelOption;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import reactor.netty.http.client.HttpClient;
+import java.time.Duration;
 import java.util.Map;
+
 @Configuration
 @Slf4j
 public class TourInfoApiWebClientConfig {
@@ -21,7 +26,12 @@ public class TourInfoApiWebClientConfig {
     // WebClient 생성
     @Bean
     public WebClient webClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000) //연결 타임아웃
+                .responseTimeout(Duration.ofMillis(5000)); //응답 타임아웃
+
         return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
 
@@ -34,20 +44,20 @@ public class TourInfoApiWebClientConfig {
                 .queryParam("serviceKey", apiKey)
                 .queryParam("MobileOS", "AND")
                 .queryParam("MobileApp", "Wellcome")
-                .queryParam("_type", "json")
-                .queryParam("listYN", "Y");
+                .queryParam("_type", "json");
+                //.queryParam("listYN", "Y");
     }
 
     // 지역기반관광정보조회
     public String getTourBasicApiUrl(Map<String, String> additionalParams) {
-        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("areaBasedList1");
+        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("areaBasedList2");
         additionalParams.forEach(uriBuilder::queryParam);
         return uriBuilder.build(true).toUriString();
     }
 
     // 키워드검색조회
     public String getTourSearchApiUrl(Map<String, String> additionalParams) {
-        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("searchKeyword1");
+        UriComponentsBuilder uriBuilder = buildTourApiCommonUrl("searchKeyword2");
         additionalParams.forEach(uriBuilder::queryParam);
         return uriBuilder.build(true).toUriString();
     }

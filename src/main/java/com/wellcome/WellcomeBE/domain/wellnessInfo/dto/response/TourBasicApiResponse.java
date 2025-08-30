@@ -3,6 +3,7 @@ package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
 import com.wellcome.WellcomeBE.global.type.Area;
 import com.wellcome.WellcomeBE.global.type.Category;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
@@ -74,38 +75,6 @@ public class TourBasicApiResponse {
                     private String tel;
                     private String title;
 
-                    public WellnessInfo toEntity() throws ParseException {
-
-                        // WKTReader를 통해 WKT -> 실제 타입으로 변환
-                        String pointWKT = String.format("POINT(%s %s)", mapx, mapy);
-                        Point point = (Point) new WKTReader().read(pointWKT);
-
-                        // ENUM
-                        Area area = areacode != null ? getAreaType(Integer.parseInt(areacode)) : getAreaType(100);
-                        Sigungu sigungu = sigungucode != null ? getSigunguType(Integer.parseInt(sigungucode)): getSigunguType(100);
-                        Category category = getCategoryType(Integer.parseInt(contenttypeid));
-
-                        // 테마
-                        Thema thema = getThemaType(cat1, cat2, cat3);
-
-                        WellnessInfo wellnessSpot = WellnessInfo.builder()
-                                .title(title)
-                                .contentId(contentid)
-                                .originalThumbnailUrl(firstimage2)
-                                .tel(tel)
-                                .area(area)
-                                .sigungu(sigungu)
-                                .thema(thema)
-                                .category(category)
-                                .address(addr1)
-                                .mapX(Double.parseDouble(mapx))
-                                .mapY(Double.parseDouble(mapy))
-                                .location(point)
-                                .build();
-
-                        return wellnessSpot;
-                    }
-
                     public WellnessInfo toEntity(String s3ThumbnailUrl) throws ParseException {
 
                         // WKTReader를 통해 WKT -> 실제 타입으로 변환
@@ -124,7 +93,7 @@ public class TourBasicApiResponse {
                                 .title(title)
                                 .contentId(contentid)
                                 .originalThumbnailUrl(firstimage2)
-                                .thumbnailUrl(s3ThumbnailUrl) //TODO API 호출 및 데이터 저장 종료 후, 썸네일 이미지 일괄 처리 예정
+                                .thumbnailUrl(s3ThumbnailUrl)
                                 .tel(tel)
                                 .area(area)
                                 .sigungu(sigungu)
@@ -137,6 +106,70 @@ public class TourBasicApiResponse {
                                 .build();
 
                         return wellnessSpot;
+                    }
+
+                    public WellnessInfo toEntity() throws ParseException {
+
+                        // WKTReader를 통해 WKT -> 실제 타입으로 변환
+                        String pointWKT = String.format("POINT(%s %s)", mapx, mapy);
+                        Point point = (Point) new WKTReader().read(pointWKT);
+
+                        // ENUM
+                        Area area = areacode != null ? getAreaType(Integer.parseInt(areacode)) : getAreaType(100);
+                        Sigungu sigungu = sigungucode != null ? getSigunguType(Integer.parseInt(sigungucode)): getSigunguType(100);
+                        Category category = getCategoryType(Integer.parseInt(contenttypeid));
+
+                        // 테마
+                        Thema thema = getThemaType(cat1, cat2, cat3);
+
+                        return WellnessInfo.builder()
+                                .title(title)
+                                .contentId(contentid)
+                                .tel(tel)
+                                .originalThumbnailUrl(firstimage2)
+
+                                .area(area)
+                                .sigungu(sigungu)
+                                .thema(thema)
+                                .category(category)
+
+                                .address(addr1)
+                                .mapX(Double.parseDouble(mapx))
+                                .mapY(Double.parseDouble(mapy))
+                                .location(point)
+                                .build();
+                    }
+
+                    public WellnessInfoTemp toTempEntity() throws ParseException {
+
+                        // WKTReader를 통해 WKT -> 실제 타입으로 변환
+                        String pointWKT = String.format("POINT(%s %s)", mapx, mapy);
+                        Point point = (Point) new WKTReader().read(pointWKT);
+
+                        // ENUM
+                        Area area = areacode != null ? getAreaType(Integer.parseInt(areacode)) : getAreaType(100);
+                        Sigungu sigungu = sigungucode != null ? getSigunguType(Integer.parseInt(sigungucode)): getSigunguType(100);
+                        Category category = getCategoryType(Integer.parseInt(contenttypeid));
+
+                        // 테마
+                        Thema thema = getThemaType(cat1, cat2, cat3);
+
+                        return WellnessInfoTemp.builder()
+                                .title(title)
+                                .contentId(contentid)
+                                .tel(tel)
+                                .originalThumbnailUrl(firstimage2)
+
+                                .area(area)
+                                .sigungu(sigungu)
+                                .thema(thema)
+                                .category(category)
+
+                                .address(addr1)
+                                .mapX(Double.parseDouble(mapx))
+                                .mapY(Double.parseDouble(mapy))
+                                .location(point)
+                                .build();
                     }
                 }
             }

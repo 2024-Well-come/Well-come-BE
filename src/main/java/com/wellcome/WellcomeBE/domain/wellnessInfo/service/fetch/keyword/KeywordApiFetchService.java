@@ -1,9 +1,10 @@
-package com.wellcome.WellcomeBE.domain.wellnessInfo.service;
+package com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.keyword;
 
-import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.template.WellnessInfoFetchTemplate;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.template.WellnessInfoMainSaver;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.fetch.template.WellnessInfoSaver;
 import com.wellcome.WellcomeBE.global.config.TourInfoApiWebClientConfig;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.UnsupportedEncodingException;
@@ -13,16 +14,15 @@ import java.util.Map;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_RESPONSE_ERROR;
 
-@Service
-public class KeywordApiFetchService extends WellnessInfoFetchTemplate<String> {
+class KeywordApiFetchService extends WellnessInfoFetchTemplate<String, WellnessInfoMainSaver> {
     private final TourInfoApiWebClientConfig webClientConfig;
     private static final int NUM_OF_ROWS_SEARCH = 10;
 
     public KeywordApiFetchService(
-            WebClient webClient, WellnessInfoRepository wellnessInfoRepository,
+            WebClient webClient, WellnessInfoSaver saver,
             TourInfoApiWebClientConfig webClientConfig
     ) {
-        super(webClient, wellnessInfoRepository);
+        super(webClient, saver);
         this.webClientConfig = webClientConfig;
     }
 

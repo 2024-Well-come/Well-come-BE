@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.UUID;
@@ -29,6 +30,8 @@ public class S3Service {
 
     @Value("${cloud.aws.s3.bucketName}")
     private String bucketName;
+
+    private static final int retryLimit = 2;
 
     public String uploadDetailImageFromUrl(String imageUrl, String contentId) {
         try {
@@ -67,13 +70,10 @@ public class S3Service {
         }
     }
 
-
-
     private String getFileExtension(String url) {
         int lastDot = url.lastIndexOf('.');
         return (lastDot != -1) ? url.substring(lastDot + 1).toLowerCase() : "jpg";
     }
-
 
     public String uploadImgFile(MultipartFile multipartFile) throws IOException {
         File file = multiPartFileToFile(multipartFile);
@@ -106,44 +106,70 @@ public class S3Service {
     }
 
     /**
-     * 이미지 URL (한국관광공사 API 제공 이미지)
+     *이미지URL (한국관광공사API제공 이미지)
      */
     public String uploadImgFromUrl(String imgUrl, String contentId) {
-      
-        // 이미지 URL로부터 파일 다운로드 후 S3에 업로드
-        try(InputStream inputStream = new URL(imgUrl).openStream()) {
-            byte[] imageBytes = IOUtils.toByteArray(inputStream);
-            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(imageBytes);
+        String imgUploadFailedTag = "[이미지 업로드 실패] ";
 
-            // 파일명 지정
-            String folderPath = "tour-api-images/";
-            String fileName = folderPath + System.currentTimeMillis() + "_" + contentId;
+        for(int attempt = 1; attempt <= retryLimit; attempt++) {
+            try{
+                // 타임아웃 설정
+                URL url = new URL(imgUrl);
+                URLConnection connection = url.openConnection();
+                connection.setConnectTimeout(3000);
+                connection.setReadTimeout(5000);
+                connection.connect();
 
-            // 파일 확장자를 기반으로 MIME 타입 결정, Content Length 설정
-            ObjectMetadata metadata = new ObjectMetadata();
-            String mimeType = getMimeType(imgUrl);
-            metadata.setContentType(mimeType);
+                // 이미지 URL로부터 파일 다운로드 후 S3에 업로드
+                try(InputStream inputStream = new URL(imgUrl).openStream()) {
+                    byte[] imageBytes = IOUtils.toByteArray(inputStream);
+                    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(imageBytes);
 
-            metadata.setContentLength(imageBytes.length);
+                    // 파일명 지정
+                    String folderPath = "tour-api-images/";
+                    String fileName = folderPath + System.currentTimeMillis() + "_" + contentId;
 
-            // S3 업로드
-            amazonS3.putObject(new PutObjectRequest(bucketName, fileName, byteArrayInputStream, metadata));
+                    // 파일 확장자를 기반으로 MIME 타입 결정, Content Length 설정
+                    ObjectMetadata metadata = new ObjectMetadata();
+                    String mimeType = getMimeType(imgUrl);
+                    metadata.setContentType(mimeType);
 
-            // S3 업로드 후 생성되는 객체 URL 
-            return amazonS3.getUrl(bucketName, fileName).toString();
-        } catch (FileNotFoundException e) {
-            log.warn("FileNotFoundException 발생: imgUrl: {}, contentId: {}", imgUrl, contentId);
-            return null;
-        } catch (IOException e) {
-            log.error("IOException 발생: {}", e.getMessage());
-            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
-        } catch (AmazonServiceException e) {
-            log.error("AWS S3 Service 오류 발생: {}", e.getMessage());
-            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
-        } catch (AmazonClientException e) {
-            log.error("AWS S3 Client 오류 발생: {}", e.getMessage());
-            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
+                    metadata.setContentLength(imageBytes.length);
+
+                    // S3 업로드
+                    amazonS3.putObject(new PutObjectRequest(bucketName, fileName, byteArrayInputStream, metadata));
+
+                    // S3 업로드 후 생성되는 객체 URL 반환
+                    return amazonS3.getUrl(bucketName, fileName).toString();
+                }
+            } catch (MalformedURLException e) {
+                log.warn(imgUploadFailedTag + "잘못된 URL 형식: contentId={}, imgUrl={}", contentId, imgUrl);
+                return null;
+            } catch (FileNotFoundException e){
+                log.warn(imgUploadFailedTag + "해당하는 이미지 파일 없음: contentId={}, imgUrl={}", contentId, imgUrl);
+                return null;
+            } catch (AmazonServiceException e) {
+                log.error(imgUploadFailedTag + "AWS S3 서비스 오류: contentId={}, imgUrl={}, error={}", contentId, imgUrl, e.getMessage());
+                throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
+            } catch (IOException | AmazonClientException e){
+                log.warn("[이미지 업로드 재시도 {}/{}] contentId={}, imgUrl={}, causeType={}, error={}", attempt, retryLimit,
+                        contentId, imgUrl, e.getClass().getSimpleName(), e.getMessage());
+
+                // 3초 대기 후 재시도
+                if (attempt < retryLimit) {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    log.error(imgUploadFailedTag + "재시도 실패: contentId={}, imgUrl={}, error={}", contentId, imgUrl, e.getMessage());
+                    throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
+                }
+            }
         }
+        return null;
     }
 
     private String getMimeType(String url){

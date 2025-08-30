@@ -48,6 +48,9 @@ public class GoogleReviewApiWebClientConfig {
                 .build();
     }
 
+    /**
+     * ✅ (Optional) Separate WebClient bean for flexibility
+     */
     @Bean(name = "googlePlaceInfoApiWebClient")
     public WebClient googlePlaceInfoWebClient() {
         return WebClient.builder()
