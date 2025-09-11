@@ -55,16 +55,16 @@ public class GoogleMapInfoService2 {
                                         "HTTP " + clientResponse.statusCode().value() + " 에러: " + body
                                 )))
                 )
-                .bodyToMono(PlacePredictionResponse.class)  // ✅ Prediction용 DTO로 파싱
+                .bodyToMono(PlacePredictionResponse.class)  //  Prediction용 DTO로 파싱
                 .flatMap(response -> {
-                    log.info("Google Prediction API status = {}", response.getStatus());
+                    //log.info("Google Prediction API status = {}", response.getStatus());
 
                     if ("OK".equals(response.getStatus())) {
                         return Mono.just(response);
                     }
 
                     if ("ZERO_RESULTS".equals(response.getStatus())) {
-                        log.info("✅ ZERO_RESULTS 감지 → 빈 predictions 반환");
+                        //log.info(" ZERO_RESULTS 감지 → 빈 predictions 반환");
                         return Mono.just(response.toBuilder()
                                 .predictions(Collections.emptyList())
                                 .build());
@@ -123,7 +123,7 @@ public class GoogleMapInfoService2 {
     // ------------------ 주소 기반 검색 ------------------
     private CompletableFuture<PlacePredictionResponse> getPlaceIdByAddress(String address) {
         String uri = googleConfig.buildPlaceUri("autocomplete/json", Map.of("input", address));
-        log.info("[REQUEST] 주소 기반 요청 - address={} | uri={}", address, uri);
+        //log.info("[REQUEST] 주소 기반 요청 - address={} | uri={}", address, uri);
         return callPlacePredictionApi(uri);
     }
 
@@ -163,7 +163,7 @@ public class GoogleMapInfoService2 {
                     }
                 })
                 .exceptionally(ex -> {
-                    log.error("[단일 처리 실패] id={}, error={}", wellnessInfo.getId(), ex.getMessage(), ex);
+                    //log.error("[단일 처리 실패] id={}, error={}", wellnessInfo.getId(), ex.getMessage(), ex);
                     return null;
                 });
     }
@@ -213,6 +213,16 @@ public class GoogleMapInfoService2 {
                 .get(placeId)
                 .cast(PlaceReviewResponse.class)
                 .switchIfEmpty(fetchAndCachePlaceDetails(placeId));
+    }
+
+    public CompletableFuture<String> getParentIdByGoogleMap(String address, String title) {
+        return getPlaceId(address, title)
+                .thenApply(response -> {
+                    if (response != null && !response.getPredictions().isEmpty()) {
+                        return extractParentIdFromResponse(response);
+                    }
+                    return null;
+                });
     }
 
 }
