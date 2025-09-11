@@ -46,14 +46,14 @@ public class WellnessInfoTempService {
     private final WellnessInfoTempUpdateService wellnessInfoUpdateOps;
 
     public CompletableFuture<Void> updateWellnessInfo(){
-        log.info("📈 WellnessInfo 데이터 업데이트 시작");
+//        log.info("📈 WellnessInfo 데이터 업데이트 시작");
 
         // 새로운 API 호출 및 데이터 저장
         return fetchAllNewData()
                 .thenRunAsync(() -> processChangedData(), asyncExecutor)
                 .whenComplete((v, ex) -> {
                     if (ex == null) {
-                        log.info("📈 WellnessInfo 데이터 업데이트 완료");
+//                        log.info("📈 WellnessInfo 데이터 업데이트 완료");
                     } else {
                         log.error("❌ WellnessInfo 데이터 업데이트 실패: error={}", ex.getMessage());
                     }
@@ -62,7 +62,7 @@ public class WellnessInfoTempService {
 
     // 새롭게 한국관광공사 API 호출한 후, WellnessInfoTemp 테이블에 임시 저장
     private CompletableFuture<Void> fetchAllNewData(){
-        log.info("[메인 스레드 확인] thread={}", Thread.currentThread().getName());
+        //log.info("[메인 스레드 확인] thread={}", Thread.currentThread().getName());
 
         long start = System.currentTimeMillis();
 
@@ -70,7 +70,7 @@ public class WellnessInfoTempService {
         wellnessInfoUpdateOps.truncateWellnessInfoTemp();
 
         // 카테고리별 API 호출
-        log.info("<< 카테고리별 API 호출 시작 >>");
+//        log.info("<< 카테고리별 API 호출 시작 >>");
         List<CompletableFuture<Integer>> categoryFutures = new ArrayList<>();
         for (CategoryDetail category : CategoryDetail.CATEGORY_PARAM_LIST_TEST) {
             categoryFutures.add(categoryApiTempService.fetchAndSave(category));
@@ -79,7 +79,7 @@ public class WellnessInfoTempService {
         CompletableFuture<Integer> categoryFailFast = CompletableFutureUtils.sumOrFirstFail(categoryFutures)
                 .whenComplete((cnt, ex) -> {
                     if (ex == null) {
-                        log.info("<< 카테고리별 API 호출 완료 >>");
+//                        log.info("<< 카테고리별 API 호출 완료 >>");
                     } else {
                         log.error("<< 카테고리별 API 호출 중단: 실패 감지 >>");
                     }
@@ -95,7 +95,7 @@ public class WellnessInfoTempService {
             CompletableFuture<Integer> keywordFailFast = CompletableFutureUtils.sumOrFirstFail(keywordFutures)
                     .whenComplete((cnt, ex) -> {
                         if (ex == null) {
-                            log.info("<< 키워드별 API 호출 완료 >>");
+//                            log.info("<< 키워드별 API 호출 완료 >>");
                         } else {
                             log.error("<< 키워드별 API 호출 중단: 실패 감지 >>");
                         }
@@ -105,10 +105,10 @@ public class WellnessInfoTempService {
             return keywordFailFast.thenAccept(keywordSavedCount -> {
                 long end = System.currentTimeMillis();
                 int total = categorySavedCount + keywordSavedCount;
-                log.info("** API 호출 및 데이터 저장 완료 **\n" +
-                                "  - 총 처리 시간: {}ms\n" +
-                                "  - 총 데이터 수: {}건 (카테고리 API: {}건, 키워드 API: {}건)",
-                        (end - start), total, categorySavedCount, keywordSavedCount);
+//                log.info("📌(업데이트) API 호출 및 데이터 저장 완료 **\n" +
+//                                "  - 총 처리 시간: {}ms\n" +
+//                                "  - 총 데이터 수: {}건 (카테고리 API: {}건, 키워드 API: {}건)",
+//                        (end - start), total, categorySavedCount, keywordSavedCount);
             });
         });
     }
@@ -125,7 +125,7 @@ public class WellnessInfoTempService {
         // - 상세사진 불러와서 저장
         Set<String> addedIds = new HashSet<>(newContentIds);
         addedIds.removeAll(contentIds);
-        log.info("✔ addedIds: " + addedIds.size() + "건");
+//        log.info("✔ addedIds: " + addedIds.size() + "건");
         if(!addedIds.isEmpty()){
             processAddedContentIds(addedIds);
         }
@@ -133,7 +133,7 @@ public class WellnessInfoTempService {
         // ii) 삭제된 데이터가 있을 경우
         Set<String> deletedIds = new HashSet<>(contentIds);
         deletedIds.removeAll(newContentIds);
-        log.info("✔ deletedIds: " + deletedIds.size() + "건");
+//        log.info("✔ deletedIds: " + deletedIds.size() + "건");
         if(!deletedIds.isEmpty()){
             wellnessInfoUpdateOps.processDeletedContentIds(deletedIds);
         }
@@ -175,10 +175,8 @@ public class WellnessInfoTempService {
                             asyncExecutor);
 
                     // parentId 값 찾기
-                    CompletableFuture<String> parentIdFuture = CompletableFuture.completedFuture(null);
-
-                    //todo parentId 처리 로직 추가 필요
-                    //CompletableFuture<String> parentIdFuture = googleMapInfoService2.getParentIdByGoogleMap(temp.getAddress(), temp.getTitle());
+                    //CompletableFuture<String> parentIdFuture = CompletableFuture.completedFuture(null);
+                    CompletableFuture<String> parentIdFuture = googleMapInfoService2.getParentIdByGoogleMap(temp.getAddress(), temp.getTitle());
 
                     // 두 비동기 작업 병합
                     return thumbnailUrlFuture.thenCombine(parentIdFuture,

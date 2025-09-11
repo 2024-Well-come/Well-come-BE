@@ -198,7 +198,7 @@ public class WellnessInfoRepositoryImpl implements WellnessInfoRepositoryCustom 
                 .from(w)
                 .leftJoin(wi).on(wi.wellnessInfo.id.eq(w.id))
                 .where(
-                        wi.wellnessInfoImgId.isNull(),
+                        wi.id.isNull(),
                         w.createdAt.goe(since)
                 )
                 .fetch();

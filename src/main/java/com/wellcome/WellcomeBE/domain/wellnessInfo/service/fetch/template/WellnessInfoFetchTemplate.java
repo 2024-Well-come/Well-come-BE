@@ -52,7 +52,7 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
 
         String label = getLabel(type);
         logStart(label);
-        log.info("[비동기 스레드 확인] '{}', thread='{}'", label, Thread.currentThread().getName());
+//        log.info("[비동기 스레드 확인] '{}', thread='{}'", label, Thread.currentThread().getName());
 
         Throwable fatalError = null;
 
@@ -161,7 +161,7 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
         // API 호출
         try {
             URI uri = new URI(uriString);
-            log.info("API 요청 URI: {}", uri);
+//            log.info("API 요청 URI: {}", uri);
             return webClient.get()
                     .uri(uri)
                     .retrieve()
@@ -233,10 +233,10 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
      * 공통 로깅
      */
     private void logStart(String label){
-        log.info("[시작] '{}' 에 대한 API 호출 및 데이터 저장", label);
+//        log.info("[시작] '{}' 에 대한 API 호출 및 데이터 저장", label);
     }
     private void logRetry(String label, int page, int attempt, Exception e) {
-        log.warn("[재시도 {}/{}] '{}': page={}, causeType={}, error={}", attempt, retryLimit, label, page, e.getClass().getSimpleName(), e.getMessage());
+//        log.warn("[재시도 {}/{}] '{}': page={}, causeType={}, error={}", attempt, retryLimit, label, page, e.getClass().getSimpleName(), e.getMessage());
     }
     private void logError(String label, int page, Throwable e) {
         log.error("[API 호출 실패] '{}': page={}, error={}", label, page, e.getMessage(), e);
@@ -251,9 +251,9 @@ public abstract class WellnessInfoFetchTemplate<P, T> {
         log.error("[데이터 처리 오류] '{}': page={}, error={}", label, page, e.getMessage(), e);
     }
     private void logPageSaved(String label, int page, int count) {
-        log.info("[페이지 저장 완료] '{}': page={}, savedCnt={}", label, page, count);
+//        log.info("[페이지 저장 완료] '{}': page={}, savedCnt={}", label, page, count);
     }
     private void logComplete(String label, int savedCount, List<Integer> failedPages){
-        log.info("[완료] '{}' 에 대한 API 호출 및 데이터 저장 / 저장 건수: {} / 실패한 페이지 목록: {}", label, savedCount, failedPages);
+//        log.info("[완료] '{}' 에 대한 API 호출 및 데이터 저장 / 저장 건수: {} / 실패한 페이지 목록: {}", label, savedCount, failedPages);
     }
 }

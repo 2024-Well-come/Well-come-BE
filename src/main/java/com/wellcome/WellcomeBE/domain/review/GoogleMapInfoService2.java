@@ -135,7 +135,7 @@ public class GoogleMapInfoService2 {
         params.put("input", address);
         String uri = googleConfig.buildPlaceUri("autocomplete/json", params);
 
-        log.info("[REQUEST] 주소 기반 요청 - address={} | uri={}", address, uri);
+//        log.info("[REQUEST] 주소 기반 요청 - address={} | uri={}", address, uri);
         return webClient.get()
                 .uri(URI.create(uri))
                 .retrieve()

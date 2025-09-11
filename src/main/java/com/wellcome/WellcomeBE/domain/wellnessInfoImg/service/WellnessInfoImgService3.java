@@ -106,22 +106,22 @@ public class WellnessInfoImgService3 {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
 
         long elapsed = Duration.between(start, Instant.now()).toMillis();
-        log.info("** 1차 처리 완료 ** \n" +
-                        "  - 총 처리 시간: {}ms \n" +
-                        //"  - 실제 DB 조회 수: {}건 \n" +
-                        "  - 총 contentId 수: {}건 \n" +
-                        "  - 실패 contentId 수: {}건",
-                elapsed, wellnessList.size(), failedContentIds.size());
+//        log.info("** 1차 처리 완료 ** \n" +
+//                        "  - 총 처리 시간: {}ms \n" +
+//                        //"  - 실제 DB 조회 수: {}건 \n" +
+//                        "  - 총 contentId 수: {}건 \n" +
+//                        "  - 실패 contentId 수: {}건",
+//                elapsed, wellnessList.size(), failedContentIds.size());
 
         if (!failedContentIds.isEmpty()) {
-            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
+//            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
             retryFailedContentIds(failedContentIds, wellnessMap);
         }
     }
 
     public void singleFetchAndSaveTourImages(String contentId) {
         CompletableFuture.runAsync(() -> {
-            log.info("[단일 요청 스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+//            log.info("[단일 요청 스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
 
             WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId)
                     .orElseThrow(() -> new CustomException(WELLNESS_INFO_CONTENT_ID_NOT_FOUND));
@@ -154,7 +154,7 @@ public class WellnessInfoImgService3 {
             }
 
             if(images.isEmpty()){
-                log.info("[단일 요청 스레드 완료] contentId={}, 저장할 데이터 없음");
+//                log.info("[단일 요청 스레드 완료] contentId={}, 저장할 데이터 없음");
                 return;
             }
 
@@ -169,16 +169,16 @@ public class WellnessInfoImgService3 {
                 } catch (DataIntegrityViolationException e) {
                     // unique 제약 위반 등으로 insert 실패 → 건너뛰기
                     duplicateAttempts.add(img);
-                    log.warn("[중복 삽입 시도] contentId={}, imgUrl={}, imgName={}",
-                            contentId, img.getImgUrl(), img.getImgName());
+//                    log.warn("[중복 삽입 시도] contentId={}, imgUrl={}, imgName={}",
+//                            contentId, img.getImgUrl(), img.getImgName());
                 } catch (Exception e) {
                     log.error("[기타 저장 실패] contentId={}, imgUrl={}, error={}",
                             contentId, img.getImgUrl(), e.getMessage());
                 }
             }
 
-            log.info("[단일 요청 스레드 완료] contentId={}, 성공 {}건, 중복 {}건",
-                    contentId, successInserts.size(), duplicateAttempts.size());
+//            log.info("[단일 요청 스레드 완료] contentId={}, 성공 {}건, 중복 {}건",
+//                    contentId, successInserts.size(), duplicateAttempts.size());
         }, asyncExecutor);
     }
 
@@ -198,7 +198,7 @@ public class WellnessInfoImgService3 {
             throw wrapCustomException(e);
         }
         //  uriString 확인용 로그
-         log.info("[API 호출 URI] contentId={}, uri={}", contentId, uriString);
+//         log.info("[API 호출 URI] contentId={}, uri={}", contentId, uriString);
 
 
 
@@ -255,7 +255,7 @@ public class WellnessInfoImgService3 {
 
         List<CompletableFuture<Void>> retryFutures = failedContentIds.stream()
                 .map(contentId -> CompletableFuture.runAsync(() -> {
-                    log.info("[재시도 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+//                    log.info("[재시도 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
                     try {
                         // 지수 백오프 적용
                         List<WellnessInfoImg> images = retryWithBackoff.execute(() ->
@@ -264,7 +264,7 @@ public class WellnessInfoImgService3 {
                                 1000 // 초기 1초 대기
                         );
                         wellnessInfoImgRepository.saveAll(images);
-                        log.info("[재시도 성공] contentId={}, 저장 건수={}", contentId, images.size());
+//                        log.info("[재시도 성공] contentId={}, 저장 건수={}", contentId, images.size());
                     } catch (Exception e) {
                         retryFailList.add(contentId);
                         log.error("[재시도 실패] contentId={}, error={}", contentId, e.getMessage(), e);
@@ -274,8 +274,8 @@ public class WellnessInfoImgService3 {
 
         CompletableFuture.allOf(retryFutures.toArray(new CompletableFuture[0])).get();
 
-        log.info("✅ 재시도 완료 - 성공: {}건 / 실패: {}건",
-                failedContentIds.size() - retryFailList.size(), retryFailList.size());
+//        log.info("✅ 재시도 완료 - 성공: {}건 / 실패: {}건",
+//                failedContentIds.size() - retryFailList.size(), retryFailList.size());
 
         if (!retryFailList.isEmpty()) {
             log.warn("🚫 최종 실패 contentId 목록: {}", retryFailList);
