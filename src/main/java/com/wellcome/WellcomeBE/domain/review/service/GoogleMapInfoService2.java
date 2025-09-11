@@ -5,7 +5,8 @@ import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import com.wellcome.WellcomeBE.global.config.GoogleReviewApiWebClientConfig;
-import com.wellcome.WellcomeBE.global.exception.GoogleApiException;
+import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
+import com.wellcome.WellcomeBE.global.exception.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -49,22 +50,24 @@ public class GoogleMapInfoService2 {
                 .onStatus(
                         status -> status.is4xxClientError() || status.is5xxServerError(),
                         clientResponse -> clientResponse.bodyToMono(String.class)
-                                .flatMap(body -> Mono.error(new GoogleApiException(
-                                        String.valueOf(clientResponse.statusCode().value()),
-                                        body
+                                .flatMap(body -> Mono.error(new CustomException(
+                                        CustomErrorCode.GOOGLE_API_RESPONSE_ERROR,
+                                        "HTTP " + clientResponse.statusCode().value() + " 에러: " + body
                                 )))
                 )
                 .bodyToMono(PlacePredictionResponse.class)
                 .flatMap(response -> {
                     if (!"OK".equals(response.getStatus())) {
                         String msg = response.getError_message() != null ? response.getError_message() : "Unknown Google API error";
-                        return Mono.error(new GoogleApiException(response.getStatus(), msg));
+                        return Mono.error(new CustomException(
+                                CustomErrorCode.GOOGLE_API_RESPONSE_ERROR,
+                                "Google API  오류 - status: " + response.getStatus() + ", message: " + msg
+                        ));
                     }
                     return Mono.just(response);
                 })
                 .toFuture();
     }
-
     // ------------------ Google API 호출 (PlaceReview) ------------------
     private CompletableFuture<PlaceReviewResponse> callPlaceReviewApi(String uri) {
         return webClient.get()
@@ -73,24 +76,28 @@ public class GoogleMapInfoService2 {
                 .onStatus(
                         status -> status.is4xxClientError() || status.is5xxServerError(),
                         clientResponse -> clientResponse.bodyToMono(String.class)
-                                .flatMap(body -> Mono.error(new GoogleApiException(
-                                        String.valueOf(clientResponse.statusCode().value()),
-                                        body
+                                .flatMap(body -> Mono.error(new CustomException(
+                                        CustomErrorCode.GOOGLE_API_RESPONSE_ERROR,
+                                        "HTTP " + clientResponse.statusCode().value() + " 에러: " + body
                                 )))
                 )
                 .bodyToMono(PlaceReviewResponse.class)
                 .flatMap(response -> {
-                    // HTTP 200이더라도 Google API 오류 발생됨 -> status, error_message 존재
+                    // HTTP 200이더라도 Google API 오류 발생 가능
                     if (!"OK".equals(response.getStatus())) {
                         String msg = response.getError_message() != null
                                 ? response.getError_message()
                                 : "Unknown Google API error";
-                        return Mono.error(new GoogleApiException(response.getStatus(), msg));
+                        return Mono.error(new CustomException(
+                                CustomErrorCode.GOOGLE_API_RESPONSE_ERROR,
+                                "Google API  오류 - status: " + response.getStatus() + ", message: " + msg
+                        ));
                     }
                     return Mono.just(response);
                 })
                 .toFuture();
     }
+
 
     // ------------------ 타이틀 기반 검색 ------------------
     private CompletableFuture<PlacePredictionResponse> getPlaceIdByTitle(String title) {
@@ -147,7 +154,7 @@ public class GoogleMapInfoService2 {
     }
 
     // ------------------ 전체 병렬 처리 ------------------
-    public void processWellnessInfo() {
+    public CompletableFuture<Void> processWellnessInfo() {
         List<WellnessInfo> wellnessInfoList = wellnessInfoRepository.findAll();
         List<CompletableFuture<Void>> futures = wellnessInfoList.stream()
                 .map(wellnessInfo -> CompletableFuture
@@ -158,15 +165,12 @@ public class GoogleMapInfoService2 {
                                 wellnessInfoRepository.updateParentIdById(wellnessInfo.getId(), parentId);
                             }
                         })
-                        .exceptionally(ex -> {
-                            log.error("[비동기 실패] wellnessInfoId={}, error={}", wellnessInfo.getId(), ex.getMessage(), ex);
-                            return null;
-                        })
                 )
                 .collect(Collectors.toList());
 
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
+
 
     // ------------------ 리뷰 조회 ------------------
     private Mono<PlaceReviewResponse> fetchAndCachePlaceDetails(String placeId) {
@@ -174,7 +178,15 @@ public class GoogleMapInfoService2 {
                 "fields", "name,rating,formatted_phone_number,opening_hours,website,user_ratings_total,reviews",
                 "place_id", placeId
         ));
+
         return Mono.fromFuture(callPlaceReviewApi(uri))
+                .onErrorMap(ex -> {
+                    // CompletionException 내부 예외가 CustomException이면 unwrap
+                    if (ex instanceof CompletionException ce && ce.getCause() instanceof CustomException customEx) {
+                        return customEx;
+                    }
+                    return ex;
+                })
                 .flatMap(response -> reactiveRedisTemplate.opsForValue()
                         .set(placeId, response, Duration.ofDays(7))
                         .thenReturn(response)
@@ -187,4 +199,5 @@ public class GoogleMapInfoService2 {
                 .cast(PlaceReviewResponse.class)
                 .switchIfEmpty(fetchAndCachePlaceDetails(placeId));
     }
+
 }
