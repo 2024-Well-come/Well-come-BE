@@ -209,8 +209,6 @@ public class WellnessInfoServiceTest {
         when(wellnessInfoService.fetchWeatherInfo(anyInt(), anyInt())).thenReturn(weather);
 
 
-        // 6. 뷰 카운트 업데이트 무시
-        doNothing().when(wellness).updateViewNum();
 
         // when
         WellnessInfoBasicResponse response = wellnessInfoApiService.getWellnessInfoBasic(id);
@@ -231,7 +229,6 @@ public class WellnessInfoServiceTest {
         verify(wellnessInfoImgRepository).findByWellnessInfo(wellness);
         verify(likedRepository).existsByWellnessInfoAndMember(eq(wellness), isNotNull());
         verify(wellnessInfoService).fetchWeatherInfo(anyInt(), anyInt());
-        verify(wellness).updateViewNum();
     }
 
 
@@ -253,7 +250,6 @@ public class WellnessInfoServiceTest {
 
         WeatherResponse weather = WeatherResponse.builder().temperature("22.0").build();
         lenient().when(wellnessInfoService.fetchWeatherInfo(anyInt(), anyInt())).thenReturn(weather);
-        doNothing().when(wellness).updateViewNum();
 
         // when
         WellnessInfoBasicResponse response = wellnessInfoApiService.getWellnessInfoBasic(id);
