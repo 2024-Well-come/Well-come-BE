@@ -1,5 +1,7 @@
 package com.wellcome.WellcomeBE.domain.review;
 
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -15,7 +17,6 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.function.Function;
 

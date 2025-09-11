@@ -45,7 +45,7 @@ public class WellnessInfoImgService3 {
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    //private final AtomicInteger dbLookupCount = new AtomicInteger(0); // 💡 DB 조회 카운터 추가
+    //private final AtomicInteger dbLookupCount = new AtomicInteger(0); / DB 조회 카운터 추가
 
     // AsyncExecutor 주입 (ThreadPoolTaskExecutor)
     private final Executor asyncExecutor;
@@ -114,7 +114,7 @@ public class WellnessInfoImgService3 {
                 elapsed, wellnessList.size(), failedContentIds.size());
 
         if (!failedContentIds.isEmpty()) {
-            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
+            log.info(" {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
             retryFailedContentIds(failedContentIds, wellnessMap);
         }
     }
@@ -218,7 +218,7 @@ public class WellnessInfoImgService3 {
             return Collections.emptyList();
         }
 
-        // 🔄 성능 고려: 병렬 처리로 이미지 S3 업로드
+        //  성능 고려: 병렬 처리로 이미지 S3 업로드
         return StreamSupport.stream(itemsNode.spliterator(), true)
                 .map(node -> {
                     try {
@@ -227,7 +227,7 @@ public class WellnessInfoImgService3 {
                                 objectMapper.treeToValue(node, TourImageApiResponse.Response.Body.Items.Item.class);
 
                         // S3 업로드 (외부 이미지 URL을 -> 내부 S3로)
-                        String s3Url = s3Uploader.uploadDetailImageFromUrl(item.getSmallimageurl(), "wellness");
+                        String s3Url = s3Uploader.uploadDetailImageFromUrl(item.getSmallimageurl(),contentId);
 
                         if (s3Url == null) {
                             log.warn("[업로드 실패] contentId={}, imgUrl={}", item.getContentid(), item.getSmallimageurl());
@@ -247,7 +247,7 @@ public class WellnessInfoImgService3 {
                     }
                 })
                 .filter(Objects::nonNull)
-                .toList(); // JDK 16+ 또는 collect(Collectors.toList())
+                .toList();
     }
 
     private void retryFailedContentIds(List<String> failedContentIds, Map<String, WellnessInfo> wellnessMap) throws Exception {
@@ -274,11 +274,11 @@ public class WellnessInfoImgService3 {
 
         CompletableFuture.allOf(retryFutures.toArray(new CompletableFuture[0])).get();
 
-        log.info("✅ 재시도 완료 - 성공: {}건 / 실패: {}건",
+        log.info(" 재시도 완료 - 성공: {}건 / 실패: {}건",
                 failedContentIds.size() - retryFailList.size(), retryFailList.size());
 
         if (!retryFailList.isEmpty()) {
-            log.warn("🚫 최종 실패 contentId 목록: {}", retryFailList);
+            log.warn(" 최종 실패 contentId 목록: {}", retryFailList);
         }
     }
 

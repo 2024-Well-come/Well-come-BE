@@ -1,4 +1,4 @@
-package com.wellcome.WellcomeBE.domain.review;
+package com.wellcome.WellcomeBE.domain.review.dto;
 
 import lombok.Data;
 
@@ -8,6 +8,7 @@ import java.util.List;
 public class PlacePredictionResponse {
     private List<Prediction> predictions;
     private String status;
+    private String error_message;
 
 
     @Data

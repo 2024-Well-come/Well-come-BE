@@ -1,5 +1,8 @@
-package com.wellcome.WellcomeBE.domain.review;
+package com.wellcome.WellcomeBE.domain.review.controller;
 
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService2;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

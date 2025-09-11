@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.service.update;
 
-import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService2;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService2;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoTempData;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
