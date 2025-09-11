@@ -17,6 +17,9 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.TOUR_API_IMG_S3_UPLOAD_FAILED;
@@ -34,41 +37,69 @@ public class S3Service {
     private static final int retryLimit = 2;
 
     public String uploadDetailImageFromUrl(String imageUrl, String contentId) {
+        final int MEMORY_THRESHOLD = 5 * 1024 * 1024; // 5MB 이하: 메모리 사용
+        String fileExtension = getFileExtension(imageUrl);
+        String folderPath = "detail-images/" + contentId + "/";
+        String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
+
+        URL url;
         try {
-            // 파일 확장자 및 경로 세팅
-            String fileExtension = getFileExtension(imageUrl);
-            String folderPath = "detail-images/" + contentId + "/";
-            String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
+            url = new URL(imageUrl);
+        } catch (MalformedURLException e) {
+            log.error("잘못된 URL: {}", imageUrl, e);
+            return null;
+        }
 
-            // contentLength 확인용 Connection
-            URLConnection connection = new URL(imageUrl).openConnection();
-            int contentLength = connection.getContentLength();
+        try {
+            URLConnection connection = url.openConnection();
+            int contentLength = connection.getContentLength(); // -1일 수 있음
 
-            // 다시 stream 열기 (같은 URL이지만 새롭게 열어야 안정적)
-            try (InputStream inputStream = new URL(imageUrl).openStream()) {
-                ObjectMetadata metadata = new ObjectMetadata();
-                if (contentLength > 0) metadata.setContentLength(contentLength);
-                metadata.setContentType(getMimeType(fileExtension));
+            // InputStream 준비
+            try (InputStream inputStream = connection.getInputStream()) {
 
-                amazonS3.putObject(new PutObjectRequest(bucketName, fileName, inputStream, metadata));
+                if (contentLength > 0 && contentLength <= MEMORY_THRESHOLD) {
+                    // 작은 파일: 메모리에 올리고 재시도 가능하게 처리
+                    byte[] bytes = inputStream.readAllBytes();
+                    try (ByteArrayInputStream repeatableStream = new ByteArrayInputStream(bytes)) {
+                        ObjectMetadata metadata = new ObjectMetadata();
+                        metadata.setContentLength(bytes.length);
+                        metadata.setContentType(getMimeType(fileExtension));
 
-                return amazonS3.getUrl(bucketName, fileName).toString();
+                        amazonS3.putObject(new PutObjectRequest(bucketName, fileName, repeatableStream, metadata));
+                    }
+
+                } else {
+                    // 큰 파일 또는 길이 알 수 없는 파일: 임시 파일 사용
+                    Path tempFile = Files.createTempFile("s3upload-", "." + fileExtension);
+                    Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+                    try (InputStream fileStream = Files.newInputStream(tempFile)) {
+                        ObjectMetadata metadata = new ObjectMetadata();
+                        if (contentLength > 0) metadata.setContentLength(contentLength);
+                        metadata.setContentType(getMimeType(fileExtension));
+
+                        amazonS3.putObject(new PutObjectRequest(bucketName, fileName, fileStream, metadata));
+                    } finally {
+                        Files.deleteIfExists(tempFile);
+                    }
+                }
+
             }
+
+            return amazonS3.getUrl(bucketName, fileName).toString();
 
         } catch (FileNotFoundException e) {
             log.warn("FileNotFoundException 발생: imgUrl: {}, contentId: {}", imageUrl, contentId);
             return null;
-        } catch (IOException e) {
-            log.error("IOException 발생: {}", e.getMessage());
+        }catch (AmazonServiceException e) {
+            log.error("AWS S3 서비스 오류: imgUrl: {}, contentId: {}", imageUrl, contentId);
             throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
-        } catch (AmazonServiceException e) {
-            log.error("AWS S3 Service 오류 발생: {}", e.getMessage());
-            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
-        } catch (AmazonClientException e) {
-            log.error("AWS S3 Client 오류 발생: {}", e.getMessage());
+        } catch (IOException | AmazonClientException e){
+            log.error("AWS S3 오류 발생: imgUrl: {}, contentId: {}", imageUrl, contentId);
             throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
         }
     }
+
 
     private String getFileExtension(String url) {
         int lastDot = url.lastIndexOf('.');
