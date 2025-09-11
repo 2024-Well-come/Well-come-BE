@@ -129,7 +129,7 @@ public class WellnessInfoService2 {
     }
 
     @Transactional
-    private void updateThumbnailUrl(List<WellnessInfo> wellnessInfoList){
+     void updateThumbnailUrl(List<WellnessInfo> wellnessInfoList){
         wellnessInfoRepository.saveAll(wellnessInfoList);
     }
 

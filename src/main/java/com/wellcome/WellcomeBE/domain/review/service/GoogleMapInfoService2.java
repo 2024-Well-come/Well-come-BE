@@ -55,19 +55,34 @@ public class GoogleMapInfoService2 {
                                         "HTTP " + clientResponse.statusCode().value() + " 에러: " + body
                                 )))
                 )
-                .bodyToMono(PlacePredictionResponse.class)
+                .bodyToMono(PlacePredictionResponse.class)  // ✅ Prediction용 DTO로 파싱
                 .flatMap(response -> {
-                    if (!"OK".equals(response.getStatus())) {
-                        String msg = response.getError_message() != null ? response.getError_message() : "Unknown Google API error";
-                        return Mono.error(new CustomException(
-                                CustomErrorCode.GOOGLE_API_RESPONSE_ERROR,
-                                "Google API  오류 - status: " + response.getStatus() + ", message: " + msg
-                        ));
+                    log.info("Google Prediction API status = {}", response.getStatus());
+
+                    if ("OK".equals(response.getStatus())) {
+                        return Mono.just(response);
                     }
-                    return Mono.just(response);
+
+                    if ("ZERO_RESULTS".equals(response.getStatus())) {
+                        log.info("✅ ZERO_RESULTS 감지 → 빈 predictions 반환");
+                        return Mono.just(response.toBuilder()
+                                .predictions(Collections.emptyList())
+                                .build());
+                    }
+
+                    // 그 외 오류 처리
+                    String msg = response.getError_message() != null
+                            ? response.getError_message()
+                            : "Unknown Google API error";
+
+                    return Mono.error(new CustomException(
+                            CustomErrorCode.GOOGLE_API_RESPONSE_ERROR,
+                            "Google Prediction API 오류 - status: " + response.getStatus() + ", message: " + msg
+                    ));
                 })
                 .toFuture();
     }
+
     // ------------------ Google API 호출 (PlaceReview) ------------------
     private CompletableFuture<PlaceReviewResponse> callPlaceReviewApi(String uri) {
         return webClient.get()

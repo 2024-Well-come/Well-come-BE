@@ -1,9 +1,11 @@
 package com.wellcome.WellcomeBE.domain.review.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
 
+@Builder(toBuilder = true)
 @Data
 public class PlacePredictionResponse {
     private List<Prediction> predictions;

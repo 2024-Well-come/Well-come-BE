@@ -1,9 +1,11 @@
 package com.wellcome.WellcomeBE.domain.review.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
 
+@Builder(toBuilder = true)
 @Data
 public class PlaceReviewResponse  {
     private List<Object> html_attributions;  // HTML 속성
