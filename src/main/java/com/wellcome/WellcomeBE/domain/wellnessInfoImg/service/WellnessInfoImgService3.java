@@ -49,6 +49,7 @@ public class WellnessInfoImgService3 {
 
     // AsyncExecutor 주입 (ThreadPoolTaskExecutor)
     private final Executor asyncExecutor;
+    private final Executor imageExecutor;
     private final S3Service s3Uploader;
     private final RetryWithBackoff retryWithBackoff;
 
@@ -58,6 +59,7 @@ public class WellnessInfoImgService3 {
             TourInfoApiWebClientConfig webClientConfig,
             WellnessInfoImgRepository wellnessInfoImgRepository,
             Executor asyncExecutor,
+            Executor imageExecutor,
             S3Service s3Uploader,
             RetryWithBackoff retryWithBackoff
     ) {
@@ -66,6 +68,7 @@ public class WellnessInfoImgService3 {
         this.webClientConfig = webClientConfig;
         this.wellnessInfoImgRepository = wellnessInfoImgRepository;
         this.asyncExecutor = asyncExecutor;
+        this.imageExecutor = imageExecutor;
         this.s3Uploader = s3Uploader;
         this.retryWithBackoff = retryWithBackoff;
     }
@@ -179,7 +182,7 @@ public class WellnessInfoImgService3 {
 
             log.info("[단일 요청 스레드 완료] contentId={}, 성공 {}건, 중복 {}건",
                     contentId, successInserts.size(), duplicateAttempts.size());
-        }, asyncExecutor);
+        }, imageExecutor);
     }
 
     private List<WellnessInfoImg> fetchDataAndConvert(String contentId, WellnessInfo wellness) throws Exception {
