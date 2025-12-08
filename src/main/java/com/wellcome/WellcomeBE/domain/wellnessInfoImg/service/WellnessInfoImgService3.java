@@ -207,7 +207,7 @@ public class WellnessInfoImgService3 {
 
         if (!MediaType.APPLICATION_JSON.equals(contentType)) {
             String message = errorHandler.handleXmlErrorResponse(responseBody);
-            throw new CustomException(CustomErrorCode.TOUR_API_RESPONSE_ERROR, "XML 오류 응답: " + message);
+            throw new CustomException(CustomErrorCode.TOUR_API_RESPONSE_ERROR, "XML 오류 응답: " + message + "contentId" + contentId);
         }
 
         JsonNode root = objectMapper.readTree(responseBody);
@@ -227,7 +227,7 @@ public class WellnessInfoImgService3 {
                                 objectMapper.treeToValue(node, TourImageApiResponse.Response.Body.Items.Item.class);
 
                         // S3 업로드 (외부 이미지 URL을 -> 내부 S3로)
-                        String s3Url = s3Uploader.uploadDetailImageFromUrl(item.getSmallimageurl(),contentId);
+                        String s3Url = s3Uploader.uploadDetailImageFromUrl(item.getOriginimgurl(),contentId);
 
                         if (s3Url == null) {
                             //log.warn("[업로드 실패] contentId={}, imgUrl={}", item.getContentid(), item.getSmallimageurl());

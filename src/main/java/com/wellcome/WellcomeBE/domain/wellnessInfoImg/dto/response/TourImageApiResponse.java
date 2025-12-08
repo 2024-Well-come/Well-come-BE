@@ -58,15 +58,6 @@ public class TourImageApiResponse {
                     private String cpyrhtDivCd;
                     private String serialnum;
 
-
-                    public WellnessInfoImg toEntity(WellnessInfo wellnessInfo) throws ParseException {
-                        return WellnessInfoImg.builder()
-                                .wellnessInfo(wellnessInfo)
-                                .imgUrl(smallimageurl)
-                                .imgName(imgname)
-                                .contentId(contentid)
-                                .build();
-                    }
                 }
             }
         }
