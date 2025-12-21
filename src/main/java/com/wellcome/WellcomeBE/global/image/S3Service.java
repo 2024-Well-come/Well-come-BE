@@ -43,60 +43,72 @@ public class S3Service {
         String fileName = folderPath + UUID.randomUUID() + "." + fileExtension;
 
         URL url;
+        URLConnection connection;
         try {
             url = new URL(imageUrl);
+            connection = url.openConnection();
         } catch (MalformedURLException e) {
             log.error("잘못된 URL: {}", imageUrl, e);
+            return null;
+        } catch (IOException e) { // URLConnection.openConnection() 에서 발생 가능
+            log.error("URL 연결 오류: {}", imageUrl, e);
             return null;
         }
 
         try {
-            URLConnection connection = url.openConnection();
-            int contentLength = connection.getContentLength(); // -1일 수 있음
+            int contentLength = connection.getContentLength();
+            String determinedMimeType = connection.getContentType(); // 원본 서버 MIME 타입 획득
 
             // InputStream 준비
             try (InputStream inputStream = connection.getInputStream()) {
 
+                // 작은 파일: 메모리에 올리고 재시도 가능하게 처리
                 if (contentLength > 0 && contentLength <= MEMORY_THRESHOLD) {
-                    // 작은 파일: 메모리에 올리고 재시도 가능하게 처리
                     byte[] bytes = inputStream.readAllBytes();
                     try (ByteArrayInputStream repeatableStream = new ByteArrayInputStream(bytes)) {
                         ObjectMetadata metadata = new ObjectMetadata();
                         metadata.setContentLength(bytes.length);
-                        metadata.setContentType(getMimeType(fileExtension));
+                        metadata.setContentType(determinedMimeType != null ? determinedMimeType : getMimeType(fileExtension)); // MIME 타입 적용
+                        metadata.setContentDisposition("inline"); // <<-- 이미지 표시를 위해 추가
 
                         amazonS3.putObject(new PutObjectRequest(bucketName, fileName, repeatableStream, metadata));
                     }
 
-                } else {
-                    // 큰 파일 또는 길이 알 수 없는 파일: 임시 파일 사용
+                }
+                // 큰 파일 또는 길이 알 수 없는 파일: 임시 파일 사용
+                else {
                     Path tempFile = Files.createTempFile("s3upload-", "." + fileExtension);
                     Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
                     try (InputStream fileStream = Files.newInputStream(tempFile)) {
                         ObjectMetadata metadata = new ObjectMetadata();
                         if (contentLength > 0) metadata.setContentLength(contentLength);
-                        metadata.setContentType(getMimeType(fileExtension));
+                        metadata.setContentType(determinedMimeType != null ? determinedMimeType : getMimeType(fileExtension)); // MIME 타입 적용
+                        metadata.setContentDisposition("inline"); // <<-- 이미지 표시를 위해 추가
 
                         amazonS3.putObject(new PutObjectRequest(bucketName, fileName, fileStream, metadata));
                     } finally {
                         Files.deleteIfExists(tempFile);
                     }
                 }
-
             }
 
             return amazonS3.getUrl(bucketName, fileName).toString();
 
         } catch (FileNotFoundException e) {
-            log.warn("FileNotFoundException 발생: imgUrl: {}, contentId: {}", imageUrl, contentId);
+            // 404/403 등 원본 파일 접근 실패 시
+            log.warn("원본 파일 접근 실패 (404/403 추정): imgUrl: {}, contentId: {}, Error: {}", imageUrl, contentId, e.getMessage());
             return null;
-        }catch (AmazonServiceException e) {
-            log.error("AWS S3 서비스 오류: imgUrl: {}, contentId: {}", imageUrl, contentId);
-            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
+        } catch (AmazonServiceException e) {
+            // AWS 서버 측 오류 (권한, 버킷 설정 등)
+            log.error("AWS S3 서비스 오류 발생 (서버 측): imgUrl: {}, contentId: {}", imageUrl, contentId, e); // 스택 트레이스 포함
+            // 기존 예외를 포함하여 CustomException throw
+            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED, e);
         } catch (IOException | AmazonClientException e){
-            log.error("AWS S3 오류 발생: imgUrl: {}, contentId: {}", imageUrl, contentId);
-            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED);
+            // AWS 클라이언트 측 오류 또는 네트워크 I/O 오류
+            log.error("AWS S3 오류 발생 (클라이언트/IO): imgUrl: {}, contentId: {}", imageUrl, contentId, e); // 스택 트레이스 포함
+            // 기존 예외를 포함하여 CustomException throw
+            throw new CustomException(TOUR_API_IMG_S3_UPLOAD_FAILED, e);
         }
     }
 

@@ -18,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +54,6 @@ class GoogleMapInfoServiceTest {
 
     @BeforeEach
     void setUp() {
-        mockReviewResponse = new PlaceReviewResponse();
         PlaceReviewResponse.PlaceResult placeResult = new PlaceReviewResponse.PlaceResult();
         placeResult.setName("Test Place");
         placeResult.setFormatted_phone_number("123-4567");
@@ -61,9 +61,12 @@ class GoogleMapInfoServiceTest {
         placeResult.setWebsite("www.test.com");
         placeResult.setUser_ratings_total(100);
 
-        mockReviewResponse.setResult(placeResult);
-        mockReviewResponse.setStatus("OK");
-
+        mockReviewResponse = PlaceReviewResponse.builder()
+                .result(placeResult)
+                .status("OK")
+                .error_message(null)
+                .html_attributions(Collections.emptyList())
+                .build();
 
         when(jsonRedisTemplate.opsForValue()).thenReturn(valueOperations);
     }

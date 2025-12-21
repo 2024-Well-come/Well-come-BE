@@ -28,7 +28,7 @@ public class TourInfoApiWebClientConfig {
     public WebClient webClient() {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000) //연결 타임아웃
-                .responseTimeout(Duration.ofMillis(5000)); //응답 타임아웃
+                .responseTimeout(Duration.ofMinutes(10)); //응답 타임아웃
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
