@@ -15,14 +15,16 @@ public class WellnessInfoImg extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "wellness_info_img_id")
-    private Long wellnessInfoImgId;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wellness_info_id", nullable = false)
     private WellnessInfo wellnessInfo;
 
-    @Lob
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 512)
     private String imgUrl;
+
+    private String imgName;
+    private String contentId;
 
 }

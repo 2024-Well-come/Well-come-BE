@@ -1,8 +1,7 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
 import com.wellcome.WellcomeBE.domain.Article.dto.ArticleResponse;
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
-import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import lombok.Builder;
 import lombok.Getter;
 

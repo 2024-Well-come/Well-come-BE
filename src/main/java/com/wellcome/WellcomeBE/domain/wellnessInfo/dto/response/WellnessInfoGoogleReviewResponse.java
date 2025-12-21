@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import lombok.Builder;
 import lombok.Getter;
 

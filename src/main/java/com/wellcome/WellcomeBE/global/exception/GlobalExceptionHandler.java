@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.IMG_UPLOAD_ERROR;
+import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.INTERNAL_SERVER_ERROR;
 
 @RestControllerAdvice
 @Slf4j
@@ -54,7 +57,31 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAllException(Exception e, HttpServletRequest request) {
         log.error("*** Common Exception - url: {} ({}), errorMessage: {}",
                 request.getRequestURL(), request.getMethod(), e.getMessage());
-        return buildResponseEntity(CustomErrorCode.INTERNAL_SERVER_ERROR);
+        return buildResponseEntity(INTERNAL_SERVER_ERROR);
+    }
+
+    // CompletionException / ExecutionException
+    @ExceptionHandler({CompletionException.class, ExecutionException.class})
+    public ResponseEntity<ErrorResponse> handleAsyncException(Throwable ex, HttpServletRequest request) {
+        // 래핑된 예외 벗기기
+        Throwable actual = unwrap(ex);
+
+        // Custom Exception 처리
+        if (actual instanceof CustomException ce) {
+            return handleCustomException(ce, request);
+        }
+
+        // 그 외 예외는 공통 서버 에러로 처리
+        return handleAllException(new Exception(actual), request);
+    }
+
+
+    private Throwable unwrap(Throwable t) {
+        while (t instanceof CompletionException || t instanceof ExecutionException) {
+            if (t.getCause() == null) break;
+            t = t.getCause();
+        }
+        return t;
     }
 
     private ResponseEntity<ErrorResponse> buildResponseEntity(CustomErrorCode customErrorCode, String errorMessage) {

@@ -3,8 +3,8 @@ package com.wellcome.WellcomeBE.domain.Article.service;
 import com.wellcome.WellcomeBE.domain.Article.Article;
 import com.wellcome.WellcomeBE.domain.Article.dto.ArticleResponse;
 import com.wellcome.WellcomeBE.domain.Article.repository.ArticleRepository;
-import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService2;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.ARTICLE_N
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
-    private final GoogleMapInfoService googleMapInfoService;
+    private final GoogleMapInfoService2 googleMapInfoService;
     private static final int ARTICLE_POPULAR_SIZE = 5;
     private static final int ARTICLE_BREF_SIZE = 5;
 
