@@ -1,11 +1,12 @@
-package com.wellcome.WellcomeBE.domain.review;
+package com.wellcome.WellcomeBE.domain.review.service;
 
+import com.wellcome.WellcomeBE.domain.review.dto.PlacePredictionResponse;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -29,8 +30,8 @@ public class GoogleMapInfoService {
 
 
     // 생성자 주입
-    public GoogleMapInfoService(WebClient googlePlaceInfoWebClient, RedisTemplate<String, Object> jsonRedisTemplate, WellnessInfoRepository wellnessInfoRepository) {
-        this.webClient = googlePlaceInfoWebClient;
+    public GoogleMapInfoService(@Qualifier("googlePlaceInfoApiWebClient") WebClient webClient, RedisTemplate<String, Object> jsonRedisTemplate, WellnessInfoRepository wellnessInfoRepository) {
+        this.webClient = webClient;
         this.jsonRedisTemplate = jsonRedisTemplate;
         this.wellnessInfoRepository = wellnessInfoRepository;
     }
@@ -55,7 +56,7 @@ public class GoogleMapInfoService {
     private CompletableFuture<WellnessInfo> processSingleWellnessInfo(WellnessInfo wellnessInfo) {
         return getPlaceId(wellnessInfo.getAddress(), wellnessInfo.getTitle())
                 .map(placePredictionResponse -> {
-                    // 외부 API로부터 parentId를 추출하고 wellnessInfo에 설정
+                    // 외부 API로부터 placePredictionResponsearentId를 추출하고 wellnessInfo에 설정
                     String parentId = extractParentIdFromResponse(placePredictionResponse);
                     wellnessInfo.setParentId(parentId);
                     return wellnessInfo;
@@ -133,3 +134,4 @@ public class GoogleMapInfoService {
     }
 
 }
+

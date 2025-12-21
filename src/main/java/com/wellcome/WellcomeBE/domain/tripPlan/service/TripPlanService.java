@@ -2,8 +2,8 @@ package com.wellcome.WellcomeBE.domain.tripPlan.service;
 
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService2;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanDeleteRequest;
 import com.wellcome.WellcomeBE.domain.tripPlan.dto.request.TripPlanCreateRequest;
@@ -43,7 +43,7 @@ public class TripPlanService {
     private final TripPlanPlaceRepository tripPlanPlaceRepository;
     private final CommunityRepository communityRepository;
     private final TokenProvider tokenProvider;
-    private final GoogleMapInfoService googleMapInfoService;
+    private final GoogleMapInfoService2 googleMapInfoService;
     private static final int TRIP_PLAN_LIST_PAGE_SIZE = 10;
     public void createTripPlan(TripPlanCreateRequest request){
 

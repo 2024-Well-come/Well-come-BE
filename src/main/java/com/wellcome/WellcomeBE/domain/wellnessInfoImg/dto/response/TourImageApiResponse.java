@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
+import com.wellcome.WellcomeBE.domain.wellnessInfoImg.WellnessInfoImg;
 import lombok.Data;
+import org.locationtech.jts.io.ParseException;
 
 import java.util.List;
 
@@ -54,6 +57,7 @@ public class TourImageApiResponse {
                     private String smallimageurl;
                     private String cpyrhtDivCd;
                     private String serialnum;
+
                 }
             }
         }

@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response;
 
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.global.OpeningHoursUtils;
 import lombok.AllArgsConstructor;
@@ -37,9 +37,17 @@ public class WellnessInfoBasicResponse {
             boolean isLiked,
             WeatherResponse weather
     ) {
-        // 영업시간 정보
-        String openDetail = placeResult != null ? OpeningHoursUtils.getOpenStatus(placeResult).getOpenDetail() : NO_INFO;
-        Boolean isOpen = openDetail.equals(NO_INFO) ? null : OpeningHoursUtils.getOpenStatus(placeResult).getIsOpen();
+        String openDetail;
+        Boolean isOpen;
+
+        // 영업시간 정보 (삭제된 정보인 경우 폐점 표시)
+        if(wellness.isDeleted()){
+            openDetail = "폐점됨";
+            isOpen = null;
+        }else{
+            openDetail = placeResult != null ? OpeningHoursUtils.getOpenStatus(placeResult).getOpenDetail() : NO_INFO;
+            isOpen = openDetail.equals(NO_INFO) ? null : OpeningHoursUtils.getOpenStatus(placeResult).getIsOpen();
+        }
 
         return WellnessInfoBasicResponse.builder()
                 .wellnessInfoId(wellness.getId())

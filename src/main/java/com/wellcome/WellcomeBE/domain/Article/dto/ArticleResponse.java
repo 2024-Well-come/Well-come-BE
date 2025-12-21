@@ -2,7 +2,7 @@ package com.wellcome.WellcomeBE.domain.Article.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.wellcome.WellcomeBE.domain.Article.Article;
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import lombok.Builder;
 import lombok.Getter;

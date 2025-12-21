@@ -30,4 +30,5 @@ public interface WellnessInfoRepositoryCustom {
 
     List<Sigungu> findDistinctSigungu(@Param("sigunguList") List<Sigungu> sigunguList);
 
+    List<String> findContentIdsWithoutDetailImg();
 }

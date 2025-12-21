@@ -6,21 +6,20 @@ import com.wellcome.WellcomeBE.domain.community.dto.response.ReviewPostResponse;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService2;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
-import com.wellcome.WellcomeBE.domain.tripPlan.service.TripPlanService;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoWithLiked;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.request.WellnessInfoListRequest;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.response.*;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
+import com.wellcome.WellcomeBE.domain.wellnessInfo.service.setup.WellnessInfoService;
 import com.wellcome.WellcomeBE.domain.wellnessInfoImg.repository.WellnessInfoImgRepository;
 import com.wellcome.WellcomeBE.global.exception.CustomErrorCode;
 import com.wellcome.WellcomeBE.global.exception.CustomException;
 import com.wellcome.WellcomeBE.global.security.TokenProvider;
-import com.wellcome.WellcomeBE.global.type.ImgSavedType;
 import com.wellcome.WellcomeBE.global.type.Sigungu;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +30,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.wellcome.WellcomeBE.global.exception.CustomErrorCode.WELLNESS_INFO_NOT_FOUND;
@@ -44,7 +46,7 @@ public class WellnessInfoApiService {
 
     private final WellnessInfoRepository wellnessInfoRepository;
     private final TokenProvider tokenProvider;
-    private final GoogleMapInfoService googleMapInfoService;
+    private final GoogleMapInfoService2 googleMapInfoService;
     private final LikedRepository likedRepository;
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
     private final WellnessInfoService wellnessInfoService;
@@ -59,7 +61,7 @@ public class WellnessInfoApiService {
      * - 로그인 가정
      */
     @Transactional
-    public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request, ImgSavedType savedType) {
+    public WellnessInfoResponse getWellnessInfoList(int page, WellnessInfoListRequest request) {
 
         // 사용자 정보 조회
         Member member = tokenProvider.getMember();
@@ -96,7 +98,7 @@ public class WellnessInfoApiService {
 
         List<WellnessInfoResponse.WellnessInfoList.WellnessInfoItem> wellnessInfoItemList = data.getContent().stream()
                 .map(dto -> WellnessInfoResponse.WellnessInfoList.WellnessInfoItem.from(
-                        dto.getWellnessInfo(), dto.isLiked(), savedType)
+                        dto.getWellnessInfo(), dto.isLiked())
                 )
                 .collect(Collectors.toList());
 
@@ -149,7 +151,7 @@ public class WellnessInfoApiService {
         WeatherResponse weatherInfo = wellnessInfoService.fetchWeatherInfo(sigungu.getNx(), sigungu.getNy());
 
         // 조회 수 추가
-        wellness.updateViewNum();
+        wellnessInfoRepository.incrementView(wellness.getId());
 
         return WellnessInfoBasicResponse.from(wellness,wellnessInfoImg,placeResult,liked, weatherInfo);
     }
@@ -221,16 +223,6 @@ public class WellnessInfoApiService {
         return WellnessInfoUsefulInformationResponse.from(wellnessNearbyDtoList,top5Article);
     }
 
-//    private static double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
-//        final int R = 6371; // 지구의 반지름 (km)
-//        double latDistance = Math.toRadians(lat2 - lat1);
-//        double lonDistance = Math.toRadians(lon2 - lon1);
-//        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-//                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-//                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-//        return R * c; // km 단위로 변환
-//    }
 
     /**
      * 웰니스 장소 상세 조회(4) - 후기 게시글 조회

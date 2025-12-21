@@ -8,6 +8,8 @@ import com.wellcome.WellcomeBE.global.type.Thema;
 import jakarta.persistence.*;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 
 @Entity
@@ -26,6 +28,7 @@ public class WellnessInfo extends BaseTimeEntity {
     @Column(nullable = false)
     private String title;
 
+    @Column(unique = true)
     private String contentId; // tour4.0 PK
 
     private String parentId; //Google Map PK
@@ -33,13 +36,10 @@ public class WellnessInfo extends BaseTimeEntity {
     private String tel;
 
     @Column(columnDefinition = "TEXT")
-    private String originalThumbnailUrl; // Tour API 제공 이미지를 S3에 업로드 후 생성되는 객체 URL
+    private String originalThumbnailUrl; // Tour API 제공 이미지 URL
 
     @Column(columnDefinition = "TEXT")
-    private String thumbnailUrl; // Tour API 제공 이미지 URL
-
-    @Column(columnDefinition = "TEXT")
-    private String s3ThumbnailUrl; // Tour API 제공 이미지를 S3에 업로드 후 생성되는 객체 URL(업데이트용)
+    private String thumbnailUrl; // Tour API 제공 이미지를 S3에 업로드 후 생성되는 객체 URL
 
     // 분류
     @Enumerated(EnumType.STRING)
@@ -70,21 +70,47 @@ public class WellnessInfo extends BaseTimeEntity {
 
     @Column(nullable = false, columnDefinition = "GEOMETRY")
     private Point location;
-
     private long view;
-
-    //@Column(nullable = false)
-    private String summary;
+    private boolean isDeleted;
 
     public void setParentId(String parentId){
         this.parentId = parentId;
     }
-    public void updateViewNum(){
-        this.view++;
-    }
 
-    public void updateS3ThumbnailUrl(String s3ThumbnailUrl){
-        this.s3ThumbnailUrl = s3ThumbnailUrl;
+    public void updateThumbnailUrl(String s3ThumbnailUrl){
+        this.thumbnailUrl = s3ThumbnailUrl;
+    }
+    public static WellnessInfo of(WellnessInfoTemp w, String thumbnailUrl, String parentId) throws ParseException {
+        double mapX = w.getMapX();
+        double mapY = w.getMapY();
+
+        // WKTReader를 통해 WKT -> 실제 타입으로 변환
+        String pointWKT = String.format("POINT(%s %s)", mapX, mapY);
+        Point point = (Point) new WKTReader().read(pointWKT);
+
+        return WellnessInfo.builder()
+                // 기본 정보
+                .title(w.getTitle())
+                .contentId(w.getContentId())
+                .tel(w.getTel())
+                .originalThumbnailUrl(w.getOriginalThumbnailUrl())
+
+                .thumbnailUrl(thumbnailUrl)
+                .parentId(parentId)
+
+                // 분류
+                .area(w.getArea())
+                .sigungu(w.getSigungu())
+                .thema(w.getThema())
+                .category(w.getCategory())
+
+                // 주소
+                .address(w.getAddress())
+                .mapX(w.getMapX())
+                .mapY(w.getMapY())
+                .location(point)
+
+                .build();
     }
 
 }
