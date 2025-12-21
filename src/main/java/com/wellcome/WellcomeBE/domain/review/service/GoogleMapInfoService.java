@@ -1,5 +1,7 @@
-package com.wellcome.WellcomeBE.domain.review;
+package com.wellcome.WellcomeBE.domain.review.service;
 
+import com.wellcome.WellcomeBE.domain.review.dto.PlacePredictionResponse;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
 import lombok.extern.slf4j.Slf4j;

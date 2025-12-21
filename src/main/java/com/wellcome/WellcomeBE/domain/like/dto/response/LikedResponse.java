@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.domain.like.dto.response;
 
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.vo.LikeWellnessInfoVo;
 import com.wellcome.WellcomeBE.global.type.Thema;
 import lombok.Builder;

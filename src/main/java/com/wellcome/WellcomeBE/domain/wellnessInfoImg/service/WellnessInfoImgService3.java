@@ -45,10 +45,11 @@ public class WellnessInfoImgService3 {
     private final WellnessInfoImgRepository wellnessInfoImgRepository;
     private final TourApiErrorHandler errorHandler = new TourApiErrorHandler();
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    //private final AtomicInteger dbLookupCount = new AtomicInteger(0); // 💡 DB 조회 카운터 추가
+    //private final AtomicInteger dbLookupCount = new AtomicInteger(0); / DB 조회 카운터 추가
 
     // AsyncExecutor 주입 (ThreadPoolTaskExecutor)
     private final Executor asyncExecutor;
+    private final Executor imageExecutor;
     private final S3Service s3Uploader;
     private final RetryWithBackoff retryWithBackoff;
 
@@ -58,6 +59,7 @@ public class WellnessInfoImgService3 {
             TourInfoApiWebClientConfig webClientConfig,
             WellnessInfoImgRepository wellnessInfoImgRepository,
             Executor asyncExecutor,
+            Executor imageExecutor,
             S3Service s3Uploader,
             RetryWithBackoff retryWithBackoff
     ) {
@@ -66,6 +68,7 @@ public class WellnessInfoImgService3 {
         this.webClientConfig = webClientConfig;
         this.wellnessInfoImgRepository = wellnessInfoImgRepository;
         this.asyncExecutor = asyncExecutor;
+        this.imageExecutor = imageExecutor;
         this.s3Uploader = s3Uploader;
         this.retryWithBackoff = retryWithBackoff;
     }
@@ -76,7 +79,7 @@ public class WellnessInfoImgService3 {
 
 
         if (wellnessList.isEmpty()) {
-            log.warn("Wellness 리스트가 비어 있습니다.");
+            //log.warn("Wellness 리스트가 비어 있습니다.");
             return;
         }
         Map<String, WellnessInfo> wellnessMap = wellnessList.stream()
@@ -114,14 +117,14 @@ public class WellnessInfoImgService3 {
 //                elapsed, wellnessList.size(), failedContentIds.size());
 
         if (!failedContentIds.isEmpty()) {
-//            log.info("🔁 {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
+            //log.info(" {}건의 실패 요청에 대해 재시도 시작 (3초 후)", failedContentIds.size());
             retryFailedContentIds(failedContentIds, wellnessMap);
         }
     }
 
     public void singleFetchAndSaveTourImages(String contentId) {
         CompletableFuture.runAsync(() -> {
-//            log.info("[단일 요청 스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+            //log.info("[단일 요청 스레드 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
 
             WellnessInfo wellness = wellnessInfoRepository.findByContentId(contentId)
                     .orElseThrow(() -> new CustomException(WELLNESS_INFO_CONTENT_ID_NOT_FOUND));
@@ -139,22 +142,22 @@ public class WellnessInfoImgService3 {
                 } catch (Exception e) { //오류가 발생할 경우 1회 재시도
                     attempt++;
                     if(attempt < maxAttempts){
-                        log.error("[단일 요청 실패 - 3초 후 재시도 예정] contentId={}, error={}", contentId, e.getMessage(), e);
+                        //log.error("[단일 요청 실패 - 3초 후 재시도 예정] contentId={}, error={}", contentId, e.getMessage(), e);
                         try {
                             Thread.sleep(3000);
                         } catch (InterruptedException ie) {
                             Thread.currentThread().interrupt();
-                            log.error("[재시도 대기 중 인터럽트 발생] contentId={}", contentId);
+                            //log.error("[재시도 대기 중 인터럽트 발생] contentId={}", contentId);
                         }
                     }else{
-                        log.error("[단일 요청 최종 실패] contentId={}, error={}", contentId, e.getMessage(), e);
+                        //log.error("[단일 요청 최종 실패] contentId={}, error={}", contentId, e.getMessage(), e);
                         return;
                     }
                 }
             }
 
             if(images.isEmpty()){
-//                log.info("[단일 요청 스레드 완료] contentId={}, 저장할 데이터 없음");
+                //log.info("[단일 요청 스레드 완료] contentId={}, 저장할 데이터 없음");
                 return;
             }
 
@@ -172,14 +175,14 @@ public class WellnessInfoImgService3 {
 //                    log.warn("[중복 삽입 시도] contentId={}, imgUrl={}, imgName={}",
 //                            contentId, img.getImgUrl(), img.getImgName());
                 } catch (Exception e) {
-                    log.error("[기타 저장 실패] contentId={}, imgUrl={}, error={}",
-                            contentId, img.getImgUrl(), e.getMessage());
+//                    log.error("[기타 저장 실패] contentId={}, imgUrl={}, error={}",
+//                            contentId, img.getImgUrl(), e.getMessage());
                 }
             }
 
-//            log.info("[단일 요청 스레드 완료] contentId={}, 성공 {}건, 중복 {}건",
-//                    contentId, successInserts.size(), duplicateAttempts.size());
-        }, asyncExecutor);
+            log.info("[단일 요청 스레드 완료] contentId={}, 성공 {}건, 중복 {}건",
+                    contentId, successInserts.size(), duplicateAttempts.size());
+        }, imageExecutor);
     }
 
     private List<WellnessInfoImg> fetchDataAndConvert(String contentId, WellnessInfo wellness) throws Exception {
@@ -198,7 +201,7 @@ public class WellnessInfoImgService3 {
             throw wrapCustomException(e);
         }
         //  uriString 확인용 로그
-//         log.info("[API 호출 URI] contentId={}, uri={}", contentId, uriString);
+        //log.info("[API 호출 URI] contentId={}, uri={}", contentId, uriString);
 
 
 
@@ -214,11 +217,11 @@ public class WellnessInfoImgService3 {
         JsonNode itemsNode = root.path("response").path("body").path("items").path("item");
 
         if (itemsNode.isMissingNode() || !itemsNode.isArray() || itemsNode.size() == 0) {
-            log.warn("[데이터 없음] contentId={}", contentId);
+            //log.warn("[데이터 없음] contentId={}", contentId);
             return Collections.emptyList();
         }
 
-        // 🔄 성능 고려: 병렬 처리로 이미지 S3 업로드
+        //  성능 고려: 병렬 처리로 이미지 S3 업로드
         return StreamSupport.stream(itemsNode.spliterator(), true)
                 .map(node -> {
                     try {
@@ -227,10 +230,10 @@ public class WellnessInfoImgService3 {
                                 objectMapper.treeToValue(node, TourImageApiResponse.Response.Body.Items.Item.class);
 
                         // S3 업로드 (외부 이미지 URL을 -> 내부 S3로)
-                        String s3Url = s3Uploader.uploadDetailImageFromUrl(item.getSmallimageurl(), "wellness");
+                        String s3Url = s3Uploader.uploadDetailImageFromUrl(item.getSmallimageurl(),contentId);
 
                         if (s3Url == null) {
-                            log.warn("[업로드 실패] contentId={}, imgUrl={}", item.getContentid(), item.getSmallimageurl());
+                            //log.warn("[업로드 실패] contentId={}, imgUrl={}", item.getContentid(), item.getSmallimageurl());
                             return null; // 이후 filter로 null 제거
                         }
                         // 엔티티 생성
@@ -242,12 +245,12 @@ public class WellnessInfoImgService3 {
                                 .build();
 
                     } catch (Exception e) {
-                        log.warn("[이미지 처리 실패] contentId={}, error={}", contentId, e.getMessage());
+                        //log.warn("[이미지 처리 실패] contentId={}, error={}", contentId, e.getMessage());
                         return null;
                     }
                 })
                 .filter(Objects::nonNull)
-                .toList(); // JDK 16+ 또는 collect(Collectors.toList())
+                .toList();
     }
 
     private void retryFailedContentIds(List<String> failedContentIds, Map<String, WellnessInfo> wellnessMap) throws Exception {
@@ -255,7 +258,7 @@ public class WellnessInfoImgService3 {
 
         List<CompletableFuture<Void>> retryFutures = failedContentIds.stream()
                 .map(contentId -> CompletableFuture.runAsync(() -> {
-//                    log.info("[재시도 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
+                    //log.info("[재시도 시작] contentId={}, thread={}", contentId, Thread.currentThread().getName());
                     try {
                         // 지수 백오프 적용
                         List<WellnessInfoImg> images = retryWithBackoff.execute(() ->
@@ -264,21 +267,21 @@ public class WellnessInfoImgService3 {
                                 1000 // 초기 1초 대기
                         );
                         wellnessInfoImgRepository.saveAll(images);
-//                        log.info("[재시도 성공] contentId={}, 저장 건수={}", contentId, images.size());
+                        //log.info("[재시도 성공] contentId={}, 저장 건수={}", contentId, images.size());
                     } catch (Exception e) {
                         retryFailList.add(contentId);
-                        log.error("[재시도 실패] contentId={}, error={}", contentId, e.getMessage(), e);
+                        //log.error("[재시도 실패] contentId={}, error={}", contentId, e.getMessage(), e);
                     }
                 }, asyncExecutor))
                 .collect(Collectors.toList());
 
         CompletableFuture.allOf(retryFutures.toArray(new CompletableFuture[0])).get();
 
-//        log.info("✅ 재시도 완료 - 성공: {}건 / 실패: {}건",
+//        log.info(" 재시도 완료 - 성공: {}건 / 실패: {}건",
 //                failedContentIds.size() - retryFailList.size(), retryFailList.size());
 
         if (!retryFailList.isEmpty()) {
-            log.warn("🚫 최종 실패 contentId 목록: {}", retryFailList);
+            log.warn(" 최종 실패 contentId 목록: {}", retryFailList);
         }
     }
 

@@ -50,6 +50,8 @@ public class WellnessInfoService2 {
 
     // 한국관광공사 API 호출 및 데이터 저장 로직 실행
     private CompletableFuture<Void> fetchAllData() {
+        log.info("[메인 스레드 확인] thread={}", Thread.currentThread().getName());
+
         long start = System.currentTimeMillis();
 
         // 카테고리별 API 호출

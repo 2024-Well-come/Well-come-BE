@@ -75,6 +75,7 @@ public class GlobalExceptionHandler {
         return handleAllException(new Exception(actual), request);
     }
 
+
     private Throwable unwrap(Throwable t) {
         while (t instanceof CompletionException || t instanceof ExecutionException) {
             if (t.getCause() == null) break;

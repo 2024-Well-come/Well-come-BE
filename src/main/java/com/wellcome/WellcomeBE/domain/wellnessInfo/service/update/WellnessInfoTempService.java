@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.domain.wellnessInfo.service.update;
 
-import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService2;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService2;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfoTemp;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.dto.internal.WellnessInfoTempData;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.repository.WellnessInfoRepository;
@@ -41,6 +41,7 @@ public class WellnessInfoTempService {
     private final WellnessInfoTempRepository tempWellnessInfoRepository;
     private final WellnessInfoService2 wellnessInfoService2;
     private final Executor asyncExecutor;
+    private final Executor imageExecutor;
     private final GoogleMapInfoService2 googleMapInfoService2;
     private final WellnessInfoImgService3 wellnessInfoImgService3;
     private final WellnessInfoTempUpdateService wellnessInfoUpdateOps;
@@ -172,11 +173,11 @@ public class WellnessInfoTempService {
                     // 썸네일 이미지 업로드
                     CompletableFuture<String> thumbnailUrlFuture = CompletableFuture.supplyAsync(
                             () -> wellnessInfoService2.processThumbnailImg(contentId, temp.getOriginalThumbnailUrl()),
-                            asyncExecutor);
+                            imageExecutor);
 
                     // parentId 값 찾기
-                    //CompletableFuture<String> parentIdFuture = CompletableFuture.completedFuture(null);
-                    CompletableFuture<String> parentIdFuture = googleMapInfoService2.getParentIdByGoogleMap(temp.getAddress(), temp.getTitle());
+                    CompletableFuture<String> parentIdFuture = CompletableFuture.completedFuture(null);
+                    //CompletableFuture<String> parentIdFuture = googleMapInfoService2.getParentIdByGoogleMap(temp.getAddress(), temp.getTitle());
 
                     // 두 비동기 작업 병합
                     return thumbnailUrlFuture.thenCombine(parentIdFuture,

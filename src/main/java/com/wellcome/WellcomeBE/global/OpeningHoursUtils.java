@@ -1,6 +1,6 @@
 package com.wellcome.WellcomeBE.global;
 
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.global.type.DayOfWeekType;
 import lombok.extern.slf4j.Slf4j;
 

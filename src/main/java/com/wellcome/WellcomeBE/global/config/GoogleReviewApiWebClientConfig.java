@@ -27,7 +27,7 @@ public class GoogleReviewApiWebClientConfig {
     private static final String GOOGLE_PLACE_BASE_URL = "https://maps.googleapis.com/maps/api/place/";
 
     /**
-     * ✅ WebClient Bean with timeout + TLS + connection handling for Google Place API
+     *  WebClient Bean with timeout + TLS + connection handling for Google Place API
      */
     @Bean(name = "googlePlaceApiWebClient")
     public WebClient googlePlaceApiWebClient() {
@@ -49,7 +49,7 @@ public class GoogleReviewApiWebClientConfig {
     }
 
     /**
-     * ✅ (Optional) Separate WebClient bean for flexibility
+     *  (Optional) Separate WebClient bean for flexibility
      */
     @Bean(name = "googlePlaceInfoApiWebClient")
     public WebClient googlePlaceInfoWebClient() {
@@ -59,7 +59,7 @@ public class GoogleReviewApiWebClientConfig {
     }
 
     /**
-     * ✅ URI Builder for constructing dynamic Google Place API calls
+     *  URI Builder for constructing dynamic Google Place API calls
      */
     public String buildPlaceUri(String endpoint, Map<String, String> additionalParams) {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder

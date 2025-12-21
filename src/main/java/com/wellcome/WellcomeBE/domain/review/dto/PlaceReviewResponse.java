@@ -1,14 +1,17 @@
-package com.wellcome.WellcomeBE.domain.review;
+package com.wellcome.WellcomeBE.domain.review.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
 
+@Builder(toBuilder = true)
 @Data
-public class PlaceReviewResponse {
+public class PlaceReviewResponse  {
     private List<Object> html_attributions;  // HTML 속성
     private PlaceResult result;              // 장소 결과
-    private String status;                   // 상태
+    private String status;// 상태
+    private String error_message;
 
     @Data
     public static class PlaceResult {

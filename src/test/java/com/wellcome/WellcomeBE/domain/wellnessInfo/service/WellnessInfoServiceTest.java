@@ -5,8 +5,8 @@ import com.wellcome.WellcomeBE.domain.community.Community;
 import com.wellcome.WellcomeBE.domain.community.repository.CommunityRepository;
 import com.wellcome.WellcomeBE.domain.like.repository.LikedRepository;
 import com.wellcome.WellcomeBE.domain.member.Member;
-import com.wellcome.WellcomeBE.domain.review.GoogleMapInfoService;
-import com.wellcome.WellcomeBE.domain.review.PlaceReviewResponse;
+import com.wellcome.WellcomeBE.domain.review.service.GoogleMapInfoService;
+import com.wellcome.WellcomeBE.domain.review.dto.PlaceReviewResponse;
 import com.wellcome.WellcomeBE.domain.tripPlan.TripPlan;
 import com.wellcome.WellcomeBE.domain.tripPlanPlace.repository.TripPlanPlaceRepository;
 import com.wellcome.WellcomeBE.domain.wellnessInfo.WellnessInfo;
@@ -209,8 +209,6 @@ public class WellnessInfoServiceTest {
         when(wellnessInfoService.fetchWeatherInfo(anyInt(), anyInt())).thenReturn(weather);
 
 
-        // 6. 뷰 카운트 업데이트 무시
-        doNothing().when(wellness).updateViewNum();
 
         // when
         WellnessInfoBasicResponse response = wellnessInfoApiService.getWellnessInfoBasic(id);
@@ -231,7 +229,6 @@ public class WellnessInfoServiceTest {
         verify(wellnessInfoImgRepository).findByWellnessInfo(wellness);
         verify(likedRepository).existsByWellnessInfoAndMember(eq(wellness), isNotNull());
         verify(wellnessInfoService).fetchWeatherInfo(anyInt(), anyInt());
-        verify(wellness).updateViewNum();
     }
 
 
@@ -253,7 +250,6 @@ public class WellnessInfoServiceTest {
 
         WeatherResponse weather = WeatherResponse.builder().temperature("22.0").build();
         lenient().when(wellnessInfoService.fetchWeatherInfo(anyInt(), anyInt())).thenReturn(weather);
-        doNothing().when(wellness).updateViewNum();
 
         // when
         WellnessInfoBasicResponse response = wellnessInfoApiService.getWellnessInfoBasic(id);

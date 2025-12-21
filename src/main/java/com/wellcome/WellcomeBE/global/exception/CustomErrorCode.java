@@ -26,6 +26,10 @@ public enum CustomErrorCode {
 
     // 구글맵 API (3xxx)
     GOOGLE_PARENT_ID_NOT_FOUND(HttpStatus.NOT_FOUND,3001,"해당 parentId의 정보가 없습니다."),
+    GOOGLE_API_KEY_ID_NOT_ERROR(HttpStatus.NOT_FOUND, 3002, "해당 리소스 키의 정보가 없습니다."),
+    GOOGLE_API_REQUEST_ERROR(HttpStatus.BAD_GATEWAY, 3003, "Google API 요청 중 오류가 발생했습니다."),
+    GOOGLE_API_RESPONSE_ERROR(HttpStatus.BAD_GATEWAY, 3004, "Google API 응답이 정상적이지 않습니다."),
+
 
     // Member (4xxx)
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4001, "해당하는 멤버를 찾을 수 없습니다."),
