@@ -16,41 +16,9 @@
 <br>
 
 ## 👥 팀원
-<table>
-  <tr style="text-align:center; font-weight:bold;">
-    <td>김혜수</td>
-    <td>김나영</td>
-    <td>송은서</td>
-    <td>이유종</td>
-    <td>이지윤</td>
-  </tr>
-  <tr style="text-align:center;">
-    <td>
-        <img src="https://github.com/Hwater00.png?size=40" width="40" style="border-radius:50%; margin-top:5px;"><br>
-        <a href="https://github.com/Hwater00">@Hwater00</a>
-    </td>
-    <td>
-        <img src="https://github.com/Naling1225.png?size=40" width="40" style="border-radius:50%; margin-top:5px;"><br>
-        <a href="https://github.com/Naling1225">@Naling1225</a>
-    </td>
-    <td></td>
-    <td>
-        <img src="https://github.com/eujjong18.png?size=40" width="40" style="border-radius:50%; margin-top:5px;"><br>
-        <a href="https://github.com/eujjong18">@eujjong18</a>
-    </td>
-    <td>
-        <img src="https://github.com/jiyuneel.png?size=40" width="40" style="border-radius:50%; margin-top:5px;"><br>
-        <a href="https://github.com/jiyuneel">@jiyuneel</a>
-    </td>
-  </tr>
-  <tr style="text-align:center;">
-    <td>팀장 · 백엔드 개발</td>
-    <td>프론트엔드 개발</td>
-    <td>기획&디자인</td>
-    <td>백엔드 개발</td>
-    <td>프론트엔드 개발</td>
-  </tr>
-</table>
+| **김혜수**<br>[@Hwater00](https://github.com/Hwater00) | **김나영**<br>[@Naling1225](https://github.com/Naling1225) | **송은서**<br><br> | **이유종**<br>[@eujjong18](https://github.com/eujjong18) | **이지윤**<br>[@jiyuneel](https://github.com/jiyuneel) |
+|-----------------------------------------------------|---------------------------------------------------------|-----------------|-------------------------------------------------------|-----------------------------------------------------|
+| 팀장 · 백엔드 개발                                         | 프론트엔드 개발                                                | 기획&디자인          | 백엔드 개발                                                | 프론트엔드 개발                                            |
 
 <br>
 
