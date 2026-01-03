@@ -1,7 +1,7 @@
 # 🌿 웰컴 (Well, come)
 > **"당신의 일상에 쉼표를, 웰니스 여행의 시작"**
 
-'웰컴(Well, come)'은 일상 속 휴식이 필요한 현대인들을 위해 전국의 웰니스 여행지를 한눈에 확인하고 탐색할 수 있는 서비스입니다. 한국관광공사의 데이터를 기반으로 신뢰도 높은 힐링 스팟 정보를 제공합니다.
+'웰컴(Well, come)'은 일상 속 휴식이 필요한 현대인들을 위해 강원도의 웰니스 여행지를 시군별/테마별로 한눈에 확인하고 여행 계획을 세울 수 있는 서비스입니다. 한국관광공사의 데이터를 기반으로 신뢰도 높은 힐링 스팟 정보를 제공합니다.
 
 [![Google Play Store](https://img.shields.io/badge/Google_Play-Download-green?style=for-the-badge&logo=google-play)](https://play.google.com/store/apps/details?id=com.dev.wellcome&pcampaignid=web_share&pli=1)
 
@@ -13,13 +13,22 @@
 - 프로젝트명: 웰컴 (Well, come)
 - 진행 기간: 2024.04 ~ 2024.10
 
----
+<br>
+
+## 👥 팀원
+| [김혜수](https://github.com/Hwater00) | [김나영](https://github.com/Naling1225) | [송은서]() | [이유종](https://github.com/eujjong18) | [이지윤](https://github.com/jiyuneel) |
+|----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| 팀장, 백엔드                  | 프론트엔드                       | 기획/디자인                      | 백엔드                         | 프론트엔드                       |
+
+
+<br>
 
 ## 🏆 성과
 - 2024 관광데이터 활용 공모전 (한국관광공사/카카오 주관)
     - 우수상 (한국관광공사 사장상) 수여
+    - 공모전 보고서 [🔗](https://drive.google.com/file/d/171eemRA5CBQxR0A0Jyk_XLD-6Lf5hb9v/view)
 
----
+<br>
 
 ## 🛠 유지보수 및 리팩토링
 공모전 수상 이후, 서비스의 안정성과 데이터 정확도를 높이기 위해 다음과 같은 기술적 개선 과정을 거쳤습니다.
